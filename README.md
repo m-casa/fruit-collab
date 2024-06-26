@@ -1,2 +1,2 @@
-# grape
-A charming, fast-paced and multiplayer platformer where you take control of a tiny grape.
+# Fruit Jammers
+A charming, multiplayer brawler where you take control of tiny fruit people!
