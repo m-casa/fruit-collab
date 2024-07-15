@@ -17,12 +17,10 @@ namespace EasyCharacterMovement
 
         private ThirdPersonCameraController _cameraController;
         private bool _wasFalling;
-        //private Quaternion characterOverrideTransform;
         private Quaternion chestOverrideTransform; // The dummy transform used to update the real one
         private Quaternion chestTargetRotation; // Target rotation for the lean
 
         [SerializeField] private NamedAnimancerComponent _animancer;
-        //[SerializeField] private Transform rootTransform;
         [SerializeField] private Transform chestTransform; // Reference to the chest bone
         [SerializeField] private float leanAmount = 12.5f; // Maximum degrees to lean
         [SerializeField] private float leanSpeed = 8f; // Speed at which the lean is applied
@@ -189,6 +187,45 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Saves the rotation data needed to lean the character in the direction they move.
+        /// </summary>
+
+        protected virtual void HandleLeanInput()
+        {
+            // Project on a horizontal plane so we only have to consider horizontal direction without vertical rotation creating issues
+
+            Vector3 characterForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+            Vector3 movementDirection = Vector3.ProjectOnPlane(GetMovementDirection(), Vector3.up);
+
+            // Calculate the signed angle between character's forward direction and target movement direction
+
+            float angleDifference = Vector3.SignedAngle(characterForward, movementDirection, transform.up);
+
+            if (angleDifference < -15)
+            {
+                // Calculate target rotation for leaning left
+
+                chestTargetRotation = Quaternion.Euler(0, 0, leanAmount);
+            }
+            else if (angleDifference > 15)
+            {
+                // Calculate target rotation for leaning right
+
+                chestTargetRotation = Quaternion.Euler(0, 0, -leanAmount);
+            }
+            else
+            {
+                // Return to upright position
+
+                chestTargetRotation = Quaternion.Euler(0, 0, 0);
+            }
+
+            // Smoothly interpolate to the target rotation on the chest
+
+            chestOverrideTransform = Quaternion.Slerp(chestTransform.localRotation, chestTargetRotation, Time.deltaTime * leanSpeed);
+        }
+
+        /// <summary>
         /// Initialize player InputActions (if any).
         /// E.g. Subscribe to input action events and enable input actions here.
         /// </summary>
@@ -283,7 +320,7 @@ namespace EasyCharacterMovement
 
             Jumped += PlayJumpAnimation;
             ReachedJumpApex += PlayFallAnimation;
-            Landed += DoneLanding;
+            Landed += DoneFalling;
         }
 
         /// <summary>
@@ -296,7 +333,7 @@ namespace EasyCharacterMovement
 
             Jumped -= PlayJumpAnimation;
             ReachedJumpApex -= PlayFallAnimation;
-            Landed -= DoneLanding;
+            Landed -= DoneFalling;
         }
 
         /// <summary>
@@ -379,30 +416,10 @@ namespace EasyCharacterMovement
             else
             {
                 // If not grounded, smoothly return to upright position
+
                 Quaternion uprightRotation = Quaternion.FromToRotation(transform.up, Vector3.up) * transform.rotation;
                 transform.rotation = Quaternion.Slerp(transform.rotation, uprightRotation, 10f * Time.fixedDeltaTime);
             }
-        }
-
-        /// <summary>
-        /// Called on the frame when a script is enabled just before any of the Update methods are called the first time (Start).
-        /// If overridden, must call base method in order to fully initialize the class.
-        /// </summary>
-
-        protected override void OnStart()
-        {
-            base.OnStart();
-
-            //if (chestTransform != null)
-            //{
-            //    chestOverrideTransform = chestTransform.localRotation; // Initialize with no lean
-            //    chestTargetRotation = chestTransform.localRotation;
-            //    characterOverrideTransform = chestTransform.localRotation;
-            //}
-            //else
-            //{
-            //    Debug.LogError("Chest transform not assigned!");
-            //}
         }
 
         /// <summary>
@@ -414,7 +431,6 @@ namespace EasyCharacterMovement
             base.OnUpdate();
 
             HandleLeanInput();
-            //HandleSlopeRotation();
         }
 
         /// <summary>
@@ -426,14 +442,13 @@ namespace EasyCharacterMovement
             base.OnLateUpdate();
 
             ApplyLean();
-            //ApplySlopeRotation();
         }
 
         /// <summary>
         /// State that the player was falling.
         /// </summary>
 
-        protected virtual void DoneLanding()
+        protected virtual void DoneFalling()
         {
             _wasFalling = true;
         }
@@ -476,71 +491,16 @@ namespace EasyCharacterMovement
             _animancer.TryPlay("_Fall", 0.25f);
         }
 
-        protected virtual void HandleLeanInput()
-        {
-            // Project on a horizontal plane so we only have to consider horizontal direction without vertical rotation creating issues
-            Vector3 characterForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
-            Vector3 movementDirection = Vector3.ProjectOnPlane(GetMovementDirection(), Vector3.up);
-
-            // Calculate the signed angle between character's forward direction and target movement direction
-            float angleDifference = Vector3.SignedAngle(characterForward, movementDirection, transform.up);
-            
-            if (angleDifference < -15)
-            {
-                // Calculate target rotation for leaning left
-                chestTargetRotation = Quaternion.Euler(0, 0, leanAmount);
-            }
-            else if (angleDifference > 15)
-            {
-                // Calculate target rotation for leaning right
-                chestTargetRotation = Quaternion.Euler(0, 0, -leanAmount);
-            }
-            else
-            {
-                // Return to upright position
-                chestTargetRotation = Quaternion.Euler(0, 0, 0);
-            }
-
-            // Smoothly interpolate to the target rotation on the chest
-            chestOverrideTransform = Quaternion.Slerp(chestTransform.localRotation, chestTargetRotation, Time.deltaTime * leanSpeed);
-        }
+        /// <summary>
+        /// Applies the correct rotation determined in HandleLeanInput.
+        /// </summary>
 
         protected virtual void ApplyLean()
         {
-            // Override animation data on chest bone with our dummy transform
+            // Override animation data on the chest with our dummy transform
+
             chestTransform.localRotation = chestOverrideTransform;
         }
-
-        //protected virtual void HandleSlopeRotation()
-        //{
-        //    RaycastHit hit;
-
-        //    if (Physics.Raycast(rootTransform.position, Vector3.down, out hit, 1f))
-        //    {
-        //        // Calculate the slope normal
-        //        Vector3 slopeNormal = hit.normal;
-
-        //        // Rotate the player to align with the slope
-        //        Quaternion slopeRotation = Quaternion.FromToRotation(rootTransform.up, slopeNormal) * rootTransform.rotation * Quaternion.Euler(-90, 0, 0);
-
-        //        // Smoothly interpolate between current rotation and target rotation
-        //        characterOverrideTransform = Quaternion.Slerp(rootTransform.rotation, slopeRotation, 10f * Time.deltaTime);
-        //    }
-        //    else
-        //    {
-        //        // Create an upright rotation while leaving Y and Z rotations as is
-        //        Quaternion uprightRotation = Quaternion.Euler(-90, transform.rotation.eulerAngles.y, rootTransform.eulerAngles.z);
-
-        //        // Smoothly interpolate between current rotation and an upright rotation
-        //        characterOverrideTransform = Quaternion.Slerp(rootTransform.rotation, uprightRotation, 10f * Time.deltaTime);
-        //    }
-        //}
-
-        //protected virtual void ApplySlopeRotation()
-        //{
-        //    // Override animation data on the root's transform with our dummy transform
-        //    rootTransform.rotation = characterOverrideTransform;
-        //}
 
         #endregion
     }
