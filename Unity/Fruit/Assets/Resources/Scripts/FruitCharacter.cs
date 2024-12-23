@@ -346,7 +346,6 @@ namespace EasyCharacterMovement
 
             if (IsGrounded())
             {
-
                 if (WasFalling())
                 {
                     _wasFalling = false;
