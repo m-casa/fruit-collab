@@ -16,7 +16,7 @@ namespace EasyCharacterMovement
         #region FIELDS
 
         private ThirdPersonCameraController _cameraController;
-        private bool _wasFalling, _rightFootUp;
+        private bool _wasFalling, _rightFootUp, _punchButtonPressed, _isPunching;
         private Quaternion chestOverrideTransform; // The dummy transform used to update the real one
         private Quaternion chestTargetRotation; // Target rotation for the lean
 
@@ -29,7 +29,6 @@ namespace EasyCharacterMovement
         #endregion
 
         #region PROPERTIES
-
 
         /// <summary>
         /// Cached camera controller.
@@ -50,19 +49,57 @@ namespace EasyCharacterMovement
 
         #region INPUT ACTIONS
 
+        /// <summary>
+        /// Punch InputAction.
+        /// </summary>
+
+        protected InputAction punchInputAction { get; set; }
+
+        /// <summary>
+        /// Mouse Look InputAction.
+        /// </summary>
+
         protected InputAction mouseLookInputAction { get; set; }
+
+        /// <summary>
+        /// Mouse Scroll InputAction.
+        /// </summary>
 
         protected InputAction mouseScrollInputAction { get; set; }
 
+        /// <summary>
+        /// Controller Look InputAction.
+        /// </summary>
+
         protected InputAction controllerLookInputAction { get; set; }
 
+        /// <summary>
+        /// Cursor Lock InputAction.
+        /// </summary>
+
         protected InputAction cursorLockInputAction { get; set; }
+
+        /// <summary>
+        /// Cursor Unlock InputAction.
+        /// </summary>
 
         protected InputAction cursorUnlockInputAction { get; set; }
 
         #endregion
 
         #region INPUT ACTION HANDLERS
+
+        /// <summary>
+        /// Punch input action handler.
+        /// </summary>
+
+        protected virtual void OnPunch(InputAction.CallbackContext context)
+        {
+            if (context.started || context.performed)
+                Punch();
+            else if (context.canceled)
+                StopPunching();
+        }
 
         /// <summary>
         /// Gets the mouse look value.
@@ -149,14 +186,32 @@ namespace EasyCharacterMovement
             if (inputActions == null)
                 return;
 
+            // Setup Punch input action handlers
+
+            punchInputAction = inputActions.FindAction("Punch");
+            if (punchInputAction != null)
+            {
+                punchInputAction.started += OnPunch;
+                punchInputAction.performed += OnPunch;
+                punchInputAction.canceled += OnPunch;
+
+                punchInputAction.Enable();
+            }
+
+            // Setup Mouse input action handlers
+
             mouseLookInputAction = inputActions.FindAction("Mouse Look");
             mouseLookInputAction?.Enable();
 
             mouseScrollInputAction = inputActions.FindAction("Mouse Scroll");
             mouseScrollInputAction?.Enable();
 
+            // Setup Controller input action handlers
+
             controllerLookInputAction = inputActions.FindAction("Controller Look");
             controllerLookInputAction?.Enable();
+
+            // Setup Cursor input action handlers
 
             cursorLockInputAction = inputActions.FindAction("Cursor Lock");
             if (cursorLockInputAction != null)
@@ -182,6 +237,16 @@ namespace EasyCharacterMovement
             // Call base method implementation
 
             base.DeinitPlayerInput();
+
+            if (punchInputAction != null)
+            {
+                punchInputAction.started -= OnPunch;
+                punchInputAction.performed -= OnPunch;
+                punchInputAction.canceled -= OnPunch;
+
+                punchInputAction.Disable();
+                punchInputAction = null;
+            }
 
             if (mouseLookInputAction != null)
             {
@@ -254,11 +319,24 @@ namespace EasyCharacterMovement
 
             if (IsGrounded())
             {
-                if (WasFalling())
+                if (_animancer.IsPlaying("_Punch.T"))
+                {
+                    SetMovementDirection(Vector3.zero);
+                    return;
+                }
+
+                else if (WasFalling())
                 {
                     _wasFalling = false;
                     var state = _animancer.TryPlay("_Land", 0.25f);
-                    state.Events.OnEnd = FinishedLanding;
+                    state.Events.OnEnd = ResetAnimationState;
+                }
+
+                else if (_punchButtonPressed && !IsPunching())
+                {
+                    _isPunching = true;
+                    var state = _animancer.TryPlay("_Punch.T");
+                    state.Events.OnEnd = ResetAnimationState;
                 }
 
                 else if (movementInput == Vector2.zero)
@@ -528,10 +606,38 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Return the character to Idle once they've finished landing.
+        /// Start a punch.
         /// </summary>
 
-        protected virtual void FinishedLanding()
+        protected virtual void Punch()
+        {
+            _punchButtonPressed = true;
+        }
+
+        /// <summary>
+        /// Is the Character punching?
+        /// </summary>
+
+        public virtual bool IsPunching()
+        {
+            return _isPunching;
+        }
+
+        /// <summary>
+        /// Stop the character from punching.
+        /// </summary>
+
+        protected virtual void StopPunching()
+        {
+            _punchButtonPressed = false;
+            _isPunching = false;
+        }
+
+        /// <summary>
+        /// Return the character to Idle.
+        /// </summary>
+
+        protected virtual void ResetAnimationState()
         {
             _animancer.TryPlay("_Idle", 0.25f);
         }

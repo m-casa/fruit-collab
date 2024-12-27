@@ -791,7 +791,7 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// True is _jumpButtonPressed is true, false otherwise.
+        /// True if _jumpButtonPressed is true, false otherwise.
         /// </summary>
 
         public bool jumpButtonPressed => _jumpButtonPressed;
