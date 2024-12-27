@@ -131,99 +131,7 @@ namespace EasyCharacterMovement
 
         #endregion
 
-        #region METHODS        
-
-        /// <summary>
-        /// Perform camera related input actions, eg: Look Up / Down, Turn, etc.
-        /// </summary>
-
-        protected virtual void HandleCameraInput()
-        {
-            if (!cameraController.IsCursorLocked())
-                return;
-
-            Vector2 mouseLookInput = GetMouseLookInput();
-            if (mouseLookInput.sqrMagnitude > 0)
-            {
-                // Mouse look input
-
-                if (mouseLookInput.x != 0.0f)
-                    cameraController.Turn(mouseLookInput.x);
-
-                if (mouseLookInput.y != 0.0f)
-                    cameraController.LookUp(mouseLookInput.y);
-
-            }
-            else
-            {
-                // Controller look input
-
-                Vector2 controllerLookInput = GetControllerLookInput();
-
-                if (controllerLookInput.x != 0.0f)
-                    cameraController.TurnAtRate(controllerLookInput.x);
-
-                if (controllerLookInput.y != 0.0f)
-                    cameraController.LookUpAtRate(controllerLookInput.y);
-            }
-
-            // Mouse scroll input
-
-            Vector2 mouseScrollInput = GetMouseScrollInput();
-
-            if (mouseScrollInput.y != 0.0f)
-                cameraController.ZoomAtRate(mouseScrollInput.y);
-        }
-
-        /// <summary>
-        /// Extends the HandleInput method to add Camera related inputs.
-        /// </summary>
-
-        protected override void HandleInput()
-        {
-            base.HandleInput();
-
-            HandleCameraInput();
-        }
-
-        /// <summary>
-        /// Saves the rotation data needed to lean the character in the direction they move.
-        /// </summary>
-
-        protected virtual void HandleLeanInput()
-        {
-            // Project on a horizontal plane so we only have to consider horizontal direction without vertical rotation creating issues
-
-            Vector3 characterForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
-            Vector3 movementDirection = Vector3.ProjectOnPlane(GetMovementDirection(), Vector3.up);
-
-            // Calculate the signed angle between character's forward direction and target movement direction
-
-            float angleDifference = Vector3.SignedAngle(characterForward, movementDirection, transform.up);
-
-            if (angleDifference < -15)
-            {
-                // Calculate target rotation for leaning left
-
-                chestTargetRotation = Quaternion.Euler(0, 0, leanAmount);
-            }
-            else if (angleDifference > 15)
-            {
-                // Calculate target rotation for leaning right
-
-                chestTargetRotation = Quaternion.Euler(0, 0, -leanAmount);
-            }
-            else
-            {
-                // Return to upright position
-
-                chestTargetRotation = Quaternion.Euler(0, 0, 0);
-            }
-
-            // Smoothly interpolate to the target rotation on the chest
-
-            chestOverrideTransform = Quaternion.Slerp(chestTransform.localRotation, chestTargetRotation, Time.deltaTime * leanSpeed);
-        }
+        #region METHODS  
 
         /// <summary>
         /// Initialize player InputActions (if any).
@@ -436,6 +344,8 @@ namespace EasyCharacterMovement
         {
             base.OnUpdate();
 
+            HandleCameraInput();
+
             HandleLeanInput();
         }
 
@@ -451,40 +361,113 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// State that the player was falling.
+        /// Perform camera related input actions, eg: Look Up / Down, Turn, etc.
         /// </summary>
 
-        protected virtual void DoneFalling()
+        protected virtual void HandleCameraInput()
         {
-            _wasFalling = true;
+            if (!cameraController.IsCursorLocked())
+                return;
+
+            Vector2 mouseLookInput = GetMouseLookInput();
+            if (mouseLookInput.sqrMagnitude > 0)
+            {
+                // Mouse look input
+
+                if (mouseLookInput.x != 0.0f)
+                    cameraController.Turn(mouseLookInput.x);
+
+                if (mouseLookInput.y != 0.0f)
+                    cameraController.LookUp(mouseLookInput.y);
+
+            }
+            else
+            {
+                // Controller look input
+
+                Vector2 controllerLookInput = GetControllerLookInput();
+
+                if (controllerLookInput.x != 0.0f)
+                    cameraController.TurnAtRate(controllerLookInput.x);
+
+                if (controllerLookInput.y != 0.0f)
+                    cameraController.LookUpAtRate(controllerLookInput.y);
+            }
+
+            // Mouse scroll input
+
+            Vector2 mouseScrollInput = GetMouseScrollInput();
+
+            if (mouseScrollInput.y != 0.0f)
+                cameraController.ZoomAtRate(mouseScrollInput.y);
         }
 
         /// <summary>
-        /// Return whether or not the player was falling.
+        /// Saves the rotation data needed to lean the character in the direction they move.
         /// </summary>
 
-        protected virtual bool WasFalling()
+        protected virtual void HandleLeanInput()
         {
-            return _wasFalling;
+            // Project on a horizontal plane so we only have to consider horizontal direction without vertical rotation creating issues
+
+            Vector3 characterForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+            Vector3 movementDirection = Vector3.ProjectOnPlane(GetMovementDirection(), Vector3.up);
+
+            // Calculate the signed angle between character's forward direction and target movement direction
+
+            float angleDifference = Vector3.SignedAngle(characterForward, movementDirection, transform.up);
+
+            if (angleDifference < -15)
+            {
+                // Calculate target rotation for leaning left
+
+                chestTargetRotation = Quaternion.Euler(0, 0, leanAmount);
+            }
+            else if (angleDifference > 15)
+            {
+                // Calculate target rotation for leaning right
+
+                chestTargetRotation = Quaternion.Euler(0, 0, -leanAmount);
+            }
+            else
+            {
+                // Return to upright position
+
+                chestTargetRotation = Quaternion.Euler(0, 0, 0);
+            }
+
+            // Smoothly interpolate to the target rotation on the chest
+
+            chestOverrideTransform = Quaternion.Slerp(chestTransform.localRotation, chestTargetRotation, Time.deltaTime * leanSpeed);
         }
+
+        /// <summary>
+        /// Applies the correct rotation determined in HandleLeanInput.
+        /// </summary>
+
+        protected virtual void ApplyLean()
+        {
+            // Override animation data on the chest with our dummy transform
+
+            chestTransform.localRotation = chestOverrideTransform;
+        }
+
+        /// <summary>
+        /// Sets the right foot as up so we can use that foot to jump.
+        /// </summary>
 
         protected virtual void SetRightFootUp()
         {
             _rightFootUp = true;
         }
 
+        /// <summary>
+        /// Sets the right foot as down so we can use the left foot to jump.
+        /// </summary>
+
         protected virtual void SetRightFootDown()
         {
             _rightFootUp = false;
-        }
-
-        /// <summary>
-        /// Return the character to Idle once they've finished landing.
-        /// </summary>
-
-        protected virtual void FinishedLanding()
-        {
-            _animancer.TryPlay("_Idle", 0.25f);
         }
 
         /// <summary>
@@ -495,14 +478,18 @@ namespace EasyCharacterMovement
         {
             justJumped = true;
             notifyJumpApex = true;
+
+            _animancer.Stop("_Run");
             
             if (_rightFootUp)
             {
                 _animancer.TryPlay("_JiggleJump.L", 0.25f);
+                SetRightFootDown();
             }
             else
             {
                 _animancer.TryPlay("_JiggleJump.R", 0.25f);
+                SetRightFootUp();
             }
         }
 
@@ -523,14 +510,30 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Applies the correct rotation determined in HandleLeanInput.
+        /// State that the player was falling.
         /// </summary>
 
-        protected virtual void ApplyLean()
+        protected virtual void DoneFalling()
         {
-            // Override animation data on the chest with our dummy transform
+            _wasFalling = true;
+        }
 
-            chestTransform.localRotation = chestOverrideTransform;
+        /// <summary>
+        /// Return whether or not the player was falling.
+        /// </summary>
+
+        protected virtual bool WasFalling()
+        {
+            return _wasFalling;
+        }
+
+        /// <summary>
+        /// Return the character to Idle once they've finished landing.
+        /// </summary>
+
+        protected virtual void FinishedLanding()
+        {
+            _animancer.TryPlay("_Idle", 0.25f);
         }
 
         #endregion
