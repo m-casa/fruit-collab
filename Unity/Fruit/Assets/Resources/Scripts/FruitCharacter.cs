@@ -16,7 +16,7 @@ namespace EasyCharacterMovement
         #region FIELDS
 
         private ThirdPersonCameraController _cameraController;
-        private bool _wasFalling;
+        private bool _wasFalling, _rightFootUp;
         private Quaternion chestOverrideTransform; // The dummy transform used to update the real one
         private Quaternion chestTargetRotation; // Target rotation for the lean
 
@@ -371,9 +371,16 @@ namespace EasyCharacterMovement
                     _animancer.TryPlay("_Run", 0.25f);
                 }
             }
-            else if (!_animancer.IsPlaying("_Jump"))
+            else if (!_animancer.IsPlaying("_JiggleJump.R") && !_animancer.IsPlaying("_JiggleJump.L"))
             {
-                _animancer.TryPlay("_Fall", 0.25f);
+                if (_rightFootUp)
+                {
+                    _animancer.TryPlay("_Fall.R", 0.25f);
+                }
+                else
+                {
+                    _animancer.TryPlay("_Fall.L", 0.25f);
+                }
             }
         }
 
@@ -461,6 +468,16 @@ namespace EasyCharacterMovement
             return _wasFalling;
         }
 
+        protected virtual void SetRightFootUp()
+        {
+            _rightFootUp = true;
+        }
+
+        protected virtual void SetRightFootDown()
+        {
+            _rightFootUp = false;
+        }
+
         /// <summary>
         /// Return the character to Idle once they've finished landing.
         /// </summary>
@@ -478,7 +495,15 @@ namespace EasyCharacterMovement
         {
             justJumped = true;
             notifyJumpApex = true;
-            _animancer.TryPlay("_Jump");
+            
+            if (_rightFootUp)
+            {
+                _animancer.TryPlay("_JiggleJump.L", 0.25f);
+            }
+            else
+            {
+                _animancer.TryPlay("_JiggleJump.R", 0.25f);
+            }
         }
 
         /// <summary>
@@ -487,7 +512,14 @@ namespace EasyCharacterMovement
 
         protected virtual void PlayFallAnimation()
         {
-            _animancer.TryPlay("_Fall", 0.25f);
+            if (_rightFootUp)
+            {
+                _animancer.TryPlay("_Fall.R", 0.25f);
+            }
+            else
+            {
+                _animancer.TryPlay("_Fall.L", 0.25f);
+            }
         }
 
         /// <summary>
