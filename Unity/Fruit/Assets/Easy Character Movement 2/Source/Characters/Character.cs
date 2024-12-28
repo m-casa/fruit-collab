@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -314,6 +314,7 @@ namespace EasyCharacterMovement
         protected float _jumpHoldTime;
         protected int _jumpCount;
         protected bool _isJumping;
+        protected bool _waitingForJumpApex; // Set to true to receive OnReachedJumpApex event.
 
         private Vector3 _rotationInput = Vector3.zero;
         private Vector3 _movementDirection = Vector3.zero;
@@ -814,18 +815,6 @@ namespace EasyCharacterMovement
         /// </summary>
 
         public float jumpHoldTime => _jumpHoldTime;
-
-        /// <summary>
-        /// Did the jump just happen ?
-        /// </summary>
-        public bool justJumped { get; set; }
-
-        /// <summary>
-        /// Should notify a jump apex ?
-        /// Set to true to receive OnReachedJumpApex event.
-        /// </summary>
-
-        public bool notifyJumpApex { get; set; }
 
         /// <summary>
         /// The Character's gravity (modified by gravityScale). Defaults to Physics.gravity.
@@ -1917,7 +1906,7 @@ namespace EasyCharacterMovement
                     // Reset jump count and clear apex notification flag
 
                     _jumpCount = 0;
-                    notifyJumpApex = false;
+                    _waitingForJumpApex = false;
 
                     // If was flying or swimming, enable ground constraint
 
@@ -2709,6 +2698,15 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Are we waiting for the character to reach their max jump height?
+        /// </summary>
+
+        public virtual bool WaitingForJumpApex()
+        {
+            return _waitingForJumpApex;
+        }
+
+        /// <summary>
         /// Start a jump.
         /// Call this from an input event (such as a button 'down' event).
         /// </summary>
@@ -2901,7 +2899,7 @@ namespace EasyCharacterMovement
 
             // Should notify jump apex ?
 
-            if (!notifyJumpApex)
+            if (!WaitingForJumpApex())
                 return;
 
             // Notify jump apex (eg: a change in vertical speed from positive to negative)
@@ -2909,14 +2907,10 @@ namespace EasyCharacterMovement
             Vector3 upAxis = -GetGravityVector();
             float verticalSpeed = Vector3.Dot(GetVelocity(), upAxis.normalized);
 
-            if (verticalSpeed < 0.0f && !justJumped)
+            if (verticalSpeed < 0.0f)
             {
                 OnReachedJumpApex();
-                notifyJumpApex = false;
-            }
-            else
-            {
-                justJumped = false;
+                _waitingForJumpApex = false;
             }
         }
 

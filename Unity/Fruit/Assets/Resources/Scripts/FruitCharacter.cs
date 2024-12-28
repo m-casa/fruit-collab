@@ -16,14 +16,14 @@ namespace EasyCharacterMovement
         #region FIELDS
 
         private ThirdPersonCameraController _cameraController;
-        private bool _wasFalling, _rightFootUp, _punchButtonPressed, _isPunching;
-        private Quaternion chestOverrideTransform; // The dummy transform used to update the real one
-        private Quaternion chestTargetRotation; // Target rotation for the lean
+        private bool _rightFootUp, _punchButtonPressed, _isPunching, _punchIsAnimating;
+        private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
+        private Quaternion _chestTargetRotation; // Target rotation for the lean
 
         [SerializeField] private NamedAnimancerComponent _animancer;
-        [SerializeField] private Transform chestTransform; // Reference to the chest bone
-        [SerializeField] private float leanAmount = 12.5f; // Maximum degrees to lean
-        [SerializeField] private float leanSpeed = 8f; // Speed at which the lean is applied
+        [SerializeField] private Transform _chestTransform; // Reference to the chest bone
+        [SerializeField] private float _leanAmount = 12.5f; // Maximum degrees to lean
+        [SerializeField] private float _leanSpeed = 8f; // Speed at which the lean is applied
 
 
         #endregion
@@ -168,6 +168,18 @@ namespace EasyCharacterMovement
 
         #endregion
 
+        #region EVENTS
+
+        public delegate void PunchedEventHandler();
+
+        /// <summary>
+        /// Event triggered when character punches.
+        /// </summary>
+
+        public event PunchedEventHandler Punched;
+
+        #endregion
+
         #region METHODS  
 
         /// <summary>
@@ -284,6 +296,21 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Called when the script instance is being loaded (Awake).
+        /// If overridden, must call base method in order to fully initialize the class.
+        /// </summary>
+
+        protected override void OnAwake()
+        {
+            base.OnAwake();
+
+            _rightFootUp = true;
+            _punchButtonPressed = false;
+            _isPunching = false;
+            _punchIsAnimating = false;
+        }
+
+        /// <summary>
         /// Subscribe to events related to being off the ground.
         /// </summary>
 
@@ -292,8 +319,8 @@ namespace EasyCharacterMovement
             base.OnOnEnable();
 
             Jumped += PlayJumpAnimation;
-            ReachedJumpApex += PlayFallAnimation;
-            Landed += DoneFalling;
+            Landed += PlayLandAnimation;
+            Punched += PlayPunchAnimation;
         }
 
         /// <summary>
@@ -305,8 +332,8 @@ namespace EasyCharacterMovement
             base.OnOnDisable();
 
             Jumped -= PlayJumpAnimation;
-            ReachedJumpApex -= PlayFallAnimation;
-            Landed -= DoneFalling;
+            Landed -= PlayLandAnimation;
+            Punched -= PlayPunchAnimation;
         }
 
         /// <summary>
@@ -315,63 +342,31 @@ namespace EasyCharacterMovement
 
         protected override void Animate()
         {
-            Vector2 movementInput = GetMovementInput();
-
-            if (IsGrounded())
+            if (!PunchIsAnimating())
             {
-                if (_animancer.IsPlaying("_Punch.T"))
+                if (IsGrounded())
                 {
-                    SetMovementDirection(Vector3.zero);
-                    return;
-                }
+                    Vector2 movementInput = GetMovementInput();
 
-                else if (WasFalling())
-                {
-                    _wasFalling = false;
-                    var state = _animancer.TryPlay("_Land", 0.25f);
-                    state.Events.OnEnd = ResetAnimationState;
-                }
-
-                else if (_punchButtonPressed && !IsPunching())
-                {
-                    _isPunching = true;
-                    var state = _animancer.TryPlay("_Punch.T");
-                    state.Events.OnEnd = ResetAnimationState;
-                }
-
-                else if (movementInput == Vector2.zero)
-                {
-                    if (!_animancer.IsPlaying("_Land"))
+                    if (movementInput == Vector2.zero)
                     {
-                        _animancer.TryPlay("_Idle", 0.15f);
+                        PlayIdleAnimation();
+                    }
+
+                    else if (movementInput != Vector2.zero)
+                    {
+                        PlayRunAnimation(movementInput);
                     }
                 }
-
-                else if (movementInput.y > 0f || movementInput.y < 0f)
+                else if (!WaitingForJumpApex())
                 {
-                    _animancer.TryPlay("_Run", 0.25f);
-                }
-
-                else if (movementInput.x > 0f || movementInput.x < 0f)
-                {
-                    _animancer.TryPlay("_Run", 0.25f);
-                }
-            }
-            else if (!_animancer.IsPlaying("_JiggleJump.R") && !_animancer.IsPlaying("_JiggleJump.L"))
-            {
-                if (_rightFootUp)
-                {
-                    _animancer.TryPlay("_Fall.R", 0.25f);
-                }
-                else
-                {
-                    _animancer.TryPlay("_Fall.L", 0.25f);
+                    PlayFallAnimation();
                 }
             }
         }
 
         /// <summary>
-        /// Updates the Character's rotation based on its current RotationMode PLUS its current up direction.
+        /// Updates the character's rotation based on its current RotationMode PLUS its current up direction.
         /// </summary>
 
         protected override void UpdateRotation()
@@ -380,7 +375,7 @@ namespace EasyCharacterMovement
 
             base.UpdateRotation();
 
-            // Update's gravity direction and orient Character's Up to -gravity direction
+            // Update's gravity direction and orient character's Up to -gravity direction
 
             RaycastHit hit;
 
@@ -436,6 +431,27 @@ namespace EasyCharacterMovement
             base.OnLateUpdate();
 
             ApplyLean();
+        }
+
+        /// <summary>
+        /// Handle Player input, only if actions are assigned (eg: actions != null).
+        /// </summary>
+
+        protected override void HandleInput()
+        {
+            base.HandleInput();
+
+            if (_punchButtonPressed && !_isPunching)
+            {
+                if (IsGrounded())
+                {
+                    _isPunching = true;
+                    Punched?.Invoke();
+                }
+            }
+            
+            if (PunchIsAnimating())
+                SetMovementDirection(Vector3.zero);
         }
 
         /// <summary>
@@ -499,24 +515,24 @@ namespace EasyCharacterMovement
             {
                 // Calculate target rotation for leaning left
 
-                chestTargetRotation = Quaternion.Euler(0, 0, leanAmount);
+                _chestTargetRotation = Quaternion.Euler(0, 0, _leanAmount);
             }
             else if (angleDifference > 15)
             {
                 // Calculate target rotation for leaning right
 
-                chestTargetRotation = Quaternion.Euler(0, 0, -leanAmount);
+                _chestTargetRotation = Quaternion.Euler(0, 0, -_leanAmount);
             }
             else
             {
                 // Return to upright position
 
-                chestTargetRotation = Quaternion.Euler(0, 0, 0);
+                _chestTargetRotation = Quaternion.Euler(0, 0, 0);
             }
 
             // Smoothly interpolate to the target rotation on the chest
 
-            chestOverrideTransform = Quaternion.Slerp(chestTransform.localRotation, chestTargetRotation, Time.deltaTime * leanSpeed);
+            _chestOverrideTransform = Quaternion.Slerp(_chestTransform.localRotation, _chestTargetRotation, Time.deltaTime * _leanSpeed);
         }
 
         /// <summary>
@@ -527,7 +543,7 @@ namespace EasyCharacterMovement
         {
             // Override animation data on the chest with our dummy transform
 
-            chestTransform.localRotation = chestOverrideTransform;
+            _chestTransform.localRotation = _chestOverrideTransform;
         }
 
         /// <summary>
@@ -554,11 +570,10 @@ namespace EasyCharacterMovement
 
         protected virtual void PlayJumpAnimation()
         {
-            justJumped = true;
-            notifyJumpApex = true;
+            _waitingForJumpApex = true;
 
             _animancer.Stop("_Run");
-            
+
             if (_rightFootUp)
             {
                 _animancer.TryPlay("_JiggleJump.L", 0.25f);
@@ -588,21 +603,13 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// State that the player was falling.
+        /// Play the land animation for the character.
         /// </summary>
 
-        protected virtual void DoneFalling()
+        protected virtual void PlayLandAnimation()
         {
-            _wasFalling = true;
-        }
-
-        /// <summary>
-        /// Return whether or not the player was falling.
-        /// </summary>
-
-        protected virtual bool WasFalling()
-        {
-            return _wasFalling;
+            var state = _animancer.TryPlay("_Land", 0.25f);
+            state.Events.OnEnd = ResetAnimationState;
         }
 
         /// <summary>
@@ -615,12 +622,39 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Is the Character punching?
+        /// Play the punch animation for the character.
         /// </summary>
 
-        public virtual bool IsPunching()
+        protected virtual void PlayPunchAnimation()
         {
-            return _isPunching;
+            if (!PunchIsAnimating())
+            {
+                var state = _animancer.TryPlay("_Punch.T");
+                state.Events.OnEnd = ResetAnimationState;
+            }
+        }
+
+        /// <summary>
+        /// Is the character's punch still animating?
+        /// </summary>
+
+        protected virtual bool PunchIsAnimating()
+        {
+            if (_animancer.States.TryGet("_Punch.T", out var state))
+            {
+                if (state.Weight != 0)
+                {
+                    _punchIsAnimating = true;
+                    canEverJump = false;
+                }
+                else
+                {
+                    _punchIsAnimating = false;
+                    canEverJump = true;
+                }
+            }
+
+            return _punchIsAnimating;
         }
 
         /// <summary>
@@ -634,11 +668,41 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Return the character to Idle.
+        /// Play the idle animation for the character.
+        /// </summary>
+
+        protected virtual void PlayIdleAnimation()
+        {
+            if (!_animancer.IsPlaying("_Land"))
+            {
+                _animancer.TryPlay("_Idle", 0.15f);
+            }
+        }
+
+        /// <summary>
+        /// Play the run animation for the character.
+        /// </summary>
+
+        protected virtual void PlayRunAnimation(Vector2 movementInput)
+        {
+            if (movementInput.y > 0f || movementInput.y < 0f)
+            {
+                _animancer.TryPlay("_Run", 0.25f);
+            }
+
+            else if (movementInput.x > 0f || movementInput.x < 0f)
+            {
+                _animancer.TryPlay("_Run", 0.25f);
+            }
+        }
+
+        /// <summary>
+        /// Return the character to idle.
         /// </summary>
 
         protected virtual void ResetAnimationState()
         {
+            StopPunching();
             _animancer.TryPlay("_Idle", 0.25f);
         }
 
