@@ -16,7 +16,8 @@ namespace EasyCharacterMovement
         #region FIELDS
 
         private ThirdPersonCameraController _cameraController;
-        private bool _rightFootUp, _punchButtonPressed, _isPunching, _punchIsAnimating;
+        private bool _rightFootUp, _punchButtonPressed, _secondPunchQueued, 
+            _isThrowingFirstPunch, _isThrowingSecondPunch, _firstPunchIsAnimating, _secondPunchIsAnimating;
         private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
         private Quaternion _chestTargetRotation; // Target rotation for the lean
 
@@ -173,10 +174,22 @@ namespace EasyCharacterMovement
         public delegate void PunchedEventHandler();
 
         /// <summary>
-        /// Event triggered when character punches.
+        /// Event triggered when the player initiates the first punch.
         /// </summary>
 
-        public event PunchedEventHandler Punched;
+        public event PunchedEventHandler FirstPunchThrown;
+
+        /// <summary>
+        /// Event triggered when the player queues a second punch.
+        /// </summary>
+
+        public event PunchedEventHandler SecondPunchQueued;
+
+        /// <summary>
+        /// Event triggered when the second punch is ready to be thrown.
+        /// </summary>
+
+        public event PunchedEventHandler SecondPunchThrown;
 
         #endregion
 
@@ -306,8 +319,11 @@ namespace EasyCharacterMovement
 
             _rightFootUp = true;
             _punchButtonPressed = false;
-            _isPunching = false;
-            _punchIsAnimating = false;
+            _secondPunchQueued = false;
+            _isThrowingFirstPunch = false;
+            _isThrowingSecondPunch = false;
+            _firstPunchIsAnimating = false;
+            _secondPunchIsAnimating = false;
         }
 
         /// <summary>
@@ -320,7 +336,9 @@ namespace EasyCharacterMovement
 
             Jumped += PlayJumpAnimation;
             Landed += PlayLandAnimation;
-            Punched += PlayPunchAnimation;
+            FirstPunchThrown += PlayFirstPunchAnimation;
+            SecondPunchQueued += QueueSecondPunch;
+            SecondPunchThrown += PlaySecondPunchAnimation;
         }
 
         /// <summary>
@@ -333,7 +351,9 @@ namespace EasyCharacterMovement
 
             Jumped -= PlayJumpAnimation;
             Landed -= PlayLandAnimation;
-            Punched -= PlayPunchAnimation;
+            FirstPunchThrown -= PlayFirstPunchAnimation;
+            SecondPunchQueued -= QueueSecondPunch;
+            SecondPunchThrown -= PlaySecondPunchAnimation;
         }
 
         /// <summary>
@@ -342,7 +362,7 @@ namespace EasyCharacterMovement
 
         protected override void Animate()
         {
-            if (!PunchIsAnimating())
+            if (!FirstPunchIsAnimating() && !SecondPunchIsAnimating())
             {
                 if (IsGrounded())
                 {
@@ -441,17 +461,7 @@ namespace EasyCharacterMovement
         {
             base.HandleInput();
 
-            if (_punchButtonPressed && !_isPunching)
-            {
-                if (IsGrounded())
-                {
-                    _isPunching = true;
-                    Punched?.Invoke();
-                }
-            }
-            
-            if (PunchIsAnimating())
-                SetMovementDirection(Vector3.zero);
+            HandlePunching();
         }
 
         /// <summary>
@@ -547,6 +557,47 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Captures any punches the player initiates.
+        /// </summary>
+
+        protected virtual void HandlePunching()
+        {
+            if (_punchButtonPressed && !_secondPunchQueued)
+            {
+                if (IsGrounded())
+                {
+                    if (!FirstPunchIsAnimating() && !SecondPunchIsAnimating())
+                    {
+                        // Do first punch logic
+                        _punchButtonPressed = false;
+
+                        FirstPunchThrown?.Invoke();
+                    }
+                    else if (!SecondPunchIsAnimating())
+                    {
+                        // Do second punch logic
+                        _punchButtonPressed = false;
+
+                        SecondPunchQueued?.Invoke();
+                    }
+                }
+                else
+                {
+                    // Do air punch logic
+                }
+            }
+            else if (_secondPunchQueued)
+            {
+                _punchButtonPressed = false;
+                
+                SecondPunchThrown?.Invoke();
+            }
+
+            if (FirstPunchIsAnimating() || SecondPunchIsAnimating())
+                SetMovementDirection(Vector3.zero);
+        }
+
+        /// <summary>
         /// Sets the right foot as up so we can use that foot to jump.
         /// </summary>
 
@@ -613,7 +664,7 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Start a punch.
+        /// Start a punch initiated by the player.
         /// </summary>
 
         protected virtual void Punch()
@@ -622,12 +673,14 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Play the punch animation for the character.
+        /// Play the first punch animation for the character.
         /// </summary>
 
-        protected virtual void PlayPunchAnimation()
+        protected virtual void PlayFirstPunchAnimation()
         {
-            if (!PunchIsAnimating())
+            _isThrowingFirstPunch = true;
+
+            if (!FirstPunchIsAnimating())
             {
                 var state = _animancer.TryPlay("_Punch.T");
                 state.Events.OnEnd = ResetAnimationState;
@@ -635,36 +688,88 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Is the character's punch still animating?
+        /// Is the character's first punch still being animated?
         /// </summary>
 
-        protected virtual bool PunchIsAnimating()
+        protected virtual bool FirstPunchIsAnimating()
         {
             if (_animancer.States.TryGet("_Punch.T", out var state))
             {
                 if (state.Weight != 0)
                 {
-                    _punchIsAnimating = true;
+                    _firstPunchIsAnimating = true;
                     canEverJump = false;
                 }
                 else
                 {
-                    _punchIsAnimating = false;
+                    _firstPunchIsAnimating = false;
                     canEverJump = true;
                 }
             }
 
-            return _punchIsAnimating;
+            return _firstPunchIsAnimating;
         }
 
         /// <summary>
-        /// Stop the character from punching.
+        /// Queue the second punch for the character.
+        /// </summary>
+
+        protected virtual void QueueSecondPunch()
+        {
+            _secondPunchQueued = true;
+        }
+
+        /// <summary>
+        /// Play the second punch animation for the character.
+        /// </summary>
+
+        protected virtual void PlaySecondPunchAnimation()
+        {
+            if (_secondPunchQueued)
+            {
+                _secondPunchQueued = false;
+                _isThrowingSecondPunch = true;
+
+                if (!SecondPunchIsAnimating())
+                {
+                    var state = _animancer.TryPlay("_Punch.L");
+                    state.Events.OnEnd = ResetAnimationState;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Is the character's second punch still being animated?
+        /// </summary>
+
+        protected virtual bool SecondPunchIsAnimating()
+        {
+            if (_animancer.States.TryGet("_Punch.L", out var state))
+            {
+                if (state.Weight != 0)
+                {
+                    _secondPunchIsAnimating = true;
+                    canEverJump = false;
+                }
+                else
+                {
+                    _secondPunchIsAnimating = false;
+                    canEverJump = true;
+                }
+            }
+
+            return _secondPunchIsAnimating;
+        }
+
+        /// <summary>
+        /// Stop the player from punching.
         /// </summary>
 
         protected virtual void StopPunching()
         {
-            _punchButtonPressed = false;
-            _isPunching = false;
+            //_punchButtonPressed = false;
+            _isThrowingFirstPunch = false;
+            _isThrowingSecondPunch = false;
         }
 
         /// <summary>
@@ -702,7 +807,7 @@ namespace EasyCharacterMovement
 
         protected virtual void ResetAnimationState()
         {
-            StopPunching();
+            //StopPunching();
             _animancer.TryPlay("_Idle", 0.25f);
         }
 
