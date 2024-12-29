@@ -357,6 +357,54 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Attempts to perform a requested jump.
+        /// </summary>
+
+        protected override void DoJump()
+        {
+            // Update held down timer
+
+            if (_jumpButtonPressed)
+                _jumpButtonHeldDownTime += deltaTime;
+
+            // Wants to jump and not already jumping..
+
+            if (_jumpButtonPressed && !IsJumping())
+            {
+                // If jumpPreGroundedTime is enabled,
+                // allow to jump only if held down time is less than tolerance
+
+                if (jumpPreGroundedTime > 0.0f)
+                {
+                    bool canJump = _jumpButtonHeldDownTime <= jumpPreGroundedTime;
+                    if (!canJump)
+                        return;
+                }
+
+                // Can perform the requested jump ?
+
+                if (CanJump())
+                {
+                    punchInputAction.Disable();
+
+                    // Jump!
+
+                    SetMovementMode(MovementMode.Falling);
+
+                    characterMovement.PauseGroundConstraint();
+                    characterMovement.LaunchCharacter(CalcJumpImpulse(), true);
+
+                    _jumpCount++;
+                    _isJumping = true;
+
+                    // Trigger Jumped event
+
+                    OnJumped();
+                }
+            }
+        }
+
+        /// <summary>
         /// Check what state the character is in and play the appropriate animation.
         /// </summary>
 
@@ -564,19 +612,22 @@ namespace EasyCharacterMovement
         {
             if (_punchButtonPressed && !_secondPunchQueued)
             {
+                _punchButtonPressed = false;
+                jumpInputAction.Disable();
+
                 if (IsGrounded())
                 {
                     if (!FirstPunchIsAnimating() && !SecondPunchIsAnimating())
                     {
                         // Do first punch logic
-                        _punchButtonPressed = false;
+                        //_punchButtonPressed = false;
 
                         FirstPunchThrown?.Invoke();
                     }
                     else if (!SecondPunchIsAnimating())
                     {
                         // Do second punch logic
-                        _punchButtonPressed = false;
+                        //_punchButtonPressed = false;
 
                         SecondPunchQueued?.Invoke();
                     }
@@ -621,19 +672,26 @@ namespace EasyCharacterMovement
 
         protected virtual void PlayJumpAnimation()
         {
+            //if (FirstPunchIsAnimating() || SecondPunchIsAnimating())
+            //{
+            //    _jumpButtonPressed = false;
+            //    _isJumping = false;
+            //    return;
+            //}
+
             _waitingForJumpApex = true;
 
-            _animancer.Stop("_Run");
+            //_animancer.Stop("_Run");
 
             if (_rightFootUp)
             {
-                _animancer.TryPlay("_JiggleJump.L", 0.25f);
-                SetRightFootDown();
+                _animancer.TryPlay("_Jump.L", 0.15f);
+                //SetRightFootDown();
             }
             else
             {
-                _animancer.TryPlay("_JiggleJump.R", 0.25f);
-                SetRightFootUp();
+                _animancer.TryPlay("_Jump.R", 0.15f);
+                //SetRightFootUp();
             }
         }
 
@@ -659,6 +717,8 @@ namespace EasyCharacterMovement
 
         protected virtual void PlayLandAnimation()
         {
+            punchInputAction.Enable();
+
             var state = _animancer.TryPlay("_Land", 0.25f);
             state.Events.OnEnd = ResetAnimationState;
         }
@@ -678,11 +738,11 @@ namespace EasyCharacterMovement
 
         protected virtual void PlayFirstPunchAnimation()
         {
-            _isThrowingFirstPunch = true;
-
             if (!FirstPunchIsAnimating())
             {
-                var state = _animancer.TryPlay("_Punch.T");
+                _isThrowingFirstPunch = true;
+
+                var state = _animancer.TryPlay("_Punch.R");
                 state.Events.OnEnd = ResetAnimationState;
             }
         }
@@ -693,9 +753,9 @@ namespace EasyCharacterMovement
 
         protected virtual bool FirstPunchIsAnimating()
         {
-            if (_animancer.States.TryGet("_Punch.T", out var state))
+            if (_animancer.States.TryGet("_Punch.R", out var state))
             {
-                if (state.Weight != 0)
+                if (state.Weight > 0.99)
                 {
                     _firstPunchIsAnimating = true;
                     canEverJump = false;
@@ -725,16 +785,13 @@ namespace EasyCharacterMovement
 
         protected virtual void PlaySecondPunchAnimation()
         {
-            if (_secondPunchQueued)
+            if (!SecondPunchIsAnimating() && _secondPunchQueued)
             {
                 _secondPunchQueued = false;
                 _isThrowingSecondPunch = true;
-
-                if (!SecondPunchIsAnimating())
-                {
-                    var state = _animancer.TryPlay("_Punch.L");
-                    state.Events.OnEnd = ResetAnimationState;
-                }
+                
+                var state = _animancer.TryPlay("_Punch.L");
+                state.Events.OnEnd = ResetAnimationState;
             }
         }
 
@@ -746,7 +803,7 @@ namespace EasyCharacterMovement
         {
             if (_animancer.States.TryGet("_Punch.L", out var state))
             {
-                if (state.Weight != 0)
+                if (state.Weight > 0.99)
                 {
                     _secondPunchIsAnimating = true;
                     canEverJump = false;
@@ -767,9 +824,7 @@ namespace EasyCharacterMovement
 
         protected virtual void StopPunching()
         {
-            //_punchButtonPressed = false;
-            _isThrowingFirstPunch = false;
-            _isThrowingSecondPunch = false;
+            _punchButtonPressed = false;
         }
 
         /// <summary>
@@ -808,6 +863,7 @@ namespace EasyCharacterMovement
         protected virtual void ResetAnimationState()
         {
             //StopPunching();
+            jumpInputAction.Enable();
             _animancer.TryPlay("_Idle", 0.25f);
         }
 
