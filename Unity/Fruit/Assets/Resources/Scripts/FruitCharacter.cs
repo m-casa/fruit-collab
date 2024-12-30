@@ -17,7 +17,7 @@ namespace EasyCharacterMovement
 
         private ThirdPersonCameraController _cameraController;
         private bool _rightFootUp, _punchButtonPressed, _secondPunchQueued, 
-            _isThrowingFirstPunch, _isThrowingSecondPunch, _firstPunchIsAnimating, _secondPunchIsAnimating;
+            _firstPunchIsAnimating, _secondPunchIsAnimating;
         private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
         private Quaternion _chestTargetRotation; // Target rotation for the lean
 
@@ -296,8 +296,6 @@ namespace EasyCharacterMovement
             _rightFootUp = true;
             _punchButtonPressed = false;
             _secondPunchQueued = false;
-            _isThrowingFirstPunch = false;
-            _isThrowingSecondPunch = false;
             _firstPunchIsAnimating = false;
             _secondPunchIsAnimating = false;
         }
@@ -665,18 +663,15 @@ namespace EasyCharacterMovement
         protected virtual void PlayFirstPunchAnimation()
         {
             _animancer.States.TryGet("_Punch.R", out var punchOne);
+                
+            jumpInputAction.Disable();
+            canEverJump = false;
 
-            //if (punchOne.Weight <= 0.75)
-            //{
-                punchOne.Time = 0;
-                //punchOne.Speed = 1.5f;
+            punchOne.Time = 0;
+            punchOne.Speed = 1.5f;
 
-                jumpInputAction.Disable();
-                canEverJump = false;
-
-                _animancer.TryPlay("_Punch.R");
-                punchOne.Events.OnEnd = StopPunching;
-            //}
+            _animancer.TryPlay("_Punch.R");
+            punchOne.Events.OnEnd = StopPunching;
         }
 
         /// <summary>
@@ -715,6 +710,7 @@ namespace EasyCharacterMovement
         protected virtual void PlaySecondPunchAnimation()
         {
             _animancer.States.TryGet("_Punch.R", out var punchOne);
+            _animancer.States.TryGet("_Punch.L", out var punchTwo);
 
             if (punchOne.Weight > 0 && punchOne.Time >= punchOne.Length)
             {
@@ -722,10 +718,9 @@ namespace EasyCharacterMovement
                 canEverJump = false;
 
                 _secondPunchQueued = false;
-                _isThrowingSecondPunch = true;
+                punchTwo.Speed = 1.5f;
 
-                var punchTwo = _animancer.TryPlay("_Punch.L");
-                //punchTwo.Speed = 1.5f;
+                _animancer.TryPlay("_Punch.L");
                 punchTwo.Events.OnEnd = StopPunching;
             }
         }
