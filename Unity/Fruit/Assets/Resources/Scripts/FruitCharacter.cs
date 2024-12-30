@@ -169,30 +169,6 @@ namespace EasyCharacterMovement
 
         #endregion
 
-        #region EVENTS
-
-        public delegate void PunchedEventHandler();
-
-        /// <summary>
-        /// Event triggered when the player initiates the first punch.
-        /// </summary>
-
-        public event PunchedEventHandler FirstPunchThrown;
-
-        /// <summary>
-        /// Event triggered when the player queues a second punch.
-        /// </summary>
-
-        public event PunchedEventHandler SecondPunchQueued;
-
-        /// <summary>
-        /// Event triggered when the second punch is ready to be thrown.
-        /// </summary>
-
-        public event PunchedEventHandler SecondPunchThrown;
-
-        #endregion
-
         #region METHODS  
 
         /// <summary>
@@ -336,9 +312,6 @@ namespace EasyCharacterMovement
 
             Jumped += PlayJumpAnimation;
             Landed += PlayLandAnimation;
-            FirstPunchThrown += PlayFirstPunchAnimation;
-            SecondPunchQueued += QueueSecondPunch;
-            SecondPunchThrown += PlaySecondPunchAnimation;
         }
 
         /// <summary>
@@ -351,58 +324,6 @@ namespace EasyCharacterMovement
 
             Jumped -= PlayJumpAnimation;
             Landed -= PlayLandAnimation;
-            FirstPunchThrown -= PlayFirstPunchAnimation;
-            SecondPunchQueued -= QueueSecondPunch;
-            SecondPunchThrown -= PlaySecondPunchAnimation;
-        }
-
-        /// <summary>
-        /// Attempts to perform a requested jump.
-        /// </summary>
-
-        protected override void DoJump()
-        {
-            // Update held down timer
-
-            if (_jumpButtonPressed)
-                _jumpButtonHeldDownTime += deltaTime;
-
-            // Wants to jump and not already jumping..
-
-            if (_jumpButtonPressed && !IsJumping())
-            {
-                // If jumpPreGroundedTime is enabled,
-                // allow to jump only if held down time is less than tolerance
-
-                if (jumpPreGroundedTime > 0.0f)
-                {
-                    bool canJump = _jumpButtonHeldDownTime <= jumpPreGroundedTime;
-                    if (!canJump)
-                        return;
-                }
-
-                // Can perform the requested jump ?
-
-                if (CanJump())
-                {
-                    punchInputAction.Disable();
-
-                    // Jump!
-
-                    SetMovementMode(MovementMode.Falling);
-
-                    characterMovement.PauseGroundConstraint();
-                    characterMovement.LaunchCharacter(CalcJumpImpulse(), true);
-
-                    _jumpCount++;
-                    _isJumping = true;
-                    _waitingForJumpApex = true;
-
-                    // Trigger Jumped event
-
-                    OnJumped();
-                }
-            }
         }
 
         /// <summary>
@@ -624,14 +545,14 @@ namespace EasyCharacterMovement
                     //  then play the first punch's animation.
                     if (!FirstPunchIsAnimating() && !SecondPunchIsAnimating() && punchOne.Weight == 0)
                     {
-                        FirstPunchThrown?.Invoke();
+                        PlayFirstPunchAnimation();
                     }
 
                     // If the first punch above is being animated or still transitioning to idle,
-                    //  then check if we can queue the second punch
+                    //  then check if we can queue the second punch.
                     else if (!SecondPunchIsAnimating() && !_secondPunchQueued)
                     {
-                        // Only queue the second punch is the first punch's animation is complete (punchOne.Time >= punchOne.Length)
+                        // Only queue the second punch if the first punch's animation is complete (punchOne.Time >= punchOne.Length)
                         //  and its weight is not less than 0.75 (we don't want to queue a late punch).
                         // Otherwise, just play the first punch again.
                         if (punchOne.Weight < 0.75 && punchOne.Time >= punchOne.Length)
@@ -640,7 +561,7 @@ namespace EasyCharacterMovement
                         }
                         else
                         {
-                            SecondPunchQueued?.Invoke();
+                            QueueSecondPunch();
                         }
                     }
                 }
@@ -650,16 +571,14 @@ namespace EasyCharacterMovement
                 }
             }
 
-            // If we haven't pressed the punch button again, then check if the second punch is queued.
+            // If we haven't pressed the punch button, check if the second punch is queued.
             // Make sure we aren't already playing the second punch's animation.
             else if (!SecondPunchIsAnimating() && _secondPunchQueued)
             {
-                ReleasePunch();
-
-                SecondPunchThrown?.Invoke();
+                PlaySecondPunchAnimation();
             }
 
-            // If either punch is being animated, don't allow movement
+            // If either punch is being animated, don't allow movement.
             if (FirstPunchIsAnimating() || SecondPunchIsAnimating())
                 SetMovementDirection(Vector3.zero);
         }
@@ -690,6 +609,9 @@ namespace EasyCharacterMovement
 
         protected virtual void PlayJumpAnimation()
         {
+            punchInputAction.Disable();
+            _waitingForJumpApex = true;
+
             if (_rightFootUp)
             {
                 _animancer.TryPlay("_JiggleJump.L", 0.25f);
@@ -742,18 +664,18 @@ namespace EasyCharacterMovement
 
         protected virtual void PlayFirstPunchAnimation()
         {
-            _animancer.States.TryGet("_Punch.R", out var state);
+            _animancer.States.TryGet("_Punch.R", out var punchOne);
 
-            //if (state.Weight <= 0.75)
+            //if (punchOne.Weight <= 0.75)
             //{
-                state.Time = 0;
-                //state.Speed = 1.5f;
+                punchOne.Time = 0;
+                //punchOne.Speed = 1.5f;
 
                 jumpInputAction.Disable();
                 canEverJump = false;
 
                 _animancer.TryPlay("_Punch.R");
-                state.Events.OnEnd = StopPunching;
+                punchOne.Events.OnEnd = StopPunching;
             //}
         }
 
@@ -763,16 +685,15 @@ namespace EasyCharacterMovement
 
         protected virtual bool FirstPunchIsAnimating()
         {
-            if (_animancer.States.TryGet("_Punch.R", out var state))
+            _animancer.States.TryGet("_Punch.R", out var punchOne);
+
+            if (punchOne.Weight > 0 && punchOne.Time < punchOne.Length)
             {
-                if (state.Weight > 0 && state.Time < state.Length)
-                {
-                    _firstPunchIsAnimating = true;
-                }
-                else
-                {
-                    _firstPunchIsAnimating = false;
-                }
+                _firstPunchIsAnimating = true;
+            }
+            else
+            {
+                _firstPunchIsAnimating = false;
             }
 
             return _firstPunchIsAnimating;
@@ -793,22 +714,19 @@ namespace EasyCharacterMovement
 
         protected virtual void PlaySecondPunchAnimation()
         {
-            _animancer.States.TryGet("_Punch.R", out var stateR);
+            _animancer.States.TryGet("_Punch.R", out var punchOne);
 
-            if (stateR.Weight > 0)
+            if (punchOne.Weight > 0 && punchOne.Time >= punchOne.Length)
             {
-                if (stateR.Time >= stateR.Length)
-                {
-                    jumpInputAction.Disable();
-                    canEverJump = false;
+                jumpInputAction.Disable();
+                canEverJump = false;
 
-                    _secondPunchQueued = false;
-                    _isThrowingSecondPunch = true;
+                _secondPunchQueued = false;
+                _isThrowingSecondPunch = true;
 
-                    var stateL = _animancer.TryPlay("_Punch.L");
-                    //stateL.Speed = 1.5f;
-                    stateL.Events.OnEnd = StopPunching;
-                }
+                var punchTwo = _animancer.TryPlay("_Punch.L");
+                //punchTwo.Speed = 1.5f;
+                punchTwo.Events.OnEnd = StopPunching;
             }
         }
 
@@ -818,17 +736,15 @@ namespace EasyCharacterMovement
 
         protected virtual bool SecondPunchIsAnimating()
         {
-            if (_animancer.States.TryGet("_Punch.L", out var state))
+            _animancer.States.TryGet("_Punch.L", out var punchTwo);
+
+            if (punchTwo.Weight > 0 && punchTwo.Time < punchTwo.Length)
             {
-                if (state.Weight > 0 && state.Time < state.Length)
-                {
-                    _secondPunchIsAnimating = true;
-                    
-                }
-                else
-                {
-                    _secondPunchIsAnimating = false;
-                }
+                _secondPunchIsAnimating = true; 
+            }
+            else
+            {
+                _secondPunchIsAnimating = false;
             }
 
             return _secondPunchIsAnimating;
