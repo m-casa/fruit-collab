@@ -1238,7 +1238,7 @@ MonoBehaviour:
   _rotationMode: 1
   _rotationRate: 540
   _defaultMovementMode: 1
-  _maxWalkSpeed: 3.5
+  _maxWalkSpeed: 3
   _minAnalogWalkSpeed: 0
   _maxAcceleration: 20
   _brakingDecelerationWalking: 20
@@ -1267,8 +1267,8 @@ MonoBehaviour:
   _canEverJump: 1
   _jumpWhileCrouching: 0
   _jumpMaxCount: 1
-  _jumpImpulse: 4.5
-  _jumpMaxHoldTime: 0.35
+  _jumpImpulse: 3.5
+  _jumpMaxHoldTime: 0.25
   _jumpPreGroundedTime: 0.15
   _jumpPostGroundedTime: 0.15
   _gravity: {x: 0, y: -9.81, z: 0}
@@ -1306,7 +1306,7 @@ MonoBehaviour:
   _radius: 0.25
   _height: 0.9
   _slopeLimit: 45
-  _stepOffset: 0.45
+  _stepOffset: 0.25
   _perchOffset: 0.08
   _perchAdditionalHeight: 0.4
   _slopeLimitOverride: 0

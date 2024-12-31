@@ -1051,7 +1051,10 @@ namespace EasyCharacterMovement
 
         protected virtual Vector2 GetMovementInput()
         {
-            return movementInputAction?.ReadValue<Vector2>() ?? Vector2.zero;
+            //return movementInputAction?.ReadValue<Vector2>() ?? Vector2.zero;
+
+            var input = movementInputAction?.ReadValue<Vector2>() ?? Vector2.zero;
+            return input.magnitude >= 0.2f ? input : Vector2.zero;
         }
 
         /// <summary>
@@ -2837,6 +2840,12 @@ namespace EasyCharacterMovement
 
                 if (CanJump())
                 {
+                    // Reset the vertical velocity of the character before jumping
+
+                    Vector3 newVerticalVelocity = characterMovement.velocity;
+                    newVerticalVelocity.y = 0.0f;
+                    characterMovement.velocity = newVerticalVelocity;
+
                     // Jump!
 
                     SetMovementMode(MovementMode.Falling);
@@ -2846,6 +2855,7 @@ namespace EasyCharacterMovement
 
                     _jumpCount++;
                     _isJumping = true;
+                    _waitingForJumpApex = true;
 
                     // Trigger Jumped event
 

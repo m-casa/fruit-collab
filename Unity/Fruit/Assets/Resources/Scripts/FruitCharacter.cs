@@ -16,8 +16,8 @@ namespace EasyCharacterMovement
         #region FIELDS
 
         private ThirdPersonCameraController _cameraController;
-        private bool _rightFootUp, _firstPunchQueued, _secondPunchQueued, 
-            _punchButtonPressed, _airPunchIsAnimating, _firstPunchIsAnimating, _secondPunchIsAnimating;
+        private bool _rightFootUp, _firstPunchQueued, _secondPunchQueued, _airPunchQueued, 
+            _punchButtonPressed, _firstPunchIsAnimating, _secondPunchIsAnimating, _airPunchIsAnimating;
         private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
         private Quaternion _chestTargetRotation; // Target rotation for the lean
 
@@ -294,12 +294,16 @@ namespace EasyCharacterMovement
             base.OnAwake();
 
             _rightFootUp = true;
+
             _punchButtonPressed = false;
+            
             _firstPunchQueued = false;
             _secondPunchQueued = false;
-            _airPunchIsAnimating = false;
+            _airPunchQueued = false;
+
             _firstPunchIsAnimating = false;
             _secondPunchIsAnimating = false;
+            _airPunchIsAnimating = false;
         }
 
         /// <summary>
@@ -532,7 +536,7 @@ namespace EasyCharacterMovement
 
         protected virtual void HandlePunching()
         {
-            if (_punchButtonPressed || _firstPunchQueued || _secondPunchQueued)
+            if (_punchButtonPressed || _firstPunchQueued || _secondPunchQueued || _airPunchQueued)
             {
                 ReleasePunch();
 
@@ -578,9 +582,6 @@ namespace EasyCharacterMovement
 
         protected virtual void PlayJumpAnimation()
         {
-            //punchInputAction.Disable();
-            _waitingForJumpApex = true;
-
             if (_rightFootUp)
             {
                 _animancer.TryPlay("_JiggleJump.L", 0.25f);
@@ -613,7 +614,7 @@ namespace EasyCharacterMovement
 
         protected virtual void PlayLandAnimation()
         {
-            //punchInputAction.Enable();
+            _airPunchQueued = false;
             _airPunchIsAnimating = false;
 
             _animancer.TryPlay("_Land", 0.25f);
@@ -666,98 +667,6 @@ namespace EasyCharacterMovement
             {
                 _firstPunchQueued = true;
             }
-        }
-
-        /// <summary>
-        /// Play the air punch animation for the character.
-        /// </summary>
-
-        private void PlayAirPunchAnimation()
-        {
-            _animancer.States.TryGet("_AirPunch.R", out var airPunchOne);
-            _animancer.States.TryGet("_AirPunch.L", out var airPunchTwo);
-
-            airPunchOne.Speed = 1.5f;
-            airPunchTwo.Speed = 1.5f;
-
-            if (_airPunchIsAnimating && airPunchOne.Time >= airPunchOne.Length)
-            {
-                _animancer.TryPlay("_AirPunch.L", 0.25f);
-            }
-            else if (_airPunchIsAnimating && airPunchTwo.Time >= airPunchTwo.Length)
-            {
-                _animancer.TryPlay("_AirPunch.R", 0.25f);
-            }
-            else if (!_airPunchIsAnimating)
-            {
-                _airPunchIsAnimating = true;
-
-                if (_rightFootUp)
-                {
-                    //airPunchTwo.Time = 0;
-
-                    _animancer.TryPlay("_AirPunch.L", 0.25f);
-                }
-                else
-                {
-                    //airPunchOne.Time = 0;
-
-                    _animancer.TryPlay("_AirPunch.R", 0.25f);
-                }
-            }
-
-            //if (airPunchOne.Time >= airPunchOne.Length || airPunchTwo.Time >= airPunchTwo.Length || !_airPunchIsAnimating)
-            //{
-            //    _airPunchIsAnimating = true;
-
-            //    if (_rightFootUp)
-            //    {
-            //        airPunchTwo.Time = 0;
-
-            //        _animancer.TryPlay("_AirPunch.L", 0.25f);
-            //    }
-            //    else
-            //    {
-            //        airPunchOne.Time = 0;
-
-            //        _animancer.TryPlay("_AirPunch.R", 0.25f);
-            //    }
-            //}
-            //else
-            //{
-            //    return;
-            //}
-
-            //var airPunchClip = _rightFootUp ? "_AirPunch.L" : "_AirPunch.R";
-
-            //if (_animancer.States.TryGet(airPunchClip, out var airPunchState) &&
-            //    (airPunchState.Time >= airPunchState.Length || !_airPunchIsAnimating))
-            //{
-            //    _airPunchIsAnimating = true;
-            //    airPunchState.Time = 0;
-            //    _animancer.TryPlay(airPunchClip, 0.25f);
-            //}
-        }
-
-        /// <summary>
-        /// Is the character's air punch still being animated?
-        /// </summary>
-
-        protected virtual bool AirPunchIsAnimating()
-        {
-            _animancer.States.TryGet("_AirPunch.R", out var airPunchOne);
-            _animancer.States.TryGet("_AirPunch.L", out var airPunchTwo);
-
-            if (airPunchOne.Weight > 0 || airPunchTwo.Weight > 0)
-            {
-                
-            }
-            else
-            {
-                _airPunchIsAnimating = false;
-            }
-
-            return _airPunchIsAnimating;
         }
 
         /// <summary>
@@ -842,6 +751,102 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Play the air punch animation for the character.
+        /// </summary>
+
+        private void PlayAirPunchAnimation()
+        {
+            _animancer.States.TryGet("_AirPunch.R", out var airPunchOne);
+            _animancer.States.TryGet("_AirPunch.L", out var airPunchTwo);
+
+            airPunchOne.Speed = 1.5f;
+            airPunchTwo.Speed = 1.5f;
+
+            if (_airPunchIsAnimating && airPunchOne.Time >= airPunchOne.Length && airPunchTwo.Weight == 0)
+            {
+                _airPunchQueued = false;
+
+                _animancer.TryPlay("_AirPunch.L", 0.25f);
+            }
+            else if (_airPunchIsAnimating && airPunchTwo.Time >= airPunchTwo.Length && airPunchOne.Weight == 0)
+            {
+                _airPunchQueued = false;
+
+                _animancer.TryPlay("_AirPunch.R", 0.25f);
+            }
+            else if (_airPunchIsAnimating && !_airPunchQueued)
+            {
+                _airPunchQueued = true;
+            }
+            else if (!_airPunchIsAnimating)
+            {
+                _airPunchIsAnimating = true;
+
+                if (_rightFootUp)
+                {
+                    _animancer.TryPlay("_AirPunch.L", 0.25f);
+                }
+                else
+                {
+                    _animancer.TryPlay("_AirPunch.R", 0.25f);
+                }
+            }
+
+            //if (airPunchOne.Time >= airPunchOne.Length || airPunchTwo.Time >= airPunchTwo.Length || !_airPunchIsAnimating)
+            //{
+            //    _airPunchIsAnimating = true;
+
+            //    if (_rightFootUp)
+            //    {
+            //        airPunchTwo.Time = 0;
+
+            //        _animancer.TryPlay("_AirPunch.L", 0.25f);
+            //    }
+            //    else
+            //    {
+            //        airPunchOne.Time = 0;
+
+            //        _animancer.TryPlay("_AirPunch.R", 0.25f);
+            //    }
+            //}
+            //else
+            //{
+            //    return;
+            //}
+
+            //var airPunchClip = _rightFootUp ? "_AirPunch.L" : "_AirPunch.R";
+
+            //if (_animancer.States.TryGet(airPunchClip, out var airPunchState) &&
+            //    (airPunchState.Time >= airPunchState.Length || !_airPunchIsAnimating))
+            //{
+            //    _airPunchIsAnimating = true;
+            //    airPunchState.Time = 0;
+            //    _animancer.TryPlay(airPunchClip, 0.25f);
+            //}
+        }
+
+        /// <summary>
+        /// Is the character's air punch still being animated?
+        /// </summary>
+
+        //protected virtual bool AirPunchIsAnimating()
+        //{
+        //    _animancer.States.TryGet("_AirPunch.R", out var airPunchOne);
+        //    _animancer.States.TryGet("_AirPunch.L", out var airPunchTwo);
+
+        //    if (airPunchOne.Weight > 0 || airPunchTwo.Weight > 0)
+        //    {
+
+        //    }
+        //    else
+        //    {
+        //        _airPunchIsAnimating = false;
+        //    }
+
+        //    return _airPunchIsAnimating;
+        //}
+
+        /// <summary>
         /// Manually releases the punch button.
         /// </summary>
 
@@ -882,8 +887,15 @@ namespace EasyCharacterMovement
         {
             if (movementInput.y != 0f || movementInput.x != 0f)
             {
+                // Calculate the magnitude of the movement input
+
+                float inputMagnitude = movementInput.magnitude;
+                
+                if (inputMagnitude < 0.25f)
+                    inputMagnitude = 0.25f;
+
                 var state = _animancer.TryPlay("_Run", 0.25f);
-                state.Speed = 1.25f;
+                state.Speed = 1.25f * inputMagnitude;
             }
         }
 
