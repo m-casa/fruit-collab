@@ -16,8 +16,8 @@ namespace EasyCharacterMovement
         #region FIELDS
 
         private ThirdPersonCameraController _cameraController;
-        private bool _rightFootUp, _punchButtonPressed, _secondPunchQueued, 
-            _firstPunchIsAnimating, _secondPunchIsAnimating;
+        private bool _rightFootUp, _firstPunchQueued, _secondPunchQueued, 
+            _punchButtonPressed, _firstPunchIsAnimating, _secondPunchIsAnimating;
         private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
         private Quaternion _chestTargetRotation; // Target rotation for the lean
 
@@ -295,6 +295,7 @@ namespace EasyCharacterMovement
 
             _rightFootUp = true;
             _punchButtonPressed = false;
+            _firstPunchQueued = false;
             _secondPunchQueued = false;
             _firstPunchIsAnimating = false;
             _secondPunchIsAnimating = false;
@@ -530,53 +531,22 @@ namespace EasyCharacterMovement
 
         protected virtual void HandlePunching()
         {
-            _animancer.States.TryGet("_Punch.R", out var punchOne);
-            _animancer.States.TryGet("_Punch.L", out var punchTwo);
-
-            if (_punchButtonPressed)
+            if (_punchButtonPressed || _firstPunchQueued || _secondPunchQueued)
             {
                 ReleasePunch();
 
                 if (IsGrounded())
                 {
-                    // If neither punch is being animated, and the first punch's animation weight is 0 (meaning it isn't transitioning from idle)
-                    //  then play the first punch's animation.
-                    if (!FirstPunchIsAnimating() && !SecondPunchIsAnimating() && punchOne.Weight == 0)
-                    {
-                        PlayFirstPunchAnimation();
-                    }
-
-                    // If the first punch above is being animated or still transitioning to idle,
-                    //  then check if we can queue the second punch.
-                    else if (!SecondPunchIsAnimating() && !_secondPunchQueued)
-                    {
-                        // Only queue the second punch if the first punch's animation is complete (punchOne.Time >= punchOne.Length)
-                        //  and its weight is not less than 0.75 (we don't want to queue a late punch).
-                        // Otherwise, just play the first punch again.
-                        if (punchOne.Weight < 0.75 && punchOne.Time >= punchOne.Length)
-                        {
-                            PlayFirstPunchAnimation();
-                        }
-                        else
-                        {
-                            QueueSecondPunch();
-                        }
-                    }
+                    HandleGroundedPunch();
                 }
                 else
                 {
-                    // Do air punch logic
+                    HandleAirPunch();
                 }
             }
 
-            // If we haven't pressed the punch button, check if the second punch is queued.
-            // Make sure we aren't already playing the second punch's animation.
-            else if (!SecondPunchIsAnimating() && _secondPunchQueued)
-            {
-                PlaySecondPunchAnimation();
-            }
+            // If the character is punching, don't allow movement
 
-            // If either punch is being animated, don't allow movement.
             if (FirstPunchIsAnimating() || SecondPunchIsAnimating())
                 SetMovementDirection(Vector3.zero);
         }
@@ -657,6 +627,55 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Handles punch logic while the character is grounded.
+        /// </summary>
+        
+        private void HandleGroundedPunch()
+        {
+            _animancer.States.TryGet("_Punch.R", out var punchOne);
+            _animancer.States.TryGet("_Punch.L", out var punchTwo);
+
+            // Check if there are any queued punches
+
+            if (!SecondPunchIsAnimating() && _secondPunchQueued)
+            {
+                PlaySecondPunchAnimation();
+            }
+            else if (!SecondPunchIsAnimating() && _firstPunchQueued)
+            {
+                PlayFirstPunchAnimation();
+            }
+
+            // If there are no queued punches, should we start the first?
+
+            else if(!SecondPunchIsAnimating() && punchOne.Weight == 0 || 
+                punchOne.Time >= punchOne.Length &&  punchOne.Weight < 0.75)
+            {
+                PlayFirstPunchAnimation();
+            }
+
+            // The character is currently punching, so queue the next one
+
+            else if (!SecondPunchIsAnimating() && !_secondPunchQueued)
+            {
+                _secondPunchQueued = true;
+            }
+            else if (SecondPunchIsAnimating() && !_firstPunchQueued)
+            {
+                _firstPunchQueued = true;
+            }
+        }
+
+        /// <summary>
+        /// Handles punch logic while the character is in the air.
+        /// </summary>
+        
+        private void HandleAirPunch()
+        {
+            // Implement air punch logic here
+        }
+
+        /// <summary>
         /// Play the first punch animation for the character.
         /// </summary>
 
@@ -667,6 +686,7 @@ namespace EasyCharacterMovement
             jumpInputAction.Disable();
             canEverJump = false;
 
+            _firstPunchQueued = false;
             punchOne.Time = 0;
             punchOne.Speed = 1.5f;
 
@@ -692,15 +712,6 @@ namespace EasyCharacterMovement
             }
 
             return _firstPunchIsAnimating;
-        }
-
-        /// <summary>
-        /// Queue the second punch for the character.
-        /// </summary>
-
-        protected virtual void QueueSecondPunch()
-        {
-            _secondPunchQueued = true;
         }
 
         /// <summary>
@@ -784,14 +795,10 @@ namespace EasyCharacterMovement
 
         protected virtual void PlayRunAnimation(Vector2 movementInput)
         {
-            if (movementInput.y > 0f || movementInput.y < 0f)
+            if (movementInput.y != 0f || movementInput.x != 0f)
             {
-                _animancer.TryPlay("_Run", 0.25f);
-            }
-
-            else if (movementInput.x > 0f || movementInput.x < 0f)
-            {
-                _animancer.TryPlay("_Run", 0.25f);
+                var state = _animancer.TryPlay("_Run", 0.25f);
+                state.Speed = 1.25f;
             }
         }
 
