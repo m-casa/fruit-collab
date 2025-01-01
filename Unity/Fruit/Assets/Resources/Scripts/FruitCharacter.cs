@@ -414,6 +414,8 @@ namespace EasyCharacterMovement
             HandleCameraInput();
 
             HandleLeanInput();
+
+            //Debug.DrawLine(transform.position, GetVelocity() * 10, Color.red, .5f);
         }
 
         /// <summary>
@@ -554,6 +556,13 @@ namespace EasyCharacterMovement
 
             if (FirstPunchIsAnimating() || SecondPunchIsAnimating())
                 SetMovementDirection(Vector3.zero);
+
+            if (_airPunchIsAnimating) {
+                rotationRate = 0; 
+            }
+            else {
+                rotationRate = 540.0f;
+            }
         }
 
         /// <summary>
@@ -887,10 +896,12 @@ namespace EasyCharacterMovement
         {
             if (movementInput.y != 0f || movementInput.x != 0f)
             {
-                // Calculate the magnitude of the movement input
+                // Input magnitude determines how fast to animate the run animation
+                //  when the player is slightly tilting the control stick
 
                 float inputMagnitude = movementInput.magnitude;
                 
+
                 if (inputMagnitude < 0.25f)
                     inputMagnitude = 0.25f;
 

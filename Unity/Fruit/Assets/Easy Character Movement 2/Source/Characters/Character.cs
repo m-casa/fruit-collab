@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -59,7 +59,7 @@ namespace EasyCharacterMovement
                  " If not assigned, this Character wont process any input so you can externally take control of this Character (e.g. a Controller).")]
         [SerializeField]
         private InputActionAsset _inputActions;
-        
+
         [Space(15f)]
         [Tooltip("Character's current rotation mode.")]
         [SerializeField]
@@ -68,7 +68,7 @@ namespace EasyCharacterMovement
         [Tooltip("Change in rotation per second (Deg / s).")]
         [SerializeField]
         private float _rotationRate;
-        
+
         [Space(15f)]
         [Tooltip("The Character's default movement mode. Used at player startup.")]
         [SerializeField]
@@ -280,7 +280,7 @@ namespace EasyCharacterMovement
         private Coroutine _lateFixedUpdateCoroutine;
 
         protected List<PhysicsVolume> _volumes = new List<PhysicsVolume>();
-        
+
         private Transform _transform;
         private CharacterMovement _characterMovement;
         private Animator _animator;
@@ -846,7 +846,7 @@ namespace EasyCharacterMovement
             get => _useRootMotion;
             set => _useRootMotion = value;
         }
-        
+
         /// <summary>
         /// If enabled, the player will interact with dynamic rigidbodies when walking into them.
         /// </summary>
@@ -980,7 +980,7 @@ namespace EasyCharacterMovement
                     _characterMovement.impartPlatformRotation = _impartPlatformRotation;
             }
         }
-        
+
         /// <summary>
         /// PhysicsVolume overlapping this component. NULL if none.
         /// </summary>
@@ -1052,6 +1052,8 @@ namespace EasyCharacterMovement
         protected virtual Vector2 GetMovementInput()
         {
             //return movementInputAction?.ReadValue<Vector2>() ?? Vector2.zero;
+
+            // If the player is using a controller, the deadzone should be 0.2f
 
             var input = movementInputAction?.ReadValue<Vector2>() ?? Vector2.zero;
             return input.magnitude >= 0.2f ? input : Vector2.zero;
@@ -1891,75 +1893,75 @@ namespace EasyCharacterMovement
             switch (_movementMode)
             {
                 case MovementMode.None:
-                {
-                    // Entering None mode...
+                    {
+                        // Entering None mode...
 
-                    // Disable Character's movement and clear any pending forces
+                        // Disable Character's movement and clear any pending forces
 
-                    characterMovement.velocity = Vector3.zero;
-                    characterMovement.ClearAccumulatedForces();
+                        characterMovement.velocity = Vector3.zero;
+                        characterMovement.ClearAccumulatedForces();
 
-                    break;
-                }
+                        break;
+                    }
 
                 case MovementMode.Walking:
-                {
-                    // Entering Walking mode...
+                    {
+                        // Entering Walking mode...
 
-                    // Reset jump count and clear apex notification flag
+                        // Reset jump count and clear apex notification flag
 
-                    _jumpCount = 0;
-                    _waitingForJumpApex = false;
+                        _jumpCount = 0;
+                        _waitingForJumpApex = false;
 
-                    // If was flying or swimming, enable ground constraint
+                        // If was flying or swimming, enable ground constraint
 
-                    if (prevMovementMode == MovementMode.Flying || prevMovementMode == MovementMode.Swimming)
-                        characterMovement.constrainToGround = true;
+                        if (prevMovementMode == MovementMode.Flying || prevMovementMode == MovementMode.Swimming)
+                            characterMovement.constrainToGround = true;
 
-                    break;
-                }
+                        break;
+                    }
 
                 case MovementMode.Falling:
-                {
-                    // Entering Falling mode...
+                    {
+                        // Entering Falling mode...
 
-                    // If was flying or swimming, enable ground constraint as it could lands on walkable ground
+                        // If was flying or swimming, enable ground constraint as it could lands on walkable ground
 
-                    if (prevMovementMode == MovementMode.Flying || prevMovementMode == MovementMode.Swimming)
-                        characterMovement.constrainToGround = true;
+                        if (prevMovementMode == MovementMode.Flying || prevMovementMode == MovementMode.Swimming)
+                            characterMovement.constrainToGround = true;
 
-                    break;
-                }
+                        break;
+                    }
 
                 case MovementMode.Swimming:
-                {
-                    // Entering Swimming mode...
+                    {
+                        // Entering Swimming mode...
 
-                    // Stop the Character from holding jump.
+                        // Stop the Character from holding jump.
 
-                    StopJumping();
+                        StopJumping();
 
-                    // Disable ground constraint
+                        // Disable ground constraint
 
-                    characterMovement.constrainToGround = false;
+                        characterMovement.constrainToGround = false;
 
-                    break;
-                }
+                        break;
+                    }
 
                 case MovementMode.Flying:
-                {
-                    // Entering Flying mode...
+                    {
+                        // Entering Flying mode...
 
-                    // Stop the Character from holding jump.
+                        // Stop the Character from holding jump.
 
-                    StopJumping();
+                        StopJumping();
 
-                    // Disable ground constraint
+                        // Disable ground constraint
 
-                    characterMovement.constrainToGround = false;
+                        characterMovement.constrainToGround = false;
 
-                    break;
-                }
+                        break;
+                    }
             }
 
             // Left Falling mode, reset falling timer
@@ -2031,12 +2033,12 @@ namespace EasyCharacterMovement
             switch (_movementMode)
             {
                 case MovementMode.Walking:
-                {
-                    if (IsCrouching())
-                        return maxWalkSpeed * crouchingSpeedModifier;
+                    {
+                        if (IsCrouching())
+                            return maxWalkSpeed * crouchingSpeedModifier;
 
-                    return IsSprinting() ? maxWalkSpeed * sprintSpeedModifier : maxWalkSpeed;
-                }
+                        return IsSprinting() ? maxWalkSpeed * sprintSpeedModifier : maxWalkSpeed;
+                    }
 
                 case MovementMode.Falling:
                     return maxWalkSpeed;
@@ -2093,12 +2095,12 @@ namespace EasyCharacterMovement
                     return brakingDecelerationWalking;
 
                 case MovementMode.Falling:
-                {
-                    // Falling,
-                    // BUT ON non-walkable ground, bypass braking deceleration to force slide off
+                    {
+                        // Falling,
+                        // BUT ON non-walkable ground, bypass braking deceleration to force slide off
 
-                    return characterMovement.isOnGround ? 0.0f : brakingDecelerationFalling;
-                }
+                        return characterMovement.isOnGround ? 0.0f : brakingDecelerationFalling;
+                    }
 
                 case MovementMode.Swimming:
                     return brakingDecelerationSwimming;
@@ -2300,7 +2302,7 @@ namespace EasyCharacterMovement
         {
             _gravity = newGravityVector;
         }
-        
+
         /// <summary>
         /// Toggle gravity acceleration while falling.
         /// </summary>
@@ -2351,7 +2353,7 @@ namespace EasyCharacterMovement
             // Update falling time
 
             _fallingTime += deltaTime;
-            
+
             // On not walkable ground
 
             if (IsOnGround())
@@ -2370,7 +2372,7 @@ namespace EasyCharacterMovement
             }
 
             // Calc new velocity
-            
+
             // Separate velocity into its components
 
             Vector3 verticalVelocity = Vector3.Project(characterMovement.velocity, worldUp);
@@ -2963,7 +2965,7 @@ namespace EasyCharacterMovement
 
             if (IsFalling() && characterMovement.isGrounded)
                 SetMovementMode(MovementMode.Walking);
-            
+
             // Compute new velocity based on Character's movement mode
 
             Vector3 desiredVelocity = CalcDesiredVelocity();
@@ -3005,7 +3007,7 @@ namespace EasyCharacterMovement
             // Handle jumping state
 
             Jumping();
-            
+
             // Move the character (perform collision constrained movement) with velocity updated by movement mode
 
             characterMovement.Move(deltaTime);
@@ -3041,40 +3043,40 @@ namespace EasyCharacterMovement
                     return;
 
                 case RotationMode.OrientToMovement:
-                {
-                    // Orient towards current movement direction vector
+                    {
+                        // Orient towards current movement direction vector
 
-                    RotateTowardsWithSlerp(_movementDirection);
+                        RotateTowardsWithSlerp(_movementDirection);
 
-                    break;
-                }
+                        break;
+                    }
 
                 case RotationMode.OrientToCameraViewDirection:
-                {
-                    // Orient towards camera view direction
+                    {
+                        // Orient towards camera view direction
 
-                    if (camera)
-                        RotateTowards(cameraTransform.forward);
+                        if (camera)
+                            RotateTowards(cameraTransform.forward);
 
-                    break;
-                }
+                        break;
+                    }
 
                 case RotationMode.OrientWithRootMotion:
-                {
-                    // Rotate using root motion
+                    {
+                        // Rotate using root motion
 
-                    RotateWithRootMotion();
+                        RotateWithRootMotion();
 
-                    break;
-                }
+                        break;
+                    }
 
                 case RotationMode.Custom:
-                {
-                    // Custom rotation mode
+                    {
+                        // Custom rotation mode
 
-                    CustomRotationMode();
-                    break;
-                }
+                        CustomRotationMode();
+                        break;
+                    }
             }
         }
 
@@ -3131,7 +3133,7 @@ namespace EasyCharacterMovement
         {
             _movementDirection = movementDirection;
         }
-        
+
         /// <summary>
         /// Amount to add to Yaw (up axis).
         /// </summary>
@@ -3186,14 +3188,14 @@ namespace EasyCharacterMovement
         /// Initialize player InputActions (if any).
         /// E.g. Subscribe to input action events and enable input actions here.
         /// </summary>
-        
+
         protected virtual void InitPlayerInput()
         {
             // Attempts to cache Character InputActions (if any)
 
             if (inputActions == null)
                 return;
-            
+
             // Movement input action (no handler, this is polled, e.g. GetMovementInput())
 
             movementInputAction = inputActions.FindAction("Movement");
@@ -3210,7 +3212,7 @@ namespace EasyCharacterMovement
 
                 sprintInputAction.Enable();
             }
-            
+
             // Setup Crouch input action handlers
 
             crouchInputAction = inputActions.FindAction("Crouch");
@@ -3304,7 +3306,7 @@ namespace EasyCharacterMovement
 
                 movementDirection += Vector3.right * movementInput.x;
                 movementDirection += Vector3.forward * movementInput.y;
-                
+
                 movementDirection = movementDirection.relativeTo(cameraTransform);
 
                 SetMovementDirection(movementDirection);
@@ -3476,7 +3478,7 @@ namespace EasyCharacterMovement
             _rootMotionController = GetComponentInChildren<RootMotionController>();
 
             // Enable late fixed update (default)
-            
+
             enableLateFixedUpdate = true;
         }
 
@@ -3490,7 +3492,7 @@ namespace EasyCharacterMovement
             // Setup player InputActions (if any).
 
             InitPlayerInput();
-            
+
             // Subscribe to CharacterMovement events
 
             characterMovement.Collided += OnCollided;
