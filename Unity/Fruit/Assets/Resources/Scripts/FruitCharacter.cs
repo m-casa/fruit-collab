@@ -1,4 +1,5 @@
 using Animancer;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -16,8 +17,13 @@ namespace EasyCharacterMovement
         #region FIELDS
 
         private ThirdPersonCameraController _cameraController;
-        private bool _rightFootUp, _firstPunchQueued, _secondPunchQueued, _airPunchQueued, 
-            _punchButtonPressed, _firstPunchIsAnimating, _secondPunchIsAnimating, _airPunchIsAnimating;
+        private bool _rightFootUp, _punchButtonPressed, _isPunching;
+        private int _currentComboStep = 0;
+        private int nextComboStep = 0;  // Keep track of the next combo step
+        private float _cooldownTimer = 0f;
+        private float _cooldownDuration = 0.2f; // Cooldown duration after combo ends or fails
+        private string[] _comboAnimations = { "_Punch.1", "_Punch.2", "_Punch.3" };
+        private Queue<int> _punchQueue = new Queue<int>();
         private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
         private Quaternion _chestTargetRotation; // Target rotation for the lean
 
@@ -149,7 +155,6 @@ namespace EasyCharacterMovement
         protected virtual void OnCursorLock(InputAction.CallbackContext context)
         {
             // Do not allow to lock cursor if using UI
-
             if (EventSystem.current && EventSystem.current.IsPointerOverGameObject())
                 return;
 
@@ -179,16 +184,13 @@ namespace EasyCharacterMovement
         protected override void InitPlayerInput()
         {
             // Call base method implementation
-
             base.InitPlayerInput();
 
             // Attempts to cache and init this InputActions (if any)
-
             if (inputActions == null)
                 return;
 
             // Setup Punch input action handlers
-
             punchInputAction = inputActions.FindAction("Punch");
             if (punchInputAction != null)
             {
@@ -200,7 +202,6 @@ namespace EasyCharacterMovement
             }
 
             // Setup Mouse input action handlers
-
             mouseLookInputAction = inputActions.FindAction("Mouse Look");
             mouseLookInputAction?.Enable();
 
@@ -208,12 +209,10 @@ namespace EasyCharacterMovement
             mouseScrollInputAction?.Enable();
 
             // Setup Controller input action handlers
-
             controllerLookInputAction = inputActions.FindAction("Controller Look");
             controllerLookInputAction?.Enable();
 
             // Setup Cursor input action handlers
-
             cursorLockInputAction = inputActions.FindAction("Cursor Lock");
             if (cursorLockInputAction != null)
             {
@@ -236,7 +235,6 @@ namespace EasyCharacterMovement
         protected override void DeinitPlayerInput()
         {
             // Call base method implementation
-
             base.DeinitPlayerInput();
 
             if (punchInputAction != null)
@@ -296,14 +294,7 @@ namespace EasyCharacterMovement
             _rightFootUp = true;
 
             _punchButtonPressed = false;
-            
-            _firstPunchQueued = false;
-            _secondPunchQueued = false;
-            _airPunchQueued = false;
-
-            _firstPunchIsAnimating = false;
-            _secondPunchIsAnimating = false;
-            _airPunchIsAnimating = false;
+            _isPunching = false;
         }
 
         /// <summary>
@@ -336,26 +327,29 @@ namespace EasyCharacterMovement
 
         protected override void Animate()
         {
-            if (!FirstPunchIsAnimating() && !SecondPunchIsAnimating())
+            if (_isPunching)
             {
-                if (IsGrounded())
-                {
-                    Vector2 movementInput = GetMovementInput();
+                // Override movement animations when punching
+                return;
+            }
 
-                    if (movementInput == Vector2.zero)
-                    {
-                        PlayIdleAnimation();
-                    }
+            if (IsGrounded())
+            {
+                Vector2 movementInput = GetMovementInput();
 
-                    else if (movementInput != Vector2.zero)
-                    {
-                        PlayRunAnimation(movementInput);
-                    }
-                }
-                else if (!WaitingForJumpApex() && !_airPunchIsAnimating)
+                if (movementInput == Vector2.zero)
                 {
-                    PlayFallAnimation();
+                    PlayIdleAnimation();
                 }
+
+                else if (movementInput != Vector2.zero)
+                {
+                    PlayRunAnimation(movementInput);
+                }
+            }
+            else if (!WaitingForJumpApex())
+            {
+                PlayFallAnimation();
             }
         }
 
@@ -366,38 +360,31 @@ namespace EasyCharacterMovement
         protected override void UpdateRotation()
         {
             // Call base method (eg: rotate towards movement direction)
-
             base.UpdateRotation();
 
             // Update's gravity direction and orient character's Up to -gravity direction
-
             RaycastHit hit;
 
             if (Physics.Raycast(transform.position, Vector3.down, out hit, 0.25f))
             {
                 // Calculate the slope normal
-
                 Vector3 slopeNormal = hit.normal;
 
                 // Calculate the angle between the character's up vector and the slope normal
-
                 float angle = Vector3.Angle(transform.up, slopeNormal);
 
                 if (angle <= 45)
                 {
                     // Rotate the player to align with the slope
-
                     Quaternion slopeRotation = Quaternion.FromToRotation(transform.up, slopeNormal) * transform.rotation;
 
                     // Smoothly interpolate between current rotation and target rotation
-
                     transform.rotation = Quaternion.Slerp(transform.rotation, slopeRotation, 10f * Time.fixedDeltaTime);
                 }
             }
             else
             {
                 // If not grounded, smoothly return to upright position
-
                 Quaternion uprightRotation = Quaternion.FromToRotation(transform.up, Vector3.up) * transform.rotation;
                 transform.rotation = Quaternion.Slerp(transform.rotation, uprightRotation, 10f * Time.fixedDeltaTime);
             }
@@ -436,7 +423,7 @@ namespace EasyCharacterMovement
         protected override void HandleInput()
         {
             base.HandleInput();
-
+            
             HandlePunching();
         }
 
@@ -453,7 +440,6 @@ namespace EasyCharacterMovement
             if (mouseLookInput.sqrMagnitude > 0)
             {
                 // Mouse look input
-
                 if (mouseLookInput.x != 0.0f)
                     cameraController.Turn(mouseLookInput.x);
 
@@ -464,7 +450,6 @@ namespace EasyCharacterMovement
             else
             {
                 // Controller look input
-
                 Vector2 controllerLookInput = GetControllerLookInput();
 
                 if (controllerLookInput.x != 0.0f)
@@ -475,7 +460,6 @@ namespace EasyCharacterMovement
             }
 
             // Mouse scroll input
-
             Vector2 mouseScrollInput = GetMouseScrollInput();
 
             if (mouseScrollInput.y != 0.0f)
@@ -489,35 +473,29 @@ namespace EasyCharacterMovement
         protected virtual void HandleLeanInput()
         {
             // Project on a horizontal plane so we only have to consider horizontal direction without vertical rotation creating issues
-
             Vector3 characterForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
             Vector3 movementDirection = Vector3.ProjectOnPlane(GetMovementDirection(), Vector3.up);
 
             // Calculate the signed angle between character's forward direction and target movement direction
-
             float angleDifference = Vector3.SignedAngle(characterForward, movementDirection, transform.up);
 
             if (angleDifference < -15)
             {
                 // Calculate target rotation for leaning left
-
                 _chestTargetRotation = Quaternion.Euler(0, 0, _leanAmount);
             }
             else if (angleDifference > 15)
             {
                 // Calculate target rotation for leaning right
-
                 _chestTargetRotation = Quaternion.Euler(0, 0, -_leanAmount);
             }
             else
             {
                 // Return to upright position
-
                 _chestTargetRotation = Quaternion.Euler(0, 0, 0);
             }
 
             // Smoothly interpolate to the target rotation on the chest
-
             _chestOverrideTransform = Quaternion.Slerp(_chestTransform.localRotation, _chestTargetRotation, Time.deltaTime * _leanSpeed);
         }
 
@@ -528,7 +506,6 @@ namespace EasyCharacterMovement
         protected virtual void ApplyLean()
         {
             // Override animation data on the chest with our dummy transform
-
             _chestTransform.localRotation = _chestOverrideTransform;
         }
 
@@ -538,31 +515,148 @@ namespace EasyCharacterMovement
 
         protected virtual void HandlePunching()
         {
-            if (_punchButtonPressed || _firstPunchQueued || _secondPunchQueued || _airPunchQueued)
+            if (IsGrounded())
             {
-                ReleasePunch();
+                HandleGroundedPunch();
+            }
+        }
 
-                if (IsGrounded())
+        /// <summary>
+        /// Start a punch initiated by the player.
+        /// </summary>
+
+        protected virtual void StartPunch()
+        {
+            if (_cooldownTimer <= 0f)
+            {
+                _punchButtonPressed = true;
+            }
+        }
+
+        /// <summary>
+        /// Handles punch logic while the character is grounded.
+        /// </summary>
+
+        private void HandleGroundedPunch()
+        {
+            // Handle cooldown timer
+            if (_cooldownTimer > 0f)
+            {
+                _cooldownTimer -= Time.deltaTime;
+                return; // Exit early during cooldown
+            }
+
+            if (_punchButtonPressed)
+            {
+                if (!_isPunching)
                 {
-                    HandleGroundedPunch();
+                    _punchQueue.Enqueue(0); // Always start combo with the first punch
+                    nextComboStep = 1;      // Update the next combo step after the first punch
+                    ExecuteComboStep();
+                }
+                else if (nextComboStep < _comboAnimations.Length)
+                {
+                    // Queue the next punch if already punching
+                    _punchQueue.Enqueue(nextComboStep);
+                    nextComboStep++;  // Move to the next step in the combo
+                }
+
+                ReleasePunch(); // Reset the button press
+            }
+        }
+
+        /// <summary>
+        /// Combo different punches according to what is currently queued.
+        /// </summary>
+
+        private void ExecuteComboStep()
+        {
+            if (_punchQueue.Count == 0)
+            {
+                // If the queue is empty, reset the combo
+                ResetCombo();
+                StartPunchCooldown();
+                return;
+            }
+
+            // Disable input when punching starts
+            movementInputAction.Disable();
+            jumpInputAction.Disable();
+            canEverJump = false;
+
+            // Get the next punch index from the queue
+            _currentComboStep = _punchQueue.Dequeue();
+
+            // Adjust the speed of the punch and ensure it plays from the beginning
+            _animancer.States.TryGet(_comboAnimations[_currentComboStep], out var state);
+            state.Speed = 1.25f;
+            state.Time = 0f;
+
+            // Play the appropriate punch animation
+            _animancer.TryPlay(_comboAnimations[_currentComboStep]);
+
+            // Mark as punching
+            _isPunching = true;
+
+            // Apply a slight forward push for each punch
+            LaunchCharacter(transform.forward * 1.5f);
+
+            // Schedule the transition back to idle after the animation
+            state.Events.OnEnd = () =>
+            {
+                if (_punchQueue.Count > 0 && _currentComboStep < _comboAnimations.Length - 1)
+                {
+                    // Queue the next punch if not on the final punch
+                    ExecuteComboStep();
                 }
                 else
                 {
-                    PlayAirPunchAnimation();
+                    // Reset combo after the last punch or no queued punch
+                    ResetCombo();
+                    StartPunchCooldown();
                 }
-            }
+            };
+        }
 
-            // If the character is punching, don't allow movement
+        /// <summary>
+        /// Manually releases the punch button.
+        /// </summary>
 
-            if (FirstPunchIsAnimating() || SecondPunchIsAnimating())
-                SetMovementDirection(Vector3.zero);
+        protected virtual void ReleasePunch()
+        {
+            _punchButtonPressed = false;
+        }
 
-            if (_airPunchIsAnimating) {
-                rotationRate = 0; 
-            }
-            else {
-                rotationRate = 540.0f;
-            }
+        /// <summary>
+        /// Reset the character back to a default state.
+        /// </summary>
+
+        private void ResetCombo()
+        {
+            // Transition back to idle animation
+            PlayIdleAnimation();
+
+            // Reset combo state
+            _isPunching = false;
+            _currentComboStep = 0;
+
+            // Clear the queue
+            _punchQueue.Clear();
+
+            // Re-enable input when done punching
+            movementInputAction.Enable();
+            jumpInputAction.Enable();
+            canEverJump = true;
+
+        }
+
+        /// <summary>
+        /// Starts a cooldown to avoid punch spamming.
+        /// </summary>
+
+        private void StartPunchCooldown()
+        {
+            _cooldownTimer = _cooldownDuration;
         }
 
         /// <summary>
@@ -591,13 +685,12 @@ namespace EasyCharacterMovement
 
         protected virtual void PlayJumpAnimation()
         {
-            if (_rightFootUp)
+            string jumpClip = _rightFootUp ? "_Jump.L" : "_Jump.R";
+
+            if (_animancer.States.TryGet(jumpClip, out var state))
             {
-                _animancer.TryPlay("_JiggleJump.L", 0.25f);
-            }
-            else
-            {
-                _animancer.TryPlay("_JiggleJump.R", 0.25f);
+                state.Time = 0;
+                _animancer.Play(state, 0.25f);
             }
         }
 
@@ -623,257 +716,7 @@ namespace EasyCharacterMovement
 
         protected virtual void PlayLandAnimation()
         {
-            _airPunchQueued = false;
-            _airPunchIsAnimating = false;
-
             _animancer.TryPlay("_Land", 0.25f);
-        }
-
-        /// <summary>
-        /// Start a punch initiated by the player.
-        /// </summary>
-
-        protected virtual void StartPunch()
-        {
-            _punchButtonPressed = true;
-        }
-
-        /// <summary>
-        /// Handles punch logic while the character is grounded.
-        /// </summary>
-        
-        private void HandleGroundedPunch()
-        {
-            _animancer.States.TryGet("_Punch.R", out var punchOne);
-            _animancer.States.TryGet("_Punch.L", out var punchTwo);
-
-            // Check if there are any queued punches
-
-            if (!SecondPunchIsAnimating() && _secondPunchQueued)
-            {
-                PlaySecondPunchAnimation();
-            }
-            else if (!SecondPunchIsAnimating() && _firstPunchQueued)
-            {
-                PlayFirstPunchAnimation();
-            }
-
-            // If there are no queued punches, should we start the first?
-
-            else if(!SecondPunchIsAnimating() && punchOne.Weight == 0 || 
-                punchOne.Time >= punchOne.Length &&  punchOne.Weight < 0.75)
-            {
-                PlayFirstPunchAnimation();
-            }
-
-            // The character is currently punching, so queue the next one
-
-            else if (!SecondPunchIsAnimating() && !_secondPunchQueued)
-            {
-                _secondPunchQueued = true;
-            }
-            else if (SecondPunchIsAnimating() && !_firstPunchQueued)
-            {
-                _firstPunchQueued = true;
-            }
-        }
-
-        /// <summary>
-        /// Play the first punch animation for the character.
-        /// </summary>
-
-        protected virtual void PlayFirstPunchAnimation()
-        {
-            _animancer.States.TryGet("_Punch.R", out var punchOne);
-                
-            jumpInputAction.Disable();
-            canEverJump = false;
-
-            _firstPunchQueued = false;
-            punchOne.Time = 0;
-            punchOne.Speed = 1.5f;
-
-            _animancer.TryPlay("_Punch.R");
-            punchOne.Events.OnEnd = StopPunching;
-        }
-
-        /// <summary>
-        /// Is the character's first punch still being animated?
-        /// </summary>
-
-        protected virtual bool FirstPunchIsAnimating()
-        {
-            _animancer.States.TryGet("_Punch.R", out var punchOne);
-
-            if (punchOne.Weight > 0 && punchOne.Time < punchOne.Length)
-            {
-                _firstPunchIsAnimating = true;
-            }
-            else
-            {
-                _firstPunchIsAnimating = false;
-            }
-
-            return _firstPunchIsAnimating;
-        }
-
-        /// <summary>
-        /// Play the second punch animation for the character.
-        /// </summary>
-
-        protected virtual void PlaySecondPunchAnimation()
-        {
-            _animancer.States.TryGet("_Punch.R", out var punchOne);
-            _animancer.States.TryGet("_Punch.L", out var punchTwo);
-
-            if (punchOne.Weight > 0 && punchOne.Time >= punchOne.Length)
-            {
-                jumpInputAction.Disable();
-                canEverJump = false;
-
-                _secondPunchQueued = false;
-                punchTwo.Speed = 1.5f;
-
-                _animancer.TryPlay("_Punch.L");
-                punchTwo.Events.OnEnd = StopPunching;
-            }
-        }
-
-        /// <summary>
-        /// Is the character's second punch still being animated?
-        /// </summary>
-
-        protected virtual bool SecondPunchIsAnimating()
-        {
-            _animancer.States.TryGet("_Punch.L", out var punchTwo);
-
-            if (punchTwo.Weight > 0 && punchTwo.Time < punchTwo.Length)
-            {
-                _secondPunchIsAnimating = true; 
-            }
-            else
-            {
-                _secondPunchIsAnimating = false;
-            }
-
-            return _secondPunchIsAnimating;
-        }
-
-        /// <summary>
-        /// Play the air punch animation for the character.
-        /// </summary>
-
-        private void PlayAirPunchAnimation()
-        {
-            _animancer.States.TryGet("_AirPunch.R", out var airPunchOne);
-            _animancer.States.TryGet("_AirPunch.L", out var airPunchTwo);
-
-            airPunchOne.Speed = 1.5f;
-            airPunchTwo.Speed = 1.5f;
-
-            if (_airPunchIsAnimating && airPunchOne.Time >= airPunchOne.Length && airPunchTwo.Weight == 0)
-            {
-                _airPunchQueued = false;
-
-                _animancer.TryPlay("_AirPunch.L", 0.25f);
-            }
-            else if (_airPunchIsAnimating && airPunchTwo.Time >= airPunchTwo.Length && airPunchOne.Weight == 0)
-            {
-                _airPunchQueued = false;
-
-                _animancer.TryPlay("_AirPunch.R", 0.25f);
-            }
-            else if (_airPunchIsAnimating && !_airPunchQueued)
-            {
-                _airPunchQueued = true;
-            }
-            else if (!_airPunchIsAnimating)
-            {
-                _airPunchIsAnimating = true;
-
-                if (_rightFootUp)
-                {
-                    _animancer.TryPlay("_AirPunch.L", 0.25f);
-                }
-                else
-                {
-                    _animancer.TryPlay("_AirPunch.R", 0.25f);
-                }
-            }
-
-            //if (airPunchOne.Time >= airPunchOne.Length || airPunchTwo.Time >= airPunchTwo.Length || !_airPunchIsAnimating)
-            //{
-            //    _airPunchIsAnimating = true;
-
-            //    if (_rightFootUp)
-            //    {
-            //        airPunchTwo.Time = 0;
-
-            //        _animancer.TryPlay("_AirPunch.L", 0.25f);
-            //    }
-            //    else
-            //    {
-            //        airPunchOne.Time = 0;
-
-            //        _animancer.TryPlay("_AirPunch.R", 0.25f);
-            //    }
-            //}
-            //else
-            //{
-            //    return;
-            //}
-
-            //var airPunchClip = _rightFootUp ? "_AirPunch.L" : "_AirPunch.R";
-
-            //if (_animancer.States.TryGet(airPunchClip, out var airPunchState) &&
-            //    (airPunchState.Time >= airPunchState.Length || !_airPunchIsAnimating))
-            //{
-            //    _airPunchIsAnimating = true;
-            //    airPunchState.Time = 0;
-            //    _animancer.TryPlay(airPunchClip, 0.25f);
-            //}
-        }
-
-        /// <summary>
-        /// Is the character's air punch still being animated?
-        /// </summary>
-
-        //protected virtual bool AirPunchIsAnimating()
-        //{
-        //    _animancer.States.TryGet("_AirPunch.R", out var airPunchOne);
-        //    _animancer.States.TryGet("_AirPunch.L", out var airPunchTwo);
-
-        //    if (airPunchOne.Weight > 0 || airPunchTwo.Weight > 0)
-        //    {
-
-        //    }
-        //    else
-        //    {
-        //        _airPunchIsAnimating = false;
-        //    }
-
-        //    return _airPunchIsAnimating;
-        //}
-
-        /// <summary>
-        /// Manually releases the punch button.
-        /// </summary>
-
-        protected virtual void ReleasePunch()
-        {
-            _punchButtonPressed = false;
-        }
-
-        /// <summary>
-        /// Stop the player from punching.
-        /// </summary>
-
-        protected virtual void StopPunching()
-        {
-            PlayIdleAnimation();
-
-            canEverJump = true;
-            jumpInputAction.Enable();
         }
 
         /// <summary>
@@ -898,7 +741,6 @@ namespace EasyCharacterMovement
             {
                 // Input magnitude determines how fast to animate the run animation
                 //  when the player is slightly tilting the control stick
-
                 float inputMagnitude = movementInput.magnitude;
                 
 
