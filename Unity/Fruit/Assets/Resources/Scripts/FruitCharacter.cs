@@ -1,4 +1,5 @@
 using Animancer;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -21,7 +22,6 @@ namespace EasyCharacterMovement
         private int _currentComboStep = 0;
         private int nextComboStep = 0;  // Keep track of the next combo step
         private float _cooldownTimer = 0f;
-        private float _cooldownDuration = 0.2f; // Cooldown duration after combo ends or fails
         private string[] _comboAnimations = { "_Punch.1", "_Punch.2", "_Punch.3" };
         private Queue<int> _punchQueue = new Queue<int>();
         private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
@@ -31,6 +31,7 @@ namespace EasyCharacterMovement
         [SerializeField] private Transform _chestTransform; // Reference to the chest bone
         [SerializeField] private float _leanAmount = 12.5f; // Maximum degrees to lean
         [SerializeField] private float _leanSpeed = 8f; // Speed at which the lean is applied
+        [SerializeField] private float _cooldownDuration = 0.15f; // Cooldown duration after combo ends or fails
 
 
         #endregion
@@ -575,7 +576,7 @@ namespace EasyCharacterMovement
             {
                 // If the queue is empty, reset the combo
                 ResetCombo();
-                StartPunchCooldown();
+                StartCooldown();
                 return;
             }
 
@@ -587,13 +588,13 @@ namespace EasyCharacterMovement
             // Get the next punch index from the queue
             _currentComboStep = _punchQueue.Dequeue();
 
-            // Adjust the speed of the punch and ensure it plays from the beginning
-            _animancer.States.TryGet(_comboAnimations[_currentComboStep], out var state);
-            state.Speed = 1.25f;
-            state.Time = 0f;
-
-            // Play the appropriate punch animation
+            // Play and adjust the animation state
             _animancer.TryPlay(_comboAnimations[_currentComboStep]);
+            if (_animancer.States.TryGet(_comboAnimations[_currentComboStep], out var state))
+            {
+                state.Speed = 1.25f;
+                state.Time = 0f;
+            }
 
             // Mark as punching
             _isPunching = true;
@@ -604,18 +605,40 @@ namespace EasyCharacterMovement
             // Schedule the transition back to idle after the animation
             state.Events.OnEnd = () =>
             {
-                if (_punchQueue.Count > 0 && _currentComboStep < _comboAnimations.Length - 1)
+                if (_punchQueue.Count > 0)
                 {
-                    // Queue the next punch if not on the final punch
+                    // Execute the next combo step immediately
                     ExecuteComboStep();
                 }
                 else
                 {
-                    // Reset combo after the last punch or no queued punch
-                    ResetCombo();
-                    StartPunchCooldown();
+                    // No punch is queued, so hold the last frame
+                    StartCoroutine(HoldLastFrame(state, 0.1f));
                 }
             };
+        }
+
+        /// <summary>
+        /// Hold the last frame of the punch to give time for a combo.
+        /// </summary>
+
+        private IEnumerator HoldLastFrame(AnimancerState state, float holdDuration)
+        {
+            // Freeze on the last frame
+            state.Speed = 0f;
+            state.Time = state.Length;
+
+            yield return new WaitForSeconds(holdDuration);
+
+            if (_punchQueue.Count > 0)
+            {
+                ExecuteComboStep();
+            }
+            else
+            {
+                ResetCombo();
+                StartCooldown();
+            }
         }
 
         /// <summary>
@@ -654,7 +677,7 @@ namespace EasyCharacterMovement
         /// Starts a cooldown to avoid punch spamming.
         /// </summary>
 
-        private void StartPunchCooldown()
+        private void StartCooldown()
         {
             _cooldownTimer = _cooldownDuration;
         }
