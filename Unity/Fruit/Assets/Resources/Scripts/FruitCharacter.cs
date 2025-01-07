@@ -522,8 +522,7 @@ namespace EasyCharacterMovement
             {
                 if (_isAirPunching)
                 {
-                    _isAirPunching = false;
-                    SetRotationMode(RotationMode.OrientToMovement);
+                    ResetAirPunch();
                 }
 
                 HandleGroundedPunch();
@@ -647,6 +646,7 @@ namespace EasyCharacterMovement
 
             yield return new WaitForSeconds(holdDuration);
 
+            // Check if we're holding the last frame for a ground/air punch
             if (IsGrounded())
             {
                 if (_punchQueue.Count > 0)
@@ -661,9 +661,7 @@ namespace EasyCharacterMovement
             }
             else
             {
-                PlayFallAnimation();
-                _isAirPunching = false;
-                SetRotationMode(RotationMode.OrientToMovement);
+                ResetAirPunch();
             }
         }
 
@@ -711,10 +709,10 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Reset the character back to a default state.
+        /// Reset the character's combo to a default state.
         /// </summary>
 
-        private void ResetCombo()
+        protected virtual void ResetCombo()
         {
             // Transition back to idle animation
             PlayIdleAnimation();
@@ -730,6 +728,19 @@ namespace EasyCharacterMovement
             movementInputAction.Enable();
             jumpInputAction.Enable();
             canEverJump = true;
+        }
+
+        /// <summary>
+        /// Reset the character's air punch to a default state.
+        /// </summary
+
+        protected virtual void ResetAirPunch()
+        {
+            PlayFallAnimation();
+
+            _isAirPunching = false;
+
+            SetRotationMode(RotationMode.OrientToMovement);
         }
 
         /// <summary>
