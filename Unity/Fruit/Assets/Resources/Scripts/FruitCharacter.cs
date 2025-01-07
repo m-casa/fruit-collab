@@ -19,7 +19,7 @@ namespace EasyCharacterMovement
 
         private ThirdPersonCameraController _cameraController;
         private bool _rightFootUp, _punchButtonPressed, 
-            _isGroundPunching, _isAirPunching;
+            _isGroundPunching, _isAirPunching, _isBlocking;
         private int _currentComboStep = 0;
         private int nextComboStep = 0;  // Keep track of the next combo step
         private float _cooldownTimer = 0f;
@@ -65,6 +65,12 @@ namespace EasyCharacterMovement
         protected InputAction punchInputAction { get; set; }
 
         /// <summary>
+        /// Block InputAction.
+        /// </summary>
+
+        protected InputAction blockInputAction { get; set; }
+
+        /// <summary>
         /// Mouse Look InputAction.
         /// </summary>
 
@@ -108,6 +114,18 @@ namespace EasyCharacterMovement
                 StartPunch();
             else if (context.canceled)
                 ReleasePunch();
+        }
+
+        /// <summary>
+        /// Block input action handler.
+        /// </summary>
+
+        protected virtual void OnBlock(InputAction.CallbackContext context)
+        {
+            if (context.started || context.performed)
+                Block();
+            else if (context.canceled)
+                StopBlocking();
         }
 
         /// <summary>
@@ -203,6 +221,17 @@ namespace EasyCharacterMovement
                 punchInputAction.Enable();
             }
 
+            // Setup Block input action handlers
+            blockInputAction = inputActions.FindAction("Block");
+            if (blockInputAction != null)
+            {
+                blockInputAction.started += OnBlock;
+                blockInputAction.performed += OnBlock;
+                blockInputAction.canceled += OnBlock;
+
+                blockInputAction.Enable();
+            }
+
             // Setup Mouse input action handlers
             mouseLookInputAction = inputActions.FindAction("Mouse Look");
             mouseLookInputAction?.Enable();
@@ -247,6 +276,16 @@ namespace EasyCharacterMovement
 
                 punchInputAction.Disable();
                 punchInputAction = null;
+            }
+
+            if (blockInputAction != null)
+            {
+                blockInputAction.started -= OnBlock;
+                blockInputAction.performed -= OnBlock;
+                blockInputAction.canceled -= OnBlock;
+
+                blockInputAction.Disable();
+                blockInputAction = null;
             }
 
             if (mouseLookInputAction != null)
@@ -298,6 +337,7 @@ namespace EasyCharacterMovement
             _punchButtonPressed = false;
             _isGroundPunching = false;
             _isAirPunching = false;
+            _isBlocking = false;
         }
 
         /// <summary>
@@ -330,7 +370,7 @@ namespace EasyCharacterMovement
 
         protected override void Animate()
         {
-            if (_isGroundPunching || _isAirPunching)
+            if (_isGroundPunching || _isAirPunching || _isBlocking)
             {
                 // Override movement animations when punching
                 return;
@@ -597,6 +637,7 @@ namespace EasyCharacterMovement
             }
 
             // Disable input when punching starts
+            blockInputAction.Disable();
             movementInputAction.Disable();
             jumpInputAction.Disable();
             canEverJump = false;
@@ -725,6 +766,7 @@ namespace EasyCharacterMovement
             _punchQueue.Clear();
 
             // Re-enable input when done punching
+            blockInputAction.Enable();
             movementInputAction.Enable();
             jumpInputAction.Enable();
             canEverJump = true;
@@ -750,6 +792,40 @@ namespace EasyCharacterMovement
         private void StartCooldown()
         {
             _cooldownTimer = _cooldownDuration;
+        }
+
+        /// <summary>
+        /// Request the character to block.
+        /// </summary>
+
+        protected virtual void Block()
+        {
+            if (IsGrounded())
+            {
+                _isBlocking = true;
+                punchInputAction.Disable();
+                movementInputAction.Disable();
+                jumpInputAction.Disable();
+                canEverJump = false;
+
+                _animancer.TryPlay("_Block", 0.15f);
+            }
+        }
+
+        /// <summary>
+        /// Request the character to stop blocking.
+        /// </summary>
+
+        protected virtual void StopBlocking()
+        {
+            if (_isBlocking)
+            {
+                _isBlocking = false;
+                punchInputAction.Enable();
+                movementInputAction.Enable();
+                jumpInputAction.Enable();
+                canEverJump = true;
+            }
         }
 
         /// <summary>
