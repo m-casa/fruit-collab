@@ -19,7 +19,8 @@ namespace EasyCharacterMovement
 
         private ThirdPersonCameraController _cameraController;
         private bool _rightFootUp, _punchButtonPressed, 
-            _isGroundPunching, _isAirPunching, _isBlocking;
+            _isGroundPunching, _isAirPunching, _blockButtonPressed, _isBlocking;
+        private bool _isPunching => _isGroundPunching || _isAirPunching;
         private int _currentComboStep = 0;
         private int nextComboStep = 0;  // Keep track of the next combo step
         private float _cooldownTimer = 0f;
@@ -111,7 +112,7 @@ namespace EasyCharacterMovement
         protected virtual void OnPunch(InputAction.CallbackContext context)
         {
             if (context.started || context.performed)
-                StartPunch();
+                Punch();
             else if (context.canceled)
                 ReleasePunch();
         }
@@ -337,6 +338,8 @@ namespace EasyCharacterMovement
             _punchButtonPressed = false;
             _isGroundPunching = false;
             _isAirPunching = false;
+
+            _blockButtonPressed = false;
             _isBlocking = false;
         }
 
@@ -370,9 +373,9 @@ namespace EasyCharacterMovement
 
         protected override void Animate()
         {
-            if (_isGroundPunching || _isAirPunching || _isBlocking)
+            if (_isPunching || _isBlocking)
             {
-                // Override movement animations when punching
+                // Override movement animations when punching/blocking
                 return;
             }
 
@@ -468,6 +471,8 @@ namespace EasyCharacterMovement
             base.HandleInput();
             
             HandlePunching();
+
+            HandleBlocking();
         }
 
         /// <summary>
@@ -579,10 +584,30 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Captures block input that the player initiates.
+        /// </summary>
+
+        protected virtual void HandleBlocking()
+        {
+            if (IsGrounded() && _blockButtonPressed)
+            {
+                if (!_isPunching)
+                {
+                    _isBlocking = true;
+                    punchInputAction.Disable();
+                    movementInputAction.Disable();
+                    jumpInputAction.Disable();
+
+                    _animancer.TryPlay("_Block", 0.15f);
+                }
+            }
+        }
+
+        /// <summary>
         /// Start a punch initiated by the player.
         /// </summary>
 
-        protected virtual void StartPunch()
+        protected virtual void Punch()
         {
             if (_cooldownTimer <= 0f)
             {
@@ -637,10 +662,8 @@ namespace EasyCharacterMovement
             }
 
             // Disable input when punching starts
-            blockInputAction.Disable();
             movementInputAction.Disable();
             jumpInputAction.Disable();
-            canEverJump = false;
 
             // Get the next punch index from the queue
             _currentComboStep = _punchQueue.Dequeue();
@@ -766,10 +789,8 @@ namespace EasyCharacterMovement
             _punchQueue.Clear();
 
             // Re-enable input when done punching
-            blockInputAction.Enable();
             movementInputAction.Enable();
             jumpInputAction.Enable();
-            canEverJump = true;
         }
 
         /// <summary>
@@ -800,16 +821,7 @@ namespace EasyCharacterMovement
 
         protected virtual void Block()
         {
-            if (IsGrounded())
-            {
-                _isBlocking = true;
-                punchInputAction.Disable();
-                movementInputAction.Disable();
-                jumpInputAction.Disable();
-                canEverJump = false;
-
-                _animancer.TryPlay("_Block", 0.15f);
-            }
+            _blockButtonPressed = true;
         }
 
         /// <summary>
@@ -818,13 +830,14 @@ namespace EasyCharacterMovement
 
         protected virtual void StopBlocking()
         {
+            _blockButtonPressed = false;
+
             if (_isBlocking)
             {
                 _isBlocking = false;
                 punchInputAction.Enable();
                 movementInputAction.Enable();
                 jumpInputAction.Enable();
-                canEverJump = true;
             }
         }
 
