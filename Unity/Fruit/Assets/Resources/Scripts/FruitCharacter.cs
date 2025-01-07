@@ -18,7 +18,8 @@ namespace EasyCharacterMovement
         #region FIELDS
 
         private ThirdPersonCameraController _cameraController;
-        private bool _rightFootUp, _punchButtonPressed, _isPunching;
+        private bool _rightFootUp, _punchButtonPressed, 
+            _isGroundPunching, _isAirPunching;
         private int _currentComboStep = 0;
         private int nextComboStep = 0;  // Keep track of the next combo step
         private float _cooldownTimer = 0f;
@@ -295,7 +296,8 @@ namespace EasyCharacterMovement
             _rightFootUp = true;
 
             _punchButtonPressed = false;
-            _isPunching = false;
+            _isGroundPunching = false;
+            _isAirPunching = false;
         }
 
         /// <summary>
@@ -328,7 +330,7 @@ namespace EasyCharacterMovement
 
         protected override void Animate()
         {
-            if (_isPunching)
+            if (_isGroundPunching || _isAirPunching)
             {
                 // Override movement animations when punching
                 return;
@@ -518,7 +520,22 @@ namespace EasyCharacterMovement
         {
             if (IsGrounded())
             {
+                if (_isAirPunching)
+                {
+                    _isAirPunching = false;
+                    SetRotationMode(RotationMode.OrientToMovement);
+                }
+
                 HandleGroundedPunch();
+            }
+            else
+            {
+                if (_isGroundPunching)
+                {
+                    ResetCombo();
+                }
+
+                HandleAirPunch();
             }
         }
 
@@ -549,7 +566,7 @@ namespace EasyCharacterMovement
 
             if (_punchButtonPressed)
             {
-                if (!_isPunching)
+                if (!_isGroundPunching)
                 {
                     _punchQueue.Enqueue(0); // Always start combo with the first punch
                     nextComboStep = 1;      // Update the next combo step after the first punch
@@ -589,15 +606,15 @@ namespace EasyCharacterMovement
             _currentComboStep = _punchQueue.Dequeue();
 
             // Play and adjust the animation state
-            _animancer.TryPlay(_comboAnimations[_currentComboStep]);
             if (_animancer.States.TryGet(_comboAnimations[_currentComboStep], out var state))
             {
+                _animancer.Play(state);
                 state.Speed = 1.25f;
                 state.Time = 0f;
             }
 
             // Mark as punching
-            _isPunching = true;
+            _isGroundPunching = true;
 
             // Apply a slight forward push for each punch
             LaunchCharacter(transform.forward * 1.5f);
@@ -630,14 +647,57 @@ namespace EasyCharacterMovement
 
             yield return new WaitForSeconds(holdDuration);
 
-            if (_punchQueue.Count > 0)
+            if (IsGrounded())
             {
-                ExecuteComboStep();
+                if (_punchQueue.Count > 0)
+                {
+                    ExecuteComboStep();
+                }
+                else
+                {
+                    ResetCombo();
+                    StartCooldown();
+                }
             }
             else
             {
-                ResetCombo();
-                StartCooldown();
+                PlayFallAnimation();
+                _isAirPunching = false;
+                SetRotationMode(RotationMode.OrientToMovement);
+            }
+        }
+
+        /// <summary>
+        /// Handles punch logic while the character is in the air.
+        /// </summary>
+
+        protected virtual void HandleAirPunch()
+        {
+            if (_punchButtonPressed)
+            {
+                if (!_isAirPunching)
+                {
+                    string airPunchClip = _rightFootUp ? "_AirPunch.R" : "_AirPunch.L";
+
+                    SetRotationMode(RotationMode.None);
+
+                    if (_animancer.States.TryGet(airPunchClip, out var state))
+                    {
+                        _animancer.Play(state);
+                        state.Speed = 1.25f;
+                        state.Time = 0f;
+                    }
+
+                    _isAirPunching = true;
+
+                    state.Events.OnEnd = () =>
+                    {
+                        StartCoroutine(HoldLastFrame(state, 0.1f));
+                        
+                    };
+                }
+
+                ReleasePunch();
             }
         }
 
@@ -660,7 +720,7 @@ namespace EasyCharacterMovement
             PlayIdleAnimation();
 
             // Reset combo state
-            _isPunching = false;
+            _isGroundPunching = false;
             _currentComboStep = 0;
 
             // Clear the queue
@@ -670,7 +730,6 @@ namespace EasyCharacterMovement
             movementInputAction.Enable();
             jumpInputAction.Enable();
             canEverJump = true;
-
         }
 
         /// <summary>
