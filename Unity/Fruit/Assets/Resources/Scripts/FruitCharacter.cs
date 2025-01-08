@@ -1,4 +1,5 @@
 using Animancer;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,16 +19,17 @@ namespace EasyCharacterMovement
         #region FIELDS
 
         private ThirdPersonCameraController _cameraController;
-        private bool _rightFootUp, _punchButtonPressed, 
-            _isGroundPunching, _isAirPunching, _blockButtonPressed, _isBlocking;
-        private bool _isPunching => _isGroundPunching || _isAirPunching;
-        private int _currentComboStep = 0;
-        private int nextComboStep = 0;  // Keep track of the next combo step
-        private float _cooldownTimer = 0f;
+        private bool _queueLaunch, _rightFootUp, _blockButtonPressed, _isBlocking,
+            _punchButtonPressed, _isGroundPunching, _isAirPunching;
+        private int _currentComboStep;
+        private int _nextComboStep; // Keep track of the next combo step
+        private float _cooldownTimer;
         private string[] _comboAnimations = { "_Punch.1", "_Punch.2", "_Punch.3" };
         private Queue<int> _punchQueue = new Queue<int>();
         private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
         private Quaternion _chestTargetRotation; // Target rotation for the lean
+
+        private bool _isPunching => _isGroundPunching || _isAirPunching;
 
         [SerializeField] private NamedAnimancerComponent _animancer;
         [SerializeField] private Transform _chestTransform; // Reference to the chest bone
@@ -195,6 +197,18 @@ namespace EasyCharacterMovement
 
         #endregion
 
+        #region EVENTS
+
+        public delegate void LaunchedEventHandler();
+
+        /// <summary>
+        /// Event triggered when character gets launched.
+        /// </summary>
+
+        public event LaunchedEventHandler Launched;
+
+        #endregion
+
         #region METHODS  
 
         /// <summary>
@@ -333,6 +347,8 @@ namespace EasyCharacterMovement
         {
             base.OnAwake();
 
+            _queueLaunch = false;
+
             _rightFootUp = true;
 
             _punchButtonPressed = false;
@@ -341,6 +357,10 @@ namespace EasyCharacterMovement
 
             _blockButtonPressed = false;
             _isBlocking = false;
+            
+            _currentComboStep = 0;
+            _nextComboStep = 0;
+            _cooldownTimer = 0f;
         }
 
         /// <summary>
@@ -353,6 +373,7 @@ namespace EasyCharacterMovement
 
             Jumped += PlayJumpAnimation;
             Landed += PlayLandAnimation;
+            Launched += PlayLaunchAnimation;
         }
 
         /// <summary>
@@ -365,6 +386,77 @@ namespace EasyCharacterMovement
 
             Jumped -= PlayJumpAnimation;
             Landed -= PlayLandAnimation;
+            Launched -= PlayLaunchAnimation;
+        }
+
+        /// <summary>
+        /// Perform character's movement based on its current MovementMode.
+        /// </summary>
+
+        protected override void Move()
+        {
+            // If Character movement is disabled, return
+
+            if (IsDisabled())
+                return;
+
+            // Toggle walking / falling mode based on ground status
+
+            if (IsWalking() && !characterMovement.isGrounded)
+                SetMovementMode(MovementMode.Falling);
+
+            if (IsFalling() && characterMovement.isGrounded)
+                SetMovementMode(MovementMode.Walking);
+
+            // Compute new velocity based on Character's movement mode
+
+            Vector3 desiredVelocity = CalcDesiredVelocity();
+
+            switch (_movementMode)
+            {
+                case MovementMode.None:
+                    characterMovement.velocity = Vector3.zero;
+                    break;
+
+                case MovementMode.Walking:
+                    Walking(desiredVelocity);
+                    break;
+
+                case MovementMode.Falling:
+                    Falling(desiredVelocity);
+                    break;
+
+                case MovementMode.Flying:
+                    Flying(desiredVelocity);
+                    break;
+
+                case MovementMode.Swimming:
+                    Swimming(desiredVelocity);
+                    break;
+
+                case MovementMode.Custom:
+                    CustomMovementMode(desiredVelocity);
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            // Handle crouching state
+
+            Crouching();
+
+            // Handle jumping state
+
+            Jumping();
+
+            // Handle launching state
+
+            Launching();
+
+            // Move the character (perform collision constrained movement) with velocity updated by movement mode
+
+            characterMovement.Move(deltaTime);
         }
 
         /// <summary>
@@ -616,6 +708,15 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Manually releases the punch button.
+        /// </summary>
+
+        protected virtual void ReleasePunch()
+        {
+            _punchButtonPressed = false;
+        }
+
+        /// <summary>
         /// Handles punch logic while the character is grounded.
         /// </summary>
 
@@ -633,14 +734,14 @@ namespace EasyCharacterMovement
                 if (!_isGroundPunching)
                 {
                     _punchQueue.Enqueue(0); // Always start combo with the first punch
-                    nextComboStep = 1;      // Update the next combo step after the first punch
+                    _nextComboStep = 1;      // Update the next combo step after the first punch
                     ExecuteComboStep();
                 }
-                else if (nextComboStep < _comboAnimations.Length)
+                else if (_nextComboStep < _comboAnimations.Length)
                 {
                     // Queue the next punch if already punching
-                    _punchQueue.Enqueue(nextComboStep);
-                    nextComboStep++;  // Move to the next step in the combo
+                    _punchQueue.Enqueue(_nextComboStep);
+                    _nextComboStep++;  // Move to the next step in the combo
                 }
 
                 ReleasePunch(); // Reset the button press
@@ -730,6 +831,37 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Reset the character's combo to a default state.
+        /// </summary>
+
+        protected virtual void ResetCombo()
+        {
+            // Transition back to idle animation
+            if (IsGrounded())
+                PlayIdleAnimation();
+
+            // Reset combo state
+            _isGroundPunching = false;
+            _currentComboStep = 0;
+
+            // Clear the queue
+            _punchQueue.Clear();
+
+            // Re-enable input when done punching
+            movementInputAction.Enable();
+            jumpInputAction.Enable();
+        }
+
+        /// <summary>
+        /// Starts a cooldown to avoid punch spamming.
+        /// </summary>
+
+        private void StartCooldown()
+        {
+            _cooldownTimer = _cooldownDuration;
+        }
+
+        /// <summary>
         /// Handles punch logic while the character is in the air.
         /// </summary>
 
@@ -755,42 +887,11 @@ namespace EasyCharacterMovement
                     state.Events.OnEnd = () =>
                     {
                         StartCoroutine(HoldLastFrame(state, 0.1f));
-                        
                     };
                 }
 
                 ReleasePunch();
             }
-        }
-
-        /// <summary>
-        /// Manually releases the punch button.
-        /// </summary>
-
-        protected virtual void ReleasePunch()
-        {
-            _punchButtonPressed = false;
-        }
-
-        /// <summary>
-        /// Reset the character's combo to a default state.
-        /// </summary>
-
-        protected virtual void ResetCombo()
-        {
-            // Transition back to idle animation
-            PlayIdleAnimation();
-
-            // Reset combo state
-            _isGroundPunching = false;
-            _currentComboStep = 0;
-
-            // Clear the queue
-            _punchQueue.Clear();
-
-            // Re-enable input when done punching
-            movementInputAction.Enable();
-            jumpInputAction.Enable();
         }
 
         /// <summary>
@@ -804,15 +905,6 @@ namespace EasyCharacterMovement
             _isAirPunching = false;
 
             SetRotationMode(RotationMode.OrientToMovement);
-        }
-
-        /// <summary>
-        /// Starts a cooldown to avoid punch spamming.
-        /// </summary>
-
-        private void StartCooldown()
-        {
-            _cooldownTimer = _cooldownDuration;
         }
 
         /// <summary>
@@ -842,6 +934,48 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Handle launching state.
+        /// Eg: check if a launch was queued.
+        /// </summary>
+
+        protected virtual void Launching()
+        {
+            if (_queueLaunch)
+            {
+                _queueLaunch = false;
+
+                if (_isAirPunching)
+                    ResetAirPunch();
+
+                if (_isBlocking)
+                    StopBlocking();
+
+                Vector3 newVerticalVelocity = GetVelocity();
+                newVerticalVelocity.y = 0.0f;
+                SetVelocity(newVerticalVelocity);
+
+                SetMovementMode(MovementMode.Falling);
+
+                PauseGroundConstraint();
+
+                LaunchCharacter(GetUpVector() * 4f, true);
+
+                _waitingForJumpApex = true;
+
+                Launched?.Invoke();
+            }
+        }
+
+        /// <summary>
+        /// Play the launch animation for the character.
+        /// </summary>
+
+        protected virtual void PlayLaunchAnimation()
+        {
+            _animancer.TryPlay("_Launch", 0.25f);
+        }
+
+        /// <summary>
         /// Sets the right foot as up so we can use that foot to jump.
         /// </summary>
 
@@ -862,7 +996,7 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Play the jump animation for the character and check for their apex.
+        /// Play the jump animation for the character.
         /// </summary>
 
         protected virtual void PlayJumpAnimation()
@@ -932,6 +1066,34 @@ namespace EasyCharacterMovement
                 var state = _animancer.TryPlay("_Run", 0.25f);
                 state.Speed = 1.25f * inputMagnitude;
             }
+        }
+
+        /// <summary>
+        /// Speed the character up.
+        /// </summary>
+
+        public void BoostSpeed()
+        {
+
+        }
+
+        /// <summary>
+        /// Queue the character to launch.
+        /// Happens during the next simulation step.
+        /// </summary>
+
+        public void QueueLaunch()
+        {
+            _queueLaunch = true;
+        }
+
+        /// <summary>
+        /// Damage the character and push them back.
+        /// </summary>
+
+        public void TakeDamage()
+        {
+
         }
 
         #endregion
