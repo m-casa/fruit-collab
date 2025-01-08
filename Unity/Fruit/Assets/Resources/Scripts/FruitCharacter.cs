@@ -398,12 +398,10 @@ namespace EasyCharacterMovement
         protected override void Move()
         {
             // If Character movement is disabled, return
-
             if (IsDisabled())
                 return;
 
             // Toggle walking / falling mode based on ground status
-
             if (IsWalking() && !characterMovement.isGrounded)
                 SetMovementMode(MovementMode.Falling);
 
@@ -411,7 +409,6 @@ namespace EasyCharacterMovement
                 SetMovementMode(MovementMode.Walking);
 
             // Compute new velocity based on Character's movement mode
-
             Vector3 desiredVelocity = CalcDesiredVelocity();
 
             switch (_movementMode)
@@ -445,19 +442,15 @@ namespace EasyCharacterMovement
             }
 
             // Handle crouching state
-
             Crouching();
 
             // Handle jumping state
-
             Jumping();
 
             // Handle launching state
-
             Launching();
 
             // Move the character (perform collision constrained movement) with velocity updated by movement mode
-
             characterMovement.Move(deltaTime);
         }
 
@@ -548,7 +541,7 @@ namespace EasyCharacterMovement
             HandleCameraInput();
 
             HandleLeanInput();
-
+            
             //Debug.DrawLine(transform.position, GetVelocity() * 10, Color.red, .5f);
         }
 
@@ -574,6 +567,30 @@ namespace EasyCharacterMovement
             HandlePunching();
 
             HandleBlocking();
+        }
+
+        /// <summary>
+        /// Disables Player input.
+        /// </summary>
+
+        protected virtual void DisableInput()
+        {
+            movementInputAction.Disable();
+            jumpInputAction.Disable();
+            punchInputAction.Disable();
+            blockInputAction.Disable();
+        }
+
+        /// <summary>
+        /// Enables Player input.
+        /// </summary>
+
+        protected virtual void EnableInput()
+        {
+            movementInputAction.Enable();
+            jumpInputAction.Enable();
+            punchInputAction.Enable();
+            blockInputAction.Enable();
         }
 
         /// <summary>
@@ -695,6 +712,7 @@ namespace EasyCharacterMovement
                 if (!_isPunching)
                 {
                     _isBlocking = true;
+
                     punchInputAction.Disable();
                     movementInputAction.Disable();
                     jumpInputAction.Disable();
@@ -936,6 +954,7 @@ namespace EasyCharacterMovement
             if (_isBlocking)
             {
                 _isBlocking = false;
+
                 punchInputAction.Enable();
                 movementInputAction.Enable();
                 jumpInputAction.Enable();
@@ -967,6 +986,7 @@ namespace EasyCharacterMovement
 
                 PauseGroundConstraint();
 
+                // Launch the player upwards
                 LaunchCharacter(GetUpVector() * 4f, true);
 
                 _waitingForJumpApex = true;
@@ -1142,22 +1162,17 @@ namespace EasyCharacterMovement
             if (!_takingDamage)
             {
                 _takingDamage = true;
-                ResetAirPunch();
+
                 ResetCombo();
+                ResetAirPunch();
 
-                movementInputAction.Disable();
-                jumpInputAction.Disable();
-                punchInputAction.Disable();
-                blockInputAction.Disable();
-
-                Vector3 newVerticalVelocity = GetVelocity();
-                newVerticalVelocity.y = 0.0f;
-                SetVelocity(newVerticalVelocity);
-
-                PauseGroundConstraint();
+                DisableInput();
 
                 SetVelocity(Vector3.zero);
 
+                PauseGroundConstraint();
+
+                // Push the player back
                 LaunchCharacter((direction * 5f) + (GetUpVector() * 2.5f), true);
                 
                 if (_animancer.States.TryGet("_Hurt", out var state))
@@ -1178,10 +1193,7 @@ namespace EasyCharacterMovement
         {
             _takingDamage = false;
 
-            movementInputAction.Enable();
-            jumpInputAction.Enable();
-            punchInputAction.Enable();
-            blockInputAction.Enable();
+            EnableInput();
         }
 
         #endregion
