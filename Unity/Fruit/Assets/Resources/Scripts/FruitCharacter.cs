@@ -20,7 +20,7 @@ namespace EasyCharacterMovement
 
         private ThirdPersonCameraController _cameraController;
         private bool _rightFootUp, _isSpeeding, _queueLaunch, 
-            _blockButtonPressed, _isBlocking,
+            _blockButtonPressed, _isBlocking, _takingDamage, 
             _punchButtonPressed, _isGroundPunching, _isAirPunching;
         private int _currentComboStep;
         private int _nextComboStep; // Keep track of the next combo step
@@ -358,7 +358,8 @@ namespace EasyCharacterMovement
 
             _blockButtonPressed = false;
             _isBlocking = false;
-            
+            _takingDamage = false;
+
             _currentComboStep = 0;
             _nextComboStep = 0;
             _cooldownTimer = 0f;
@@ -466,7 +467,7 @@ namespace EasyCharacterMovement
 
         protected override void Animate()
         {
-            if (_isPunching || _isBlocking)
+            if (_isPunching || _isBlocking || _takingDamage)
             {
                 // Override movement animations when punching/blocking
                 return;
@@ -1066,7 +1067,6 @@ namespace EasyCharacterMovement
                 // Input magnitude determines how fast to animate the run animation
                 //  when the player is slightly tilting the control stick
                 float inputMagnitude = movementInput.magnitude;
-                
 
                 if (inputMagnitude < 0.25f)
                     inputMagnitude = 0.25f;
@@ -1087,7 +1087,6 @@ namespace EasyCharacterMovement
                 // Input magnitude determines how fast to animate the run animation
                 //  when the player is slightly tilting the control stick
                 float inputMagnitude = movementInput.magnitude;
-
 
                 if (inputMagnitude < 0.25f)
                     inputMagnitude = 0.25f;
@@ -1138,9 +1137,51 @@ namespace EasyCharacterMovement
         /// Damage the character and push them back.
         /// </summary>
 
-        public void TakeDamage()
+        public void TakeDamage(float effectDuration, Vector3 direction)
         {
+            if (!_takingDamage)
+            {
+                _takingDamage = true;
+                ResetAirPunch();
+                ResetCombo();
 
+                movementInputAction.Disable();
+                jumpInputAction.Disable();
+                punchInputAction.Disable();
+                blockInputAction.Disable();
+
+                Vector3 newVerticalVelocity = GetVelocity();
+                newVerticalVelocity.y = 0.0f;
+                SetVelocity(newVerticalVelocity);
+
+                PauseGroundConstraint();
+
+                SetVelocity(Vector3.zero);
+
+                LaunchCharacter((direction * 5f) + (GetUpVector() * 2.5f), true);
+                
+                if (_animancer.States.TryGet("_Hurt", out var state))
+                {
+                    _animancer.Play(state);
+                    state.Time = 0f;
+                }
+
+                Invoke(nameof(StopDamage), effectDuration);
+            }
+        }
+
+        /// <summary>
+        /// Take the character out of the damage state.
+        /// </summary>
+
+        private void StopDamage()
+        {
+            _takingDamage = false;
+
+            movementInputAction.Enable();
+            jumpInputAction.Enable();
+            punchInputAction.Enable();
+            blockInputAction.Enable();
         }
 
         #endregion
