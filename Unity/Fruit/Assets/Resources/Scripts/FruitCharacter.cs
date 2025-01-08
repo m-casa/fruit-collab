@@ -19,7 +19,8 @@ namespace EasyCharacterMovement
         #region FIELDS
 
         private ThirdPersonCameraController _cameraController;
-        private bool _queueLaunch, _rightFootUp, _blockButtonPressed, _isBlocking,
+        private bool _rightFootUp, _isSpeeding, _queueLaunch, 
+            _blockButtonPressed, _isBlocking,
             _punchButtonPressed, _isGroundPunching, _isAirPunching;
         private int _currentComboStep;
         private int _nextComboStep; // Keep track of the next combo step
@@ -347,9 +348,9 @@ namespace EasyCharacterMovement
         {
             base.OnAwake();
 
-            _queueLaunch = false;
-
             _rightFootUp = true;
+            _isSpeeding = false;
+            _queueLaunch = false;
 
             _punchButtonPressed = false;
             _isGroundPunching = false;
@@ -482,7 +483,14 @@ namespace EasyCharacterMovement
 
                 else if (movementInput != Vector2.zero)
                 {
-                    PlayRunAnimation(movementInput);
+                    if (_isSpeeding)
+                    {
+                        PlaySprintAnimation(movementInput);
+                    }
+                    else
+                    {
+                        PlayRunAnimation(movementInput);
+                    }
                 }
             }
             else if (!WaitingForJumpApex())
@@ -1069,12 +1077,51 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Play the sprint animation for the character.
+        /// </summary>
+
+        protected virtual void PlaySprintAnimation(Vector2 movementInput)
+        {
+            if (movementInput.y != 0f || movementInput.x != 0f)
+            {
+                // Input magnitude determines how fast to animate the run animation
+                //  when the player is slightly tilting the control stick
+                float inputMagnitude = movementInput.magnitude;
+
+
+                if (inputMagnitude < 0.25f)
+                    inputMagnitude = 0.25f;
+
+                var state = _animancer.TryPlay("_Sprint", 0.25f);
+                state.Speed = 1.25f * inputMagnitude;
+            }
+        }
+
+        /// <summary>
         /// Speed the character up.
         /// </summary>
 
-        public void BoostSpeed()
+        public void BoostSpeed(float effectDuration)
         {
+            if (!_isSpeeding)
+            {
+                maxWalkSpeed = 5f;
 
+                _isSpeeding = true;
+
+                Invoke(nameof(ResetSpeed), effectDuration);
+            }
+        }
+
+        /// <summary>
+        /// Reset the character's speed.
+        /// </summary>
+
+        private void ResetSpeed()
+        {
+            maxWalkSpeed = 3f;
+
+            _isSpeeding = false;
         }
 
         /// <summary>

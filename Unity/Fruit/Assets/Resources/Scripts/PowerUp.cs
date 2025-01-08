@@ -26,7 +26,7 @@ public class PowerUp : MonoBehaviour
         switch (powerUpType)
         {
             case PowerUpType.SpeedBoost:
-                player.BoostSpeed();
+                player.BoostSpeed(effectDuration);
                 break;
             case PowerUpType.Launcher:
                 player.QueueLaunch();
