@@ -18,7 +18,7 @@ namespace EasyCharacterMovement
     {
         #region FIELDS
 
-        private ThirdPersonCameraController _cameraController;
+        //private ThirdPersonCameraController _cameraController;
         private bool _rightFootUp, _isSpeeding, _queueLaunch, 
             _blockButtonPressed, _isBlocking, _takingDamage, 
             _punchButtonPressed, _isGroundPunching, _isAirPunching;
@@ -47,16 +47,16 @@ namespace EasyCharacterMovement
         /// Cached camera controller.
         /// </summary>
 
-        protected ThirdPersonCameraController cameraController
-        {
-            get
-            {
-                if (_cameraController == null)
-                    _cameraController = camera.GetComponent<ThirdPersonCameraController>();
+        //protected ThirdPersonCameraController cameraController
+        //{
+        //    get
+        //    {
+        //        if (_cameraController == null)
+        //            _cameraController = camera.GetComponent<ThirdPersonCameraController>();
 
-                return _cameraController;
-            }
-        }
+        //        return _cameraController;
+        //    }
+        //}
 
         #endregion
 
@@ -78,19 +78,19 @@ namespace EasyCharacterMovement
         /// Mouse Look InputAction.
         /// </summary>
 
-        protected InputAction mouseLookInputAction { get; set; }
+        //protected InputAction mouseLookInputAction { get; set; }
 
         /// <summary>
         /// Mouse Scroll InputAction.
         /// </summary>
 
-        protected InputAction mouseScrollInputAction { get; set; }
+        //protected InputAction mouseScrollInputAction { get; set; }
 
         /// <summary>
         /// Controller Look InputAction.
         /// </summary>
 
-        protected InputAction controllerLookInputAction { get; set; }
+        //protected InputAction controllerLookInputAction { get; set; }
 
         /// <summary>
         /// Cursor Lock InputAction.
@@ -137,13 +137,13 @@ namespace EasyCharacterMovement
         /// Return its current value or zero if no valid InputAction found.
         /// </summary>
 
-        protected virtual Vector2 GetMouseLookInput()
-        {
-            if (mouseLookInputAction != null)
-                return mouseLookInputAction.ReadValue<Vector2>();
+        //protected virtual Vector2 GetMouseLookInput()
+        //{
+        //    if (mouseLookInputAction != null)
+        //        return mouseLookInputAction.ReadValue<Vector2>();
 
-            return Vector2.zero;
-        }
+        //    return Vector2.zero;
+        //}
 
 
         /// <summary>
@@ -151,50 +151,50 @@ namespace EasyCharacterMovement
         /// Return its current value or zero if no valid InputAction found.
         /// </summary>
 
-        protected virtual Vector2 GetMouseScrollInput()
-        {
-            if (mouseScrollInputAction != null)
-                return mouseScrollInputAction.ReadValue<Vector2>();
+        //protected virtual Vector2 GetMouseScrollInput()
+        //{
+        //    if (mouseScrollInputAction != null)
+        //        return mouseScrollInputAction.ReadValue<Vector2>();
 
-            return Vector2.zero;
-        }
+        //    return Vector2.zero;
+        //}
 
         /// <summary>
         /// Gets the controller look input value.
         /// Return its current value or zero if no valid InputAction found.
         /// </summary>
 
-        protected virtual Vector2 GetControllerLookInput()
-        {
-            if (controllerLookInputAction != null)
-                return controllerLookInputAction.ReadValue<Vector2>();
+        //protected virtual Vector2 GetControllerLookInput()
+        //{
+        //    if (controllerLookInputAction != null)
+        //        return controllerLookInputAction.ReadValue<Vector2>();
 
-            return Vector2.zero;
-        }
+        //    return Vector2.zero;
+        //}
 
         /// <summary>
         /// Handle cursor lock InputAction.
         /// </summary>
 
-        protected virtual void OnCursorLock(InputAction.CallbackContext context)
-        {
-            // Do not allow to lock cursor if using UI
-            if (EventSystem.current && EventSystem.current.IsPointerOverGameObject())
-                return;
+        //protected virtual void OnCursorLock(InputAction.CallbackContext context)
+        //{
+        //    // Do not allow to lock cursor if using UI
+        //    if (EventSystem.current && EventSystem.current.IsPointerOverGameObject())
+        //        return;
 
-            if (context.started)
-                cameraController.LockCursor();
-        }
+        //    if (context.started)
+        //        cameraController.LockCursor();
+        //}
 
         /// <summary>
         /// Handle cursor unlock InputAction.
         /// </summary>
 
-        protected virtual void OnCursorUnlock(InputAction.CallbackContext context)
-        {
-            if (context.started)
-                cameraController.UnlockCursor();
-        }
+        //protected virtual void OnCursorUnlock(InputAction.CallbackContext context)
+        //{
+        //    if (context.started)
+        //        cameraController.UnlockCursor();
+        //}
 
         #endregion
 
@@ -249,30 +249,30 @@ namespace EasyCharacterMovement
             }
 
             // Setup Mouse input action handlers
-            mouseLookInputAction = inputActions.FindAction("Mouse Look");
-            mouseLookInputAction?.Enable();
+            //mouseLookInputAction = inputActions.FindAction("Mouse Look");
+            //mouseLookInputAction?.Enable();
 
-            mouseScrollInputAction = inputActions.FindAction("Mouse Scroll");
-            mouseScrollInputAction?.Enable();
+            //mouseScrollInputAction = inputActions.FindAction("Mouse Scroll");
+            //mouseScrollInputAction?.Enable();
 
             // Setup Controller input action handlers
-            controllerLookInputAction = inputActions.FindAction("Controller Look");
-            controllerLookInputAction?.Enable();
+            //controllerLookInputAction = inputActions.FindAction("Controller Look");
+            //controllerLookInputAction?.Enable();
 
             // Setup Cursor input action handlers
-            cursorLockInputAction = inputActions.FindAction("Cursor Lock");
-            if (cursorLockInputAction != null)
-            {
-                cursorLockInputAction.started += OnCursorLock;
-                cursorLockInputAction.Enable();
-            }
+            //cursorLockInputAction = inputActions.FindAction("Cursor Lock");
+            //if (cursorLockInputAction != null)
+            //{
+            //    cursorLockInputAction.started += OnCursorLock;
+            //    cursorLockInputAction.Enable();
+            //}
 
-            cursorUnlockInputAction = inputActions.FindAction("Cursor Unlock");
-            if (cursorUnlockInputAction != null)
-            {
-                cursorUnlockInputAction.started += OnCursorUnlock;
-                cursorUnlockInputAction.Enable();
-            }
+            //cursorUnlockInputAction = inputActions.FindAction("Cursor Unlock");
+            //if (cursorUnlockInputAction != null)
+            //{
+            //    cursorUnlockInputAction.started += OnCursorUnlock;
+            //    cursorUnlockInputAction.Enable();
+            //}
         }
 
         /// <summary>
@@ -304,39 +304,39 @@ namespace EasyCharacterMovement
                 blockInputAction = null;
             }
 
-            if (mouseLookInputAction != null)
-            {
-                mouseLookInputAction.Disable();
-                mouseLookInputAction = null;
-            }
+            //if (mouseLookInputAction != null)
+            //{
+            //    mouseLookInputAction.Disable();
+            //    mouseLookInputAction = null;
+            //}
 
-            if (mouseScrollInputAction != null)
-            {
-                mouseScrollInputAction.Disable();
-                mouseScrollInputAction = null;
-            }
+            //if (mouseScrollInputAction != null)
+            //{
+            //    mouseScrollInputAction.Disable();
+            //    mouseScrollInputAction = null;
+            //}
 
-            if (controllerLookInputAction != null)
-            {
-                controllerLookInputAction.Disable();
-                controllerLookInputAction = null;
-            }
+            //if (controllerLookInputAction != null)
+            //{
+            //    controllerLookInputAction.Disable();
+            //    controllerLookInputAction = null;
+            //}
 
-            if (cursorLockInputAction != null)
-            {
-                cursorLockInputAction.started -= OnCursorLock;
+            //if (cursorLockInputAction != null)
+            //{
+            //    cursorLockInputAction.started -= OnCursorLock;
 
-                cursorLockInputAction.Disable();
-                cursorLockInputAction = null;
-            }
+            //    cursorLockInputAction.Disable();
+            //    cursorLockInputAction = null;
+            //}
 
-            if (cursorUnlockInputAction != null)
-            {
-                cursorUnlockInputAction.started -= OnCursorUnlock;
+            //if (cursorUnlockInputAction != null)
+            //{
+            //    cursorUnlockInputAction.started -= OnCursorUnlock;
 
-                cursorUnlockInputAction.Disable();
-                cursorUnlockInputAction = null;
-            }
+            //    cursorUnlockInputAction.Disable();
+            //    cursorUnlockInputAction = null;
+            //}
         }
 
         /// <summary>
@@ -538,7 +538,7 @@ namespace EasyCharacterMovement
         {
             base.OnUpdate();
 
-            HandleCameraInput();
+            //HandleCameraInput();
 
             HandleLeanInput();
             
@@ -546,14 +546,14 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Our LateUpdate method.
+        /// Our LateFixedUpdate method. E.g called AFTER Physics internal update.
         /// </summary>
 
-        protected override void OnLateUpdate()
+        protected override void OnLateFixedUpdate()
         {
-            base.OnLateUpdate();
-
             ApplyLean();
+            
+            base.OnLateFixedUpdate();
         }
 
         /// <summary>
@@ -597,40 +597,40 @@ namespace EasyCharacterMovement
         /// Perform camera related input actions, eg: Look Up / Down, Turn, etc.
         /// </summary>
 
-        protected virtual void HandleCameraInput()
-        {
-            if (!cameraController.IsCursorLocked())
-                return;
+        //protected virtual void HandleCameraInput()
+        //{
+        //    if (!cameraController.IsCursorLocked())
+        //        return;
 
-            Vector2 mouseLookInput = GetMouseLookInput();
-            if (mouseLookInput.sqrMagnitude > 0)
-            {
-                // Mouse look input
-                if (mouseLookInput.x != 0.0f)
-                    cameraController.Turn(mouseLookInput.x);
+        //    Vector2 mouseLookInput = GetMouseLookInput();
+        //    if (mouseLookInput.sqrMagnitude > 0)
+        //    {
+        //        // Mouse look input
+        //        if (mouseLookInput.x != 0.0f)
+        //            cameraController.Turn(mouseLookInput.x);
 
-                if (mouseLookInput.y != 0.0f)
-                    cameraController.LookUp(mouseLookInput.y);
+        //        if (mouseLookInput.y != 0.0f)
+        //            cameraController.LookUp(mouseLookInput.y);
 
-            }
-            else
-            {
-                // Controller look input
-                Vector2 controllerLookInput = GetControllerLookInput();
+        //    }
+        //    else
+        //    {
+        //        // Controller look input
+        //        Vector2 controllerLookInput = GetControllerLookInput();
 
-                if (controllerLookInput.x != 0.0f)
-                    cameraController.TurnAtRate(controllerLookInput.x);
+        //        if (controllerLookInput.x != 0.0f)
+        //            cameraController.TurnAtRate(controllerLookInput.x);
 
-                if (controllerLookInput.y != 0.0f)
-                    cameraController.LookUpAtRate(controllerLookInput.y);
-            }
+        //        if (controllerLookInput.y != 0.0f)
+        //            cameraController.LookUpAtRate(controllerLookInput.y);
+        //    }
 
-            // Mouse scroll input
-            Vector2 mouseScrollInput = GetMouseScrollInput();
+        //    // Mouse scroll input
+        //    Vector2 mouseScrollInput = GetMouseScrollInput();
 
-            if (mouseScrollInput.y != 0.0f)
-                cameraController.ZoomAtRate(mouseScrollInput.y);
-        }
+        //    if (mouseScrollInput.y != 0.0f)
+        //        cameraController.ZoomAtRate(mouseScrollInput.y);
+        //}
 
         /// <summary>
         /// Saves the rotation data needed to lean the character in the direction they move.
