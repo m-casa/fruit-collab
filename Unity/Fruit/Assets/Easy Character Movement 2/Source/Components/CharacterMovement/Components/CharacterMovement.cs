@@ -1762,8 +1762,8 @@ namespace EasyCharacterMovement
             _rigidbody = GetComponent<Rigidbody>();
             if (_rigidbody)
             {
-                _rigidbody.drag = 0.0f;
-                _rigidbody.angularDrag = 0.0f;
+                _rigidbody.linearDamping = 0.0f;
+                _rigidbody.angularDamping = 0.0f;
 
                 _rigidbody.useGravity = false;
                 _rigidbody.isKinematic = true;

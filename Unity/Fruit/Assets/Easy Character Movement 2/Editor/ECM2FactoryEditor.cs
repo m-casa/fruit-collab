@@ -14,8 +14,8 @@ namespace EasyCharacterMovement.Editor
         {
             Rigidbody rb = go.GetComponent<Rigidbody>();
 
-            rb.drag = 0.0f;
-            rb.angularDrag = 0.0f;
+            rb.linearDamping = 0.0f;
+            rb.angularDamping = 0.0f;
             rb.useGravity = false;
             rb.isKinematic = true;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
