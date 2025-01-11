@@ -14,9 +14,9 @@ public class MenuManager : MonoBehaviour
     private void Start()
     {
         // Show the start screen initially
-        startScreenUI.SetActive(true);
-        mainMenuUI.SetActive(false);
-        pauseMenuUI.SetActive(false);
+        //startScreenUI.SetActive(true);
+        //mainMenuUI.SetActive(false);
+        //pauseMenuUI.SetActive(false);
     }
 
     private void Update()
