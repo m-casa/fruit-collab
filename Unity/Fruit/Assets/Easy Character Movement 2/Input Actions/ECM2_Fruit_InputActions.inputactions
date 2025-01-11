@@ -307,7 +307,7 @@
                 {
                     "name": "",
                     "id": "38d8e7fa-b15f-4e97-a0c0-e2bee1cc5d41",
-                    "path": "<Mouse>/leftButton",
+                    "path": "<Keyboard>/space",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard And Mouse",

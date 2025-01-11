@@ -1,10 +1,15 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
+using UnityEngine.UI;
 
 public class MenuManager : MonoBehaviour
 {
     #region FIELDS
+
+    //private bool isNavigating = false; // Track if navigation is in progress
+    private bool isGamePaused = false;
 
     [Header("Camera")]
     [SerializeField] private CameraManager _cameraManager;
@@ -17,8 +22,8 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private GameObject _mainMenu; // Main menu UI
     [SerializeField] private GameObject _pauseMenu; // Pause menu UI
 
-    [Header("Game States")]
-    private bool isGamePaused = false;
+    //[Header("Event System")]
+    //[SerializeField] private EventSystem _eventSystem;
 
     #endregion
 
@@ -37,38 +42,59 @@ public class MenuManager : MonoBehaviour
         return navigationInputAction?.ReadValue<Vector2>() ?? Vector2.zero;
     }
 
+    //private void OnNavigate(InputAction.CallbackContext context)
+    //{
+    //    if (context.started)
+    //    {
+    //        if (_mainMenu.activeSelf)
+    //        {
+    //            if (isNavigating) return; // Prevent repeated navigation before release
+
+    //            Vector2 navigationInput = context.ReadValue<Vector2>();
+
+    //            if (navigationInput.y > 0) // Navigate up
+    //            {
+    //                MoveToNextSelectable(-1);
+    //            }
+    //            else if (navigationInput.y < 0) // Navigate down
+    //            {
+    //                MoveToNextSelectable(1);
+    //            }
+
+    //            isNavigating = true; // Block further navigation until release
+    //        }
+    //    }
+    //}
+
+    //private void OnNavigateEnd(InputAction.CallbackContext context)
+    //{
+    //    if (context.canceled)
+    //    {
+    //        isNavigating = false; // Allow navigation again when input is released
+    //    }
+    //}
+
     private void OnSelect(InputAction.CallbackContext context)
     {
-        if (context.started || context.performed)
-            return;
-            //Select();
+        //if (context.started || context.performed)
+        //{
+        //    // Simulate a button click on the currently selected UI element
+        //    var selectedObject = _eventSystem.currentSelectedGameObject;
+        //    if (selectedObject != null)
+        //    {
+        //        var button = selectedObject.GetComponent<UnityEngine.UI.Button>();
+        //        button?.onClick.Invoke();
+        //    }
+        //}
     }
 
     #endregion
 
     #region METHODS
 
-    private void OnEnable()
-    {
-        InitPlayerInput();
-    }
-
-    private void OnDisable()
-    {
-        DeinitPlayerInput();
-    }
-
-    private void Start()
-    {
-        // Show the start screen initially
-        _startScreen.SetActive(true);
-        _mainMenu.SetActive(false);
-        _pauseMenu.SetActive(false);
-    }
-
     private void InitPlayerInput()
     {
-        // Attempts to cache Character InputActions (if any)
+        // Attempts to cache InputActions (if any)
         if (_inputActions == null)
             return;
 
@@ -109,10 +135,26 @@ public class MenuManager : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        InitPlayerInput();
+    }
+
+    private void OnDisable()
+    {
+        DeinitPlayerInput();
+    }
+
+    private void Start()
+    {
+        // Show the start screen initially
+        _startScreen.SetActive(true);
+        _mainMenu.SetActive(false);
+        _pauseMenu.SetActive(false);
+    }
+
     private void Update()
     {
-        Vector2 navigationInput = GetNavigationInput();
-
         // Detect any button press for the start screen
         if (_startScreen.activeSelf && IsAnyInputPressed())
         {
@@ -125,6 +167,11 @@ public class MenuManager : MonoBehaviour
         {
             //TogglePauseMenu();
         }
+
+        //if (_mainMenu.activeSelf)
+        //{
+        //    HandleNavigationInput();
+        //}
     }
 
     private bool IsAnyInputPressed()
@@ -158,6 +205,40 @@ public class MenuManager : MonoBehaviour
         _cameraManager.TransitionToMainMenu();
         // Additional logic for starting the game (e.g., enabling player controls).
     }
+
+    //private void HandleNavigationInput()
+    //{
+    //    if (isNavigating) return; // Prevent repeated navigation before release
+
+    //    Vector2 navigationInput = GetNavigationInput();
+
+    //    if (navigationInput.y > 0) // Navigate up
+    //    {
+    //        MoveToNextSelectable(-1);
+    //    }
+    //    else if (navigationInput.y < 0) // Navigate down
+    //    {
+    //        MoveToNextSelectable(1);
+    //    }
+
+    //    isNavigating = true; // Block further navigation until release
+    //}
+
+    //private void MoveToNextSelectable(int direction)
+    //{
+    //    if (_eventSystem.currentSelectedGameObject == null) return;
+
+    //    var currentSelectable = _eventSystem.currentSelectedGameObject.GetComponent<UnityEngine.UI.Selectable>();
+    //    if (currentSelectable == null) return;
+
+    //    // Find the next selectable in the given direction
+    //    Selectable nextSelectable = (direction > 0) ? currentSelectable.FindSelectableOnDown() : currentSelectable.FindSelectableOnUp();
+
+    //    if (nextSelectable != null)
+    //    {
+    //        nextSelectable.Select();
+    //    }
+    //}
 
     public void OnHostGame()
     {
