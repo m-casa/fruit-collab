@@ -130,12 +130,12 @@ GameObject:
   - component: {fileID: 17668599}
   - component: {fileID: 17668598}
   m_Layer: 0
-  m_Name: CinemachineCamera
+  m_Name: Start CC
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &17668598
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -150,7 +150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Priority:
     Enabled: 1
-    m_Value: 4
+    m_Value: 10
   OutputChannel: 1
   StandbyUpdate: 2
   m_StreamingVersion: 20241001
@@ -608,12 +608,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9835ba3022e88942aeca16e7ad1e89d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startCamera: {fileID: 0}
-  mainMenuCamera: {fileID: 0}
-  characterSelectCamera: {fileID: 0}
-  startUI: {fileID: 0}
-  mainMenuUI: {fileID: 0}
-  characterSelectUI: {fileID: 0}
+  startCamera: {fileID: 17668598}
+  mainMenuCamera: {fileID: 529986793}
+  characterSelectCamera: {fileID: 1385322579}
+  lobbyCamera: {fileID: 527125334}
 --- !u!1 &199572804
 GameObject:
   m_ObjectHideFlags: 0
@@ -1144,7 +1142,7 @@ GameObject:
   - component: {fileID: 527125335}
   - component: {fileID: 527125334}
   m_Layer: 0
-  m_Name: CinemachineCamera (3)
+  m_Name: Lobby CC
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1164,7 +1162,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Priority:
     Enabled: 1
-    m_Value: 1
+    m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
   m_StreamingVersion: 20241001
@@ -1219,7 +1217,7 @@ GameObject:
   - component: {fileID: 529986794}
   - component: {fileID: 529986793}
   m_Layer: 0
-  m_Name: CinemachineCamera (1)
+  m_Name: Main Menu CC
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1239,7 +1237,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Priority:
     Enabled: 1
-    m_Value: 3
+    m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
   m_StreamingVersion: 20241001
@@ -1860,10 +1858,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: Peach Player
       objectReference: {fileID: 0}
+    - target: {fileID: 2606219565802472321, guid: b2caf19a434097841ae6e9bc4e3bd89d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5116728401642926800, guid: b2caf19a434097841ae6e9bc4e3bd89d, type: 3}
       propertyPath: _rootTransform
       value: 
       objectReference: {fileID: 1456075685}
+    - target: {fileID: 5116728401642926800, guid: b2caf19a434097841ae6e9bc4e3bd89d, type: 3}
+      propertyPath: _perchAdditionalHeight
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5116728401642926800, guid: b2caf19a434097841ae6e9bc4e3bd89d, type: 3}
+      propertyPath: _useFlatBaseForGroundChecks
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8180022915292359122, guid: b2caf19a434097841ae6e9bc4e3bd89d, type: 3}
       propertyPath: m_UpdateMode
       value: 1
@@ -2140,8 +2150,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.038103197, y: -0.95148176, z: 0.1315805, w: 0.2755309}
-  m_LocalPosition: {x: -0.64, y: 10.049825, z: 3.21}
+  m_LocalRotation: {x: 0.09864476, y: -0.89986205, z: 0.2718729, w: 0.32650065}
+  m_LocalPosition: {x: 4.656705, y: 14.928503, z: 6.564249}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2598,7 +2608,7 @@ GameObject:
   - component: {fileID: 1385322580}
   - component: {fileID: 1385322579}
   m_Layer: 0
-  m_Name: CinemachineCamera (2)
+  m_Name: Character Select CC
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2618,7 +2628,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Priority:
     Enabled: 1
-    m_Value: 2
+    m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
   m_StreamingVersion: 20241001
@@ -3307,9 +3317,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb44a623a09a74047b80a2e15761408b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startScreenUI: {fileID: 1389900801}
-  mainMenuUI: {fileID: 566991580}
-  pauseMenuUI: {fileID: 554620204}
+  _cameraManager: {fileID: 151083644}
+  _inputActions: {fileID: -944628639613478452, guid: be75f5bbb6028fd4689fb7b31fd2ebfa, type: 3}
+  _startScreen: {fileID: 1389900801}
+  _mainMenu: {fileID: 566991580}
+  _pauseMenu: {fileID: 554620204}
 --- !u!1 &1617083926
 GameObject:
   m_ObjectHideFlags: 0
@@ -3795,7 +3807,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1906382237}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1492302186}
+        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
+        m_MethodName: OnHostGame
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1906382237
 MonoBehaviour:
   m_ObjectHideFlags: 0
