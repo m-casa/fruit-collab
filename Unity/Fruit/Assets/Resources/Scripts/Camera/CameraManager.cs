@@ -5,21 +5,31 @@ public class CameraManager : MonoBehaviour
 {
     #region FIELDS
 
+    public static CameraManager Instance { get; private set; }
+
     [SerializeField] private CinemachineCamera _startCamera;
     [SerializeField] private CinemachineCamera _mainMenuCamera;
     [SerializeField] private CinemachineCamera _characterSelectCamera;
     [SerializeField] private CinemachineCamera _lobbyCamera;
 
-    private CinemachineCamera _currentCamera;
-
     #endregion
 
     #region METHODS
 
-    private void Start()
+    void Awake()
     {
-        if (_startCamera != null)
-            _currentCamera = _startCamera;
+        // Check if we have an instance of the camera manager
+        if (Instance != null)
+        {
+            // If we already have a camera manager, destroy this one
+            Destroy(gameObject);
+        }
+
+        // Set this camera manager as the primary instance since we don't have one
+        Instance = this;
+
+        // When our new scene loads, don't delete the camera manager
+        DontDestroyOnLoad(gameObject);
     }
 
     public void TransitionToMainMenu()
