@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    #region FIELDS
+
     public static GameManager Instance { get; private set; }
 
     [Header("Game States")]
@@ -15,6 +17,10 @@ public class GameManager : MonoBehaviour
     [Header("Timers")]
     [SerializeField] private float _matchDuration = 150f; // 2:30 minutes in seconds
     private float _remainingTime;
+
+    #endregion
+
+    #region METHODS
 
     void Awake()
     {
@@ -107,4 +113,6 @@ public class GameManager : MonoBehaviour
         // Display crown on the winning player
         Debug.Log($"Player {playerIndex + 1} wins!");
     }
+
+    #endregion
 }
