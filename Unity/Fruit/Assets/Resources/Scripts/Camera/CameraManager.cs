@@ -14,7 +14,7 @@ public class CameraManager : MonoBehaviour
 
     #endregion
 
-    #region METHODS
+    #region MONOBEHAVIOR
 
     void Awake()
     {
@@ -31,6 +31,10 @@ public class CameraManager : MonoBehaviour
         // When our new scene loads, don't delete the camera manager
         DontDestroyOnLoad(gameObject);
     }
+
+    #endregion
+
+    #region METHODS
 
     public void TransitionToMainMenu()
     {

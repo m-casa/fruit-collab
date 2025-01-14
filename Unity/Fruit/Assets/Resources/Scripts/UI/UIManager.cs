@@ -22,7 +22,7 @@ public class UIManager : MonoBehaviour
 
     #endregion
 
-    #region METHODS
+    #region MONOBEHAVIOR
 
     void Awake()
     {
@@ -60,6 +60,10 @@ public class UIManager : MonoBehaviour
             // Toggle pause menu
         }
     }
+
+    #endregion
+
+    #region METHODS
 
     public void OnHostGame()
     {
@@ -177,5 +181,6 @@ public class UIManager : MonoBehaviour
     {
         SetActivePanel(_gameplayUI);
     }
+
     #endregion
 }

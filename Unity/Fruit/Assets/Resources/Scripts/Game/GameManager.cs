@@ -20,7 +20,7 @@ public class GameManager : MonoBehaviour
 
     #endregion
 
-    #region METHODS
+    #region MONOBEHAVIOR
 
     void Awake()
     {
@@ -38,17 +38,20 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    public void StartMatch()
-    {
-        _remainingTime = _matchDuration;
-        StartCoroutine(MatchTimer());
-    }
+    #endregion
+
+    #region METHODS
 
     public void SelectCharacter(string characterName)
     {
         if (IsCharacterAvailable(characterName))
         {
             _selectedCharacters.Add(characterName); // Mark character as taken
+
+            CameraManager.Instance.TransitionToLobby();
+            SpawnCharacter(characterName);
+            _inGame = true;
+
             Debug.Log($"{characterName} selected.");
         }
         else
@@ -72,14 +75,25 @@ public class GameManager : MonoBehaviour
         return _allCharacters.FindAll(character => IsCharacterAvailable(character));
     }
 
-    public void GetPlayerScores()
+    public void SpawnCharacter(string characterName)
     {
-        // Return each player's score
+
     }
 
     public bool InGame()
     {
         return _inGame;
+    }
+
+    public void StartMatch()
+    {
+        _remainingTime = _matchDuration;
+        StartCoroutine(MatchTimer());
+    }
+
+    public void GetPlayerScores()
+    {
+        // Return each player's score
     }
 
     private bool IsCharacterAvailable(string characterName)

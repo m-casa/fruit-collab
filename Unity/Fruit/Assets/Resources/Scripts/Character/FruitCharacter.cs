@@ -17,7 +17,12 @@ namespace EasyCharacterMovement
     {
         #region FIELDS
 
-        //private ThirdPersonCameraController _cameraController;
+        [SerializeField] private NamedAnimancerComponent _animancer;
+        [SerializeField] private Transform _chestTransform; // Reference to the chest bone
+        [SerializeField] private float _leanAmount = 12.5f; // Maximum degrees to lean
+        [SerializeField] private float _leanSpeed = 8f; // Speed at which the lean is applied
+        [SerializeField] private float _cooldownDuration = 0.15f; // Cooldown duration after combo ends or fails
+
         private bool _rightFootUp, _isSpeeding, _queueLaunch, 
             _blockButtonPressed, _isBlocking, _takingDamage, 
             _punchButtonPressed, _isGroundPunching, _isAirPunching;
@@ -30,32 +35,6 @@ namespace EasyCharacterMovement
         private Quaternion _chestTargetRotation; // Target rotation for the lean
 
         private bool _isPunching => _isGroundPunching || _isAirPunching;
-
-        [SerializeField] private NamedAnimancerComponent _animancer;
-        [SerializeField] private Transform _chestTransform; // Reference to the chest bone
-        [SerializeField] private float _leanAmount = 12.5f; // Maximum degrees to lean
-        [SerializeField] private float _leanSpeed = 8f; // Speed at which the lean is applied
-        [SerializeField] private float _cooldownDuration = 0.15f; // Cooldown duration after combo ends or fails
-
-
-        #endregion
-
-        #region PROPERTIES
-
-        /// <summary>
-        /// Cached camera controller.
-        /// </summary>
-
-        //protected ThirdPersonCameraController cameraController
-        //{
-        //    get
-        //    {
-        //        if (_cameraController == null)
-        //            _cameraController = camera.GetComponent<ThirdPersonCameraController>();
-
-        //        return _cameraController;
-        //    }
-        //}
 
         #endregion
 
@@ -72,24 +51,6 @@ namespace EasyCharacterMovement
         /// </summary>
 
         protected InputAction blockInputAction { get; set; }
-
-        /// <summary>
-        /// Mouse Look InputAction.
-        /// </summary>
-
-        //protected InputAction mouseLookInputAction { get; set; }
-
-        /// <summary>
-        /// Mouse Scroll InputAction.
-        /// </summary>
-
-        //protected InputAction mouseScrollInputAction { get; set; }
-
-        /// <summary>
-        /// Controller Look InputAction.
-        /// </summary>
-
-        //protected InputAction controllerLookInputAction { get; set; }
 
         /// <summary>
         /// Cursor Lock InputAction.
@@ -131,70 +92,6 @@ namespace EasyCharacterMovement
                 StopBlocking();
         }
 
-        /// <summary>
-        /// Gets the mouse look value.
-        /// Return its current value or zero if no valid InputAction found.
-        /// </summary>
-
-        //protected virtual Vector2 GetMouseLookInput()
-        //{
-        //    if (mouseLookInputAction != null)
-        //        return mouseLookInputAction.ReadValue<Vector2>();
-
-        //    return Vector2.zero;
-        //}
-
-
-        /// <summary>
-        /// Gets the mouse scroll input value.
-        /// Return its current value or zero if no valid InputAction found.
-        /// </summary>
-
-        //protected virtual Vector2 GetMouseScrollInput()
-        //{
-        //    if (mouseScrollInputAction != null)
-        //        return mouseScrollInputAction.ReadValue<Vector2>();
-
-        //    return Vector2.zero;
-        //}
-
-        /// <summary>
-        /// Gets the controller look input value.
-        /// Return its current value or zero if no valid InputAction found.
-        /// </summary>
-
-        //protected virtual Vector2 GetControllerLookInput()
-        //{
-        //    if (controllerLookInputAction != null)
-        //        return controllerLookInputAction.ReadValue<Vector2>();
-
-        //    return Vector2.zero;
-        //}
-
-        /// <summary>
-        /// Handle cursor lock InputAction.
-        /// </summary>
-
-        //protected virtual void OnCursorLock(InputAction.CallbackContext context)
-        //{
-        //    // Do not allow to lock cursor if using UI
-        //    if (EventSystem.current && EventSystem.current.IsPointerOverGameObject())
-        //        return;
-
-        //    if (context.started)
-        //        cameraController.LockCursor();
-        //}
-
-        /// <summary>
-        /// Handle cursor unlock InputAction.
-        /// </summary>
-
-        //protected virtual void OnCursorUnlock(InputAction.CallbackContext context)
-        //{
-        //    if (context.started)
-        //        cameraController.UnlockCursor();
-        //}
-
         #endregion
 
         #region EVENTS
@@ -210,133 +107,6 @@ namespace EasyCharacterMovement
         #endregion
 
         #region METHODS  
-
-        /// <summary>
-        /// Initialize player InputActions (if any).
-        /// E.g. Subscribe to input action events and enable input actions here.
-        /// </summary>
-
-        protected override void InitPlayerInput()
-        {
-            // Call base method implementation
-            base.InitPlayerInput();
-
-            // Attempts to cache and init this InputActions (if any)
-            if (inputActions == null)
-                return;
-
-            // Setup Punch input action handlers
-            punchInputAction = inputActions.FindAction("Punch");
-            if (punchInputAction != null)
-            {
-                punchInputAction.started += OnPunch;
-                punchInputAction.performed += OnPunch;
-                punchInputAction.canceled += OnPunch;
-
-                punchInputAction.Enable();
-            }
-
-            // Setup Block input action handlers
-            blockInputAction = inputActions.FindAction("Block");
-            if (blockInputAction != null)
-            {
-                blockInputAction.started += OnBlock;
-                blockInputAction.performed += OnBlock;
-                blockInputAction.canceled += OnBlock;
-
-                blockInputAction.Enable();
-            }
-
-            // Setup Mouse input action handlers
-            //mouseLookInputAction = inputActions.FindAction("Mouse Look");
-            //mouseLookInputAction?.Enable();
-
-            //mouseScrollInputAction = inputActions.FindAction("Mouse Scroll");
-            //mouseScrollInputAction?.Enable();
-
-            // Setup Controller input action handlers
-            //controllerLookInputAction = inputActions.FindAction("Controller Look");
-            //controllerLookInputAction?.Enable();
-
-            // Setup Cursor input action handlers
-            //cursorLockInputAction = inputActions.FindAction("Cursor Lock");
-            //if (cursorLockInputAction != null)
-            //{
-            //    cursorLockInputAction.started += OnCursorLock;
-            //    cursorLockInputAction.Enable();
-            //}
-
-            //cursorUnlockInputAction = inputActions.FindAction("Cursor Unlock");
-            //if (cursorUnlockInputAction != null)
-            //{
-            //    cursorUnlockInputAction.started += OnCursorUnlock;
-            //    cursorUnlockInputAction.Enable();
-            //}
-        }
-
-        /// <summary>
-        /// Unsubscribe from input action events and disable input actions.
-        /// </summary>
-
-        protected override void DeinitPlayerInput()
-        {
-            // Call base method implementation
-            base.DeinitPlayerInput();
-
-            if (punchInputAction != null)
-            {
-                punchInputAction.started -= OnPunch;
-                punchInputAction.performed -= OnPunch;
-                punchInputAction.canceled -= OnPunch;
-
-                punchInputAction.Disable();
-                punchInputAction = null;
-            }
-
-            if (blockInputAction != null)
-            {
-                blockInputAction.started -= OnBlock;
-                blockInputAction.performed -= OnBlock;
-                blockInputAction.canceled -= OnBlock;
-
-                blockInputAction.Disable();
-                blockInputAction = null;
-            }
-
-            //if (mouseLookInputAction != null)
-            //{
-            //    mouseLookInputAction.Disable();
-            //    mouseLookInputAction = null;
-            //}
-
-            //if (mouseScrollInputAction != null)
-            //{
-            //    mouseScrollInputAction.Disable();
-            //    mouseScrollInputAction = null;
-            //}
-
-            //if (controllerLookInputAction != null)
-            //{
-            //    controllerLookInputAction.Disable();
-            //    controllerLookInputAction = null;
-            //}
-
-            //if (cursorLockInputAction != null)
-            //{
-            //    cursorLockInputAction.started -= OnCursorLock;
-
-            //    cursorLockInputAction.Disable();
-            //    cursorLockInputAction = null;
-            //}
-
-            //if (cursorUnlockInputAction != null)
-            //{
-            //    cursorUnlockInputAction.started -= OnCursorUnlock;
-
-            //    cursorUnlockInputAction.Disable();
-            //    cursorUnlockInputAction = null;
-            //}
-        }
 
         /// <summary>
         /// Called when the script instance is being loaded (Awake).
@@ -388,6 +158,190 @@ namespace EasyCharacterMovement
             Jumped -= PlayJumpAnimation;
             Landed -= PlayLandAnimation;
             Launched -= PlayLaunchAnimation;
+        }
+
+        /// <summary>
+        /// Our Update method.
+        /// </summary>
+
+        protected override void OnUpdate()
+        {
+            base.OnUpdate();
+
+            HandleLeanInput();
+
+            //Debug.DrawLine(transform.position, GetVelocity() * 10, Color.red, .5f);
+        }
+
+        /// <summary>
+        /// Our LateFixedUpdate method. E.g called AFTER Physics internal update.
+        /// </summary>
+
+        protected override void OnLateFixedUpdate()
+        {
+            ApplyLean();
+
+            base.OnLateFixedUpdate();
+        }
+
+        /// <summary>
+        /// Initialize player InputActions (if any).
+        /// E.g. Subscribe to input action events and enable input actions here.
+        /// </summary>
+
+        protected override void InitPlayerInput()
+        {
+            // Call base method implementation
+            base.InitPlayerInput();
+
+            // Attempts to cache and init this InputActions (if any)
+            if (inputActions == null)
+                return;
+
+            // Setup Punch input action handlers
+            punchInputAction = inputActions.FindAction("Punch");
+            if (punchInputAction != null)
+            {
+                punchInputAction.started += OnPunch;
+                punchInputAction.performed += OnPunch;
+                punchInputAction.canceled += OnPunch;
+
+                punchInputAction.Enable();
+            }
+
+            // Setup Block input action handlers
+            blockInputAction = inputActions.FindAction("Block");
+            if (blockInputAction != null)
+            {
+                blockInputAction.started += OnBlock;
+                blockInputAction.performed += OnBlock;
+                blockInputAction.canceled += OnBlock;
+
+                blockInputAction.Enable();
+            }
+        }
+
+        /// <summary>
+        /// Unsubscribe from input action events and disable input actions.
+        /// </summary>
+
+        protected override void DeinitPlayerInput()
+        {
+            // Call base method implementation
+            base.DeinitPlayerInput();
+
+            if (punchInputAction != null)
+            {
+                punchInputAction.started -= OnPunch;
+                punchInputAction.performed -= OnPunch;
+                punchInputAction.canceled -= OnPunch;
+
+                punchInputAction.Disable();
+                punchInputAction = null;
+            }
+
+            if (blockInputAction != null)
+            {
+                blockInputAction.started -= OnBlock;
+                blockInputAction.performed -= OnBlock;
+                blockInputAction.canceled -= OnBlock;
+
+                blockInputAction.Disable();
+                blockInputAction = null;
+            }
+        }
+
+        /// <summary>
+        /// Handle Player input, only if actions are assigned (eg: actions != null).
+        /// </summary>
+
+        protected override void HandleInput()
+        {
+            base.HandleInput();
+
+            HandlePunching();
+
+            HandleBlocking();
+        }
+
+        /// <summary>
+        /// Saves the rotation data needed to lean the character in the direction they move.
+        /// </summary>
+
+        protected virtual void HandleLeanInput()
+        {
+            // Project on a horizontal plane so we only have to consider horizontal direction without vertical rotation creating issues
+            Vector3 characterForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+            Vector3 movementDirection = Vector3.ProjectOnPlane(GetMovementDirection(), Vector3.up);
+
+            // Calculate the signed angle between character's forward direction and target movement direction
+            float angleDifference = Vector3.SignedAngle(characterForward, movementDirection, transform.up);
+
+            if (angleDifference < -15)
+            {
+                // Calculate target rotation for leaning left
+                _chestTargetRotation = Quaternion.Euler(0, 0, _leanAmount);
+            }
+            else if (angleDifference > 15)
+            {
+                // Calculate target rotation for leaning right
+                _chestTargetRotation = Quaternion.Euler(0, 0, -_leanAmount);
+            }
+            else
+            {
+                // Return to upright position
+                _chestTargetRotation = Quaternion.Euler(0, 0, 0);
+            }
+
+            // Smoothly interpolate to the target rotation on the chest
+            _chestOverrideTransform = Quaternion.Slerp(_chestTransform.localRotation, _chestTargetRotation, Time.deltaTime * _leanSpeed);
+        }
+
+        /// <summary>
+        /// Applies the correct rotation determined in HandleLeanInput.
+        /// </summary>
+
+        protected virtual void ApplyLean()
+        {
+            // Override animation data on the chest with our dummy transform
+            _chestTransform.localRotation = _chestOverrideTransform;
+        }
+
+        /// <summary>
+        /// Updates the character's rotation based on its current RotationMode PLUS its current up direction.
+        /// </summary>
+
+        protected override void UpdateRotation()
+        {
+            // Call base method (eg: rotate towards movement direction)
+            base.UpdateRotation();
+
+            // Update's gravity direction and orient character's Up to -gravity direction
+            RaycastHit hit;
+
+            if (Physics.Raycast(transform.position, Vector3.down, out hit, 0.25f))
+            {
+                // Calculate the slope normal
+                Vector3 slopeNormal = hit.normal;
+
+                // Calculate the angle between the character's up vector and the slope normal
+                float angle = Vector3.Angle(transform.up, slopeNormal);
+
+                if (angle <= 45)
+                {
+                    // Rotate the player to align with the slope
+                    Quaternion slopeRotation = Quaternion.FromToRotation(transform.up, slopeNormal) * transform.rotation;
+
+                    // Smoothly interpolate between current rotation and target rotation
+                    transform.rotation = Quaternion.Slerp(transform.rotation, slopeRotation, 10f * Time.fixedDeltaTime);
+                }
+            }
+            else
+            {
+                // If not grounded, smoothly return to upright position
+                Quaternion uprightRotation = Quaternion.FromToRotation(transform.up, Vector3.up) * transform.rotation;
+                transform.rotation = Quaternion.Slerp(transform.rotation, uprightRotation, 10f * Time.fixedDeltaTime);
+            }
         }
 
         /// <summary>
@@ -493,82 +447,6 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Updates the character's rotation based on its current RotationMode PLUS its current up direction.
-        /// </summary>
-
-        protected override void UpdateRotation()
-        {
-            // Call base method (eg: rotate towards movement direction)
-            base.UpdateRotation();
-
-            // Update's gravity direction and orient character's Up to -gravity direction
-            RaycastHit hit;
-
-            if (Physics.Raycast(transform.position, Vector3.down, out hit, 0.25f))
-            {
-                // Calculate the slope normal
-                Vector3 slopeNormal = hit.normal;
-
-                // Calculate the angle between the character's up vector and the slope normal
-                float angle = Vector3.Angle(transform.up, slopeNormal);
-
-                if (angle <= 45)
-                {
-                    // Rotate the player to align with the slope
-                    Quaternion slopeRotation = Quaternion.FromToRotation(transform.up, slopeNormal) * transform.rotation;
-
-                    // Smoothly interpolate between current rotation and target rotation
-                    transform.rotation = Quaternion.Slerp(transform.rotation, slopeRotation, 10f * Time.fixedDeltaTime);
-                }
-            }
-            else
-            {
-                // If not grounded, smoothly return to upright position
-                Quaternion uprightRotation = Quaternion.FromToRotation(transform.up, Vector3.up) * transform.rotation;
-                transform.rotation = Quaternion.Slerp(transform.rotation, uprightRotation, 10f * Time.fixedDeltaTime);
-            }
-        }
-
-        /// <summary>
-        /// Our Update method.
-        /// </summary>
-
-        protected override void OnUpdate()
-        {
-            base.OnUpdate();
-
-            //HandleCameraInput();
-
-            HandleLeanInput();
-            
-            //Debug.DrawLine(transform.position, GetVelocity() * 10, Color.red, .5f);
-        }
-
-        /// <summary>
-        /// Our LateFixedUpdate method. E.g called AFTER Physics internal update.
-        /// </summary>
-
-        protected override void OnLateFixedUpdate()
-        {
-            ApplyLean();
-            
-            base.OnLateFixedUpdate();
-        }
-
-        /// <summary>
-        /// Handle Player input, only if actions are assigned (eg: actions != null).
-        /// </summary>
-
-        protected override void HandleInput()
-        {
-            base.HandleInput();
-            
-            HandlePunching();
-
-            HandleBlocking();
-        }
-
-        /// <summary>
         /// Disables Player input.
         /// </summary>
 
@@ -590,88 +468,6 @@ namespace EasyCharacterMovement
             jumpInputAction.Enable();
             punchInputAction.Enable();
             blockInputAction.Enable();
-        }
-
-        /// <summary>
-        /// Perform camera related input actions, eg: Look Up / Down, Turn, etc.
-        /// </summary>
-
-        //protected virtual void HandleCameraInput()
-        //{
-        //    if (!cameraController.IsCursorLocked())
-        //        return;
-
-        //    Vector2 mouseLookInput = GetMouseLookInput();
-        //    if (mouseLookInput.sqrMagnitude > 0)
-        //    {
-        //        // Mouse look input
-        //        if (mouseLookInput.x != 0.0f)
-        //            cameraController.Turn(mouseLookInput.x);
-
-        //        if (mouseLookInput.y != 0.0f)
-        //            cameraController.LookUp(mouseLookInput.y);
-
-        //    }
-        //    else
-        //    {
-        //        // Controller look input
-        //        Vector2 controllerLookInput = GetControllerLookInput();
-
-        //        if (controllerLookInput.x != 0.0f)
-        //            cameraController.TurnAtRate(controllerLookInput.x);
-
-        //        if (controllerLookInput.y != 0.0f)
-        //            cameraController.LookUpAtRate(controllerLookInput.y);
-        //    }
-
-        //    // Mouse scroll input
-        //    Vector2 mouseScrollInput = GetMouseScrollInput();
-
-        //    if (mouseScrollInput.y != 0.0f)
-        //        cameraController.ZoomAtRate(mouseScrollInput.y);
-        //}
-
-        /// <summary>
-        /// Saves the rotation data needed to lean the character in the direction they move.
-        /// </summary>
-
-        protected virtual void HandleLeanInput()
-        {
-            // Project on a horizontal plane so we only have to consider horizontal direction without vertical rotation creating issues
-            Vector3 characterForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
-            Vector3 movementDirection = Vector3.ProjectOnPlane(GetMovementDirection(), Vector3.up);
-
-            // Calculate the signed angle between character's forward direction and target movement direction
-            float angleDifference = Vector3.SignedAngle(characterForward, movementDirection, transform.up);
-
-            if (angleDifference < -15)
-            {
-                // Calculate target rotation for leaning left
-                _chestTargetRotation = Quaternion.Euler(0, 0, _leanAmount);
-            }
-            else if (angleDifference > 15)
-            {
-                // Calculate target rotation for leaning right
-                _chestTargetRotation = Quaternion.Euler(0, 0, -_leanAmount);
-            }
-            else
-            {
-                // Return to upright position
-                _chestTargetRotation = Quaternion.Euler(0, 0, 0);
-            }
-
-            // Smoothly interpolate to the target rotation on the chest
-            _chestOverrideTransform = Quaternion.Slerp(_chestTransform.localRotation, _chestTargetRotation, Time.deltaTime * _leanSpeed);
-        }
-
-        /// <summary>
-        /// Applies the correct rotation determined in HandleLeanInput.
-        /// </summary>
-
-        protected virtual void ApplyLean()
-        {
-            // Override animation data on the chest with our dummy transform
-            _chestTransform.localRotation = _chestOverrideTransform;
         }
 
         /// <summary>

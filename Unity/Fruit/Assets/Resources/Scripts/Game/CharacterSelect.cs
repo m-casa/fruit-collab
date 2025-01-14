@@ -10,23 +10,24 @@ public class CharacterSelect : MonoBehaviour
     [SerializeField] private string[] _characterNames = new string[] { "Apple", "Grape", "Lemon", "Peach" }; // Names of the characters
     private int _currentIndex = 0; // Currently selected character index
 
-    [Header("Arrow")]
-    [SerializeField] private float _arrowHoverSpeed = 1f; // Speed of up-and-down hover animation
-    [SerializeField] private float _arrowHoverAmount = 0.2f; // Distance of the hover animation
-    [SerializeField] private float _arrowScaleSpeed = 2f; // Speed of the arrow scaling animation
+    [Header("Arrow Setup")]
+    [SerializeField] private float _arrowMoveSpeed = 5f; // Speed of smooth movement
+    [SerializeField] private float _arrowRotationSpeed = 100f; // Degrees per second
+    [SerializeField] private float _arrowHoverSpeed = 3.5f; // Speed of up-and-down hover animation
+    [SerializeField] private float _arrowHoverAmount = 0.1f; // Distance of the hover animation
     [SerializeField] private Vector3 _arrowMinScale = new Vector3(1f, 1f, 1f);
-    [SerializeField] private Vector3 _arrowMaxScale = new Vector3(1.2f, 1.2f, 1.2f);
+    [SerializeField] private Vector3 _arrowMaxScale = new Vector3(1.5f, 1.5f, 1.5f);
 
     [Header("Navigation Settings")]
     [SerializeField] private InputActionReference _navigate; // Input for left/right navigation
     [SerializeField] private InputActionReference _submit;
 
     private Vector3 _arrowBasePosition;
-    private bool _isArrowGrowing = true;
+    private Vector3 _targetPosition; // New target position for the arrow
 
     #endregion
 
-    #region METHODS
+    #region MONOBEHAVIOR
 
     void OnEnable()
     {
@@ -67,6 +68,7 @@ public class CharacterSelect : MonoBehaviour
         // Position the arrow above the first character
         _arrowBasePosition = _characterPositions[_currentIndex].position + Vector3.up;
         transform.position = _arrowBasePosition;
+        _targetPosition = transform.position;
     }
 
     void Update()
@@ -88,6 +90,10 @@ public class CharacterSelect : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region METHODS
+
     private void NavigateCharacters(int direction)
     {
         // Update index and wrap around
@@ -98,14 +104,8 @@ public class CharacterSelect : MonoBehaviour
         else if (_currentIndex < 0)
             _currentIndex = _characterPositions.Length - 1;
 
-        // Pan the camera to the new character
-        //if (CameraManager.Instance != null)
-        //{
-        //CameraManager.Instance.PanToPosition(characters[currentIndex].position);
-        //}
-
         // Move the arrow to the new character
-        _arrowBasePosition = _characterPositions[_currentIndex].position + Vector3.up;
+        _targetPosition = _characterPositions[_currentIndex].position + Vector3.up;
     }
 
     public void OnSubmit(InputAction.CallbackContext context)
@@ -113,16 +113,6 @@ public class CharacterSelect : MonoBehaviour
         string selectedCharacter = _characterNames[_currentIndex];
 
         GameManager.Instance.SelectCharacter(selectedCharacter);
-
-        //if (GameManager.Instance.IsCharacterAvailable(selectedCharacter))
-        //{
-        //    GameManager.Instance.SelectCharacter(selectedCharacter);
-        //    Debug.Log($"Character {selectedCharacter} selected.");
-        //}
-        //else
-        //{
-        //    Debug.LogWarning($"Character {selectedCharacter} is already taken.");
-        //}
     }
 
     public void DeselectCurrentCharacter()
@@ -134,29 +124,22 @@ public class CharacterSelect : MonoBehaviour
 
     private void AnimateArrow()
     {
-        //// Hover animation
-        //float hoverOffset = Mathf.Sin(Time.time * _arrowHoverSpeed) * _arrowHoverAmount;
-        //transform.position = _arrowBasePosition + new Vector3(0, hoverOffset, 0);
+        // Smoothly move the base position toward the target position
+        _arrowBasePosition = Vector3.Lerp(_arrowBasePosition, _targetPosition, Time.deltaTime * _arrowMoveSpeed);
 
-        //// Scaling animation
-        //Vector3 targetScale = _isArrowGrowing ? _arrowMaxScale : _arrowMinScale;
-        //transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * _arrowScaleSpeed);
-
-        //if (Vector3.Distance(transform.localScale, targetScale) < 0.05f)
-        //{
-        //    _isArrowGrowing = !_isArrowGrowing; // Switch scaling direction
-        //}
-
-        // Hover animation
+        // Hover animation (up and down motion)
         float hoverOffset = Mathf.Sin(Time.time * _arrowHoverSpeed) * _arrowHoverAmount;
-        transform.localPosition = _arrowBasePosition + new Vector3(0, hoverOffset, 0);
+        transform.position = _arrowBasePosition + new Vector3(0, hoverOffset, 0);
 
-        // Normalize hover offset (0 = lowest point, 1 = highest point)
+        // Normalize hover offset to range [0, 1] (0 = lowest, 1 = highest)
         float normalizedHover = (hoverOffset + _arrowHoverAmount) / (2 * _arrowHoverAmount);
 
-        // Calculate scale based on hover position (grow when descending, shrink when ascending)
+        // Rotation animation (continuous spin)
+        transform.rotation *= Quaternion.Euler(_arrowRotationSpeed * Time.deltaTime, 0, 0);
+
+        // Calculate scale for growing/shrinking animation
         Vector3 targetScale = Vector3.Lerp(_arrowMaxScale, _arrowMinScale, normalizedHover);
-        transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * _arrowScaleSpeed);
+        transform.localScale = targetScale;
     }
 
     #endregion
