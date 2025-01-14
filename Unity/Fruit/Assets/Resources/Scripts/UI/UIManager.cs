@@ -70,6 +70,8 @@ public class UIManager : MonoBehaviour
         SetActivePanel(null);
 
         CameraManager.Instance.TransitionToCharacterSelect();
+
+        GameManager.Instance.StartSelection();
         // Logic for hosting a game...
     }
 

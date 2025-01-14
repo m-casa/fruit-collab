@@ -444,6 +444,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9835ba3022e88942aeca16e7ad1e89d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _camera: {fileID: 4143201848390175042}
   _startCamera: {fileID: 7201084775917957114}
   _mainMenuCamera: {fileID: 3069687994530489917}
   _characterSelectCamera: {fileID: 790300920495669352}

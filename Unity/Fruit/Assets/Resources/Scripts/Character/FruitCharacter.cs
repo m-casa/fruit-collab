@@ -294,7 +294,7 @@ namespace EasyCharacterMovement
             }
 
             // Smoothly interpolate to the target rotation on the chest
-            _chestOverrideTransform = Quaternion.Slerp(_chestTransform.localRotation, _chestTargetRotation, Time.deltaTime * _leanSpeed);
+            _chestOverrideTransform = Quaternion.Slerp(_chestTransform.localRotation, _chestTargetRotation, Time.fixedDeltaTime * _leanSpeed);
         }
 
         /// <summary>

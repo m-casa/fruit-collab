@@ -100,20 +100,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _characterPositions:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 9186333507326073891, guid: d8c8d0a2924731a4cb67aa272d910316, type: 3}
+  - {fileID: 4074328096017738570, guid: 5285860d86abc5347942d5bea0b81390, type: 3}
+  - {fileID: 7252916329672919600, guid: be62c9af7d56add4fa9637e7ac92fef2, type: 3}
+  - {fileID: 3966253416328818631, guid: d7bf86ca337e63942b91b99b23ffc7ea, type: 3}
   _characterNames:
   - Apple
   - Grape
   - Lemon
   - Peach
+  _arrowMoveSpeed: 4
+  _arrowRotationSpeed: 100
   _arrowHoverSpeed: 3.5
   _arrowHoverAmount: 0.1
-  _arrowRotationSpeed: 100
   _arrowMinScale: {x: 1, y: 1, z: 1}
   _arrowMaxScale: {x: 1.5, y: 1.5, z: 1.5}
-  _arrowMoveSpeed: 4
   _navigate: {fileID: 8384405493553069934, guid: be75f5bbb6028fd4689fb7b31fd2ebfa, type: 3}
   _submit: {fileID: 8391241170649867948, guid: be75f5bbb6028fd4689fb7b31fd2ebfa, type: 3}

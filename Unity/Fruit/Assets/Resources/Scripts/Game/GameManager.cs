@@ -1,3 +1,4 @@
+using EasyCharacterMovement;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,6 +18,18 @@ public class GameManager : MonoBehaviour
     [Header("Timers")]
     [SerializeField] private float _matchDuration = 150f; // 2:30 minutes in seconds
     private float _remainingTime;
+
+    [Header("Arrow Prefab")]
+    [SerializeField] private GameObject _arrowPrefab; // Reference to the arrow prefab
+    private GameObject _spawnedArrow; // Reference to the spawned arrow
+
+    [Header("Fruit Prefabs")]
+    [SerializeField] private GameObject[] _fruitPrefabs; // Reference to the fruit prefabs
+    private GameObject[] _spawnedFruits; // Reference to the spawned fruits
+
+    [Header("Character Prefabs")]
+    [SerializeField] private GameObject[] _characterPrefabs; // Reference to the character prefabs
+    private GameObject[] _spawnedCharacters; // Reference to the spawned characters
 
     #endregion
 
@@ -38,18 +51,38 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    void Start()
+    {
+        _spawnedFruits = new GameObject[_fruitPrefabs.Length];
+        _spawnedCharacters = new GameObject[_characterPrefabs.Length];
+    }
+
     #endregion
 
     #region METHODS
+
+    public void StartSelection()
+    {
+        SpawnFruit();
+
+        SpawnArrow();
+
+        // Additional setup for the arrow if needed
+        Debug.Log("Fruits/arrow spawned for character selection.");
+    }
 
     public void SelectCharacter(string characterName)
     {
         if (IsCharacterAvailable(characterName))
         {
+            DestroyArrow();
+
+            DestroyFruit(characterName);
             _selectedCharacters.Add(characterName); // Mark character as taken
 
-            CameraManager.Instance.TransitionToLobby();
             SpawnCharacter(characterName);
+            CameraManager.Instance.TransitionToLobby();
+
             _inGame = true;
 
             Debug.Log($"{characterName} selected.");
@@ -77,7 +110,54 @@ public class GameManager : MonoBehaviour
 
     public void SpawnCharacter(string characterName)
     {
+        // Find the index of the characterName in the _allCharacters list
+        int characterIndex = _allCharacters.IndexOf(characterName);
+        if (characterIndex == -1)
+        {
+            Debug.LogError($"Character {characterName} not found in the list of all characters.");
+            return;
+        }
 
+        // Check if the prefab exists and spawn the character
+        if (characterIndex < _characterPrefabs.Length && _characterPrefabs[characterIndex] != null)
+        {
+            // Spawn the character and store it in the array
+            GameObject spawnedCharacter = Instantiate(_characterPrefabs[characterIndex]);
+            _spawnedCharacters[characterIndex] = spawnedCharacter;
+
+            FruitCharacter fruitCharacter = spawnedCharacter.GetComponent<FruitCharacter>();
+            fruitCharacter.camera = Camera.main;
+
+            Debug.Log($"{characterName} spawned.");
+        }
+        else
+        {
+            Debug.LogError($"Prefab for character {characterName} not found.");
+        }
+    }
+
+    public void DestroyCharacter(string characterName)
+    {
+        // Find the index of the characterName in the _allCharacters list
+        int characterIndex = _allCharacters.IndexOf(characterName);
+        if (characterIndex == -1)
+        {
+            Debug.LogError($"Character {characterName} not found in the list of all characters.");
+            return;
+        }
+
+        // Check if the character exists in the array and destroy it
+        if (_spawnedCharacters[characterIndex] != null)
+        {
+            Destroy(_spawnedCharacters[characterIndex]);
+            _spawnedCharacters[characterIndex] = null;
+
+            Debug.Log($"{characterName} destroyed.");
+        }
+        else
+        {
+            Debug.LogWarning($"No active instance of {characterName} to destroy.");
+        }
     }
 
     public bool InGame()
@@ -100,6 +180,76 @@ public class GameManager : MonoBehaviour
     {
         // The "!" negates the result, meaning it checks if the character is not already taken
         return !_selectedCharacters.Contains(characterName);
+    }
+
+    private void SpawnFruit()
+    {
+        if (_fruitPrefabs == null)
+        {
+            Debug.LogError("Fruit Prefabs not assigned in the GameManager.");
+            return;
+        }
+
+        int fruitIndex = 0;
+
+        foreach (GameObject fruit in _fruitPrefabs)
+        {
+            if (fruit == null)
+            {
+                Debug.LogWarning($"Fruit prefab at index {fruitIndex} is null. Skipping.");
+                fruitIndex++;
+                continue;
+            }
+
+            // Spawn the fruit and store it in the array
+            GameObject spawnedFruit = Instantiate(fruit);
+            _spawnedFruits[fruitIndex] = spawnedFruit;
+            fruitIndex++;
+        }
+    }
+
+    private void SpawnArrow()
+    {
+        if (_arrowPrefab == null)
+        {
+            Debug.LogError("Arrow Prefab is not assigned in the GameManager.");
+            return;
+        }
+
+        _spawnedArrow = Instantiate(_arrowPrefab);
+    }
+
+    private void DestroyFruit(string characterName)
+    {
+        // Find the index of the characterName in the _allCharacters list
+        int characterIndex = _allCharacters.IndexOf(characterName);
+        if (characterIndex == -1)
+        {
+            Debug.LogError($"Character {characterName} not found in the list of all characters.");
+            return;
+        }
+
+        // Check if the fruit exists in the array and destroy it
+        if (_spawnedFruits[characterIndex] != null)
+        {
+            Destroy(_spawnedFruits[characterIndex]);
+            _spawnedFruits[characterIndex] = null;
+
+            Debug.Log($"Fruit {characterName} destroyed.");
+        }
+        else
+        {
+            Debug.LogWarning($"No active fruit instance of {characterName} to destroy.");
+        }
+    }
+
+    private void DestroyArrow()
+    {
+        if (_spawnedArrow != null)
+        {
+            Destroy(_spawnedArrow);
+            Debug.Log("Arrow destroyed.");
+        }
     }
 
     private IEnumerator MatchTimer()
