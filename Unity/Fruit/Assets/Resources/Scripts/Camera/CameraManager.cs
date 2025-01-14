@@ -11,6 +11,7 @@ public class CameraManager : MonoBehaviour
     [SerializeField] private CinemachineCamera _mainMenuCamera;
     [SerializeField] private CinemachineCamera _characterSelectCamera;
     [SerializeField] private CinemachineCamera _lobbyCamera;
+    [SerializeField] private CinemachineTargetGroup _playerTargetGroup;
 
     #endregion
 
@@ -55,6 +56,16 @@ public class CameraManager : MonoBehaviour
         // Transition to the lobby camera
         _characterSelectCamera.Priority = 0;
         _lobbyCamera.Priority = 10;
+    }
+
+    public void AddPlayerToCamera(GameObject player)
+    {
+        _playerTargetGroup.AddMember(player.transform, 1f, 2f); // Weight = 1, Radius = 2
+    }
+
+    public void RemovePlayerFromCamera(GameObject player)
+    {
+        _playerTargetGroup.RemoveMember(player.transform);
     }
 
     #endregion

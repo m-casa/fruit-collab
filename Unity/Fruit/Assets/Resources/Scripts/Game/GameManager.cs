@@ -128,6 +128,8 @@ public class GameManager : MonoBehaviour
             FruitCharacter fruitCharacter = spawnedCharacter.GetComponent<FruitCharacter>();
             fruitCharacter.camera = Camera.main;
 
+            CameraManager.Instance.AddPlayerToCamera(spawnedCharacter);
+
             Debug.Log($"{characterName} spawned.");
         }
         else
