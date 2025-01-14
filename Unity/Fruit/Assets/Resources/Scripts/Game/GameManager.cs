@@ -19,17 +19,17 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float _matchDuration = 150f; // 2:30 minutes in seconds
     private float _remainingTime;
 
-    [Header("Arrow Prefab")]
-    [SerializeField] private GameObject _arrowPrefab; // Reference to the arrow prefab
-    private GameObject _spawnedArrow; // Reference to the spawned arrow
+    [Header("Character Prefabs")]
+    [SerializeField] private GameObject[] _characterPrefabs; // Reference to the character prefabs
+    private GameObject[] _spawnedCharacters; // Reference to the spawned characters
 
     [Header("Fruit Prefabs")]
     [SerializeField] private GameObject[] _fruitPrefabs; // Reference to the fruit prefabs
     private GameObject[] _spawnedFruits; // Reference to the spawned fruits
 
-    [Header("Character Prefabs")]
-    [SerializeField] private GameObject[] _characterPrefabs; // Reference to the character prefabs
-    private GameObject[] _spawnedCharacters; // Reference to the spawned characters
+    [Header("Arrow Prefab")]
+    [SerializeField] private GameObject _arrowPrefab; // Reference to the arrow prefab
+    private GameObject _spawnedArrow; // Reference to the spawned arrow
 
     #endregion
 
@@ -108,60 +108,6 @@ public class GameManager : MonoBehaviour
         return _allCharacters.FindAll(character => IsCharacterAvailable(character));
     }
 
-    public void SpawnCharacter(string characterName)
-    {
-        // Find the index of the characterName in the _allCharacters list
-        int characterIndex = _allCharacters.IndexOf(characterName);
-        if (characterIndex == -1)
-        {
-            Debug.LogError($"Character {characterName} not found in the list of all characters.");
-            return;
-        }
-
-        // Check if the prefab exists and spawn the character
-        if (characterIndex < _characterPrefabs.Length && _characterPrefabs[characterIndex] != null)
-        {
-            // Spawn the character and store it in the array
-            GameObject spawnedCharacter = Instantiate(_characterPrefabs[characterIndex]);
-            _spawnedCharacters[characterIndex] = spawnedCharacter;
-
-            FruitCharacter fruitCharacter = spawnedCharacter.GetComponent<FruitCharacter>();
-            fruitCharacter.camera = Camera.main;
-
-            CameraManager.Instance.AddPlayerToCamera(spawnedCharacter);
-
-            Debug.Log($"{characterName} spawned.");
-        }
-        else
-        {
-            Debug.LogError($"Prefab for character {characterName} not found.");
-        }
-    }
-
-    public void DestroyCharacter(string characterName)
-    {
-        // Find the index of the characterName in the _allCharacters list
-        int characterIndex = _allCharacters.IndexOf(characterName);
-        if (characterIndex == -1)
-        {
-            Debug.LogError($"Character {characterName} not found in the list of all characters.");
-            return;
-        }
-
-        // Check if the character exists in the array and destroy it
-        if (_spawnedCharacters[characterIndex] != null)
-        {
-            Destroy(_spawnedCharacters[characterIndex]);
-            _spawnedCharacters[characterIndex] = null;
-
-            Debug.Log($"{characterName} destroyed.");
-        }
-        else
-        {
-            Debug.LogWarning($"No active instance of {characterName} to destroy.");
-        }
-    }
-
     public bool InGame()
     {
         return _inGame;
@@ -221,6 +167,45 @@ public class GameManager : MonoBehaviour
         _spawnedArrow = Instantiate(_arrowPrefab);
     }
 
+    private void SpawnCharacter(string characterName)
+    {
+        // Find the index of the characterName in the _allCharacters list
+        int characterIndex = _allCharacters.IndexOf(characterName);
+        if (characterIndex == -1)
+        {
+            Debug.LogError($"Character {characterName} not found in the list of all characters.");
+            return;
+        }
+
+        // Check if the prefab exists and spawn the character
+        if (characterIndex < _characterPrefabs.Length && _characterPrefabs[characterIndex] != null)
+        {
+            // Spawn the character and store it in the array
+            GameObject spawnedCharacter = Instantiate(_characterPrefabs[characterIndex]);
+            _spawnedCharacters[characterIndex] = spawnedCharacter;
+
+            FruitCharacter fruitCharacter = spawnedCharacter.GetComponent<FruitCharacter>();
+            fruitCharacter.camera = Camera.main;
+
+            CameraManager.Instance.AddPlayerToCamera(spawnedCharacter);
+
+            Debug.Log($"{characterName} spawned.");
+        }
+        else
+        {
+            Debug.LogError($"Prefab for character {characterName} not found.");
+        }
+    }
+
+    private void DestroyArrow()
+    {
+        if (_spawnedArrow != null)
+        {
+            Destroy(_spawnedArrow);
+            Debug.Log("Arrow destroyed.");
+        }
+    }
+
     private void DestroyFruit(string characterName)
     {
         // Find the index of the characterName in the _allCharacters list
@@ -245,12 +230,27 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void DestroyArrow()
+    private void DestroyCharacter(string characterName)
     {
-        if (_spawnedArrow != null)
+        // Find the index of the characterName in the _allCharacters list
+        int characterIndex = _allCharacters.IndexOf(characterName);
+        if (characterIndex == -1)
         {
-            Destroy(_spawnedArrow);
-            Debug.Log("Arrow destroyed.");
+            Debug.LogError($"Character {characterName} not found in the list of all characters.");
+            return;
+        }
+
+        // Check if the character exists in the array and destroy it
+        if (_spawnedCharacters[characterIndex] != null)
+        {
+            Destroy(_spawnedCharacters[characterIndex]);
+            _spawnedCharacters[characterIndex] = null;
+
+            Debug.Log($"{characterName} destroyed.");
+        }
+        else
+        {
+            Debug.LogWarning($"No active instance of {characterName} to destroy.");
         }
     }
 

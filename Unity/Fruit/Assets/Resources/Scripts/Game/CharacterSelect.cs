@@ -76,6 +76,10 @@ public class CharacterSelect : MonoBehaviour
         AnimateArrow();
     }
 
+    #endregion
+
+    #region METHODS
+
     private void OnNavigate(InputAction.CallbackContext context)
     {
         Vector2 direction = context.ReadValue<Vector2>();
@@ -89,10 +93,6 @@ public class CharacterSelect : MonoBehaviour
             NavigateCharacters(-1);
         }
     }
-
-    #endregion
-
-    #region METHODS
 
     private void NavigateCharacters(int direction)
     {
@@ -108,14 +108,14 @@ public class CharacterSelect : MonoBehaviour
         _targetPosition = _characterPositions[_currentIndex].position + Vector3.up;
     }
 
-    public void OnSubmit(InputAction.CallbackContext context)
+    private void OnSubmit(InputAction.CallbackContext context)
     {
         string selectedCharacter = _characterNames[_currentIndex];
 
         GameManager.Instance.SelectCharacter(selectedCharacter);
     }
 
-    public void DeselectCurrentCharacter()
+    private void DeselectCurrentCharacter()
     {
         string deselectedCharacter = _characterNames[_currentIndex];
 
