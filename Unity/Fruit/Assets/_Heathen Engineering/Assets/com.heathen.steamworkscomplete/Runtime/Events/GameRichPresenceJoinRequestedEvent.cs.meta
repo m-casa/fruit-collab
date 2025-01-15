@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: c15541cb7d16bd4428eeddd607cf7897
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 190316
+  packageName: Steam API - Steamworks Complete
+  packageVersion: 2020.2.20.11
+  assetPath: Assets/_Heathen Engineering/Assets/com.heathen.steamworkscomplete/Runtime/Events/GameRichPresenceJoinRequestedEvent.cs
+  uploadId: 530280

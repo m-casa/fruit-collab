@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: dab7e9086f39c8e42a6ac1617441313d
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 190316
+  packageName: Steam API - Steamworks Complete
+  packageVersion: 2020.2.20.11
+  assetPath: Assets/_Heathen Engineering/Documentation/Steamworks/Online Code Documentation.txt
+  uploadId: 530280

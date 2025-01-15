@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 63272cb6a7665634eb718ca0ddf339f8
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 190316
+  packageName: Steam API - Steamworks Complete
+  packageVersion: 2020.2.20.11
+  assetPath: Assets/_Heathen Engineering/Documentation/Steamworks/Mirror Networking
+    Transport.txt
+  uploadId: 530280

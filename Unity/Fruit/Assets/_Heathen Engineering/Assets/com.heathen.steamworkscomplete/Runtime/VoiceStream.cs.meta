@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: bb748db1c74ca1149be28d9125d97190
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 190316
+  packageName: Steam API - Steamworks Complete
+  packageVersion: 2020.2.20.11
+  assetPath: Assets/_Heathen Engineering/Assets/com.heathen.steamworkscomplete/Runtime/VoiceStream.cs
+  uploadId: 530280

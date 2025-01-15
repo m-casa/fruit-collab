@@ -1,0 +1,44 @@
+v2020.2.20.11
+
+## Note:
+This asset is dependent on Steamworks.NET and System Core 
+Both Steamworks.NET and System Core can be installed via the Package Manager or by downloading the code from Git Hub.
+This asset will assist you in installing both Steamworks.NET and System Core or you can follow the instructions on our Knowledge Base
+
+This asset is a copy of what is available on Heathen's SourceRepo on GitHub. you can gain access to Heathen's SourceRepo by becoming a GitHub Sponsor.
+https://github.com/sponsors/heathen-engineering
+At the 10 USD level you get full source access to Steamworks Complete, PhysKit Complete and UX Complete plus additional assets not available on Unity Asset Store
+such as Steam uGUI Tools and dedicated support, issue tracking and feedback systems. GitHub Sponsors are issued a Heathen Standard License providing you with a site license which is yours to keep even after you cancel your sponsorship.
+
+## Working with a team or with contractors?
+## Did you know the Unity Asset Store license requires each indavidual to have there own licenses?
+This is a limitation imposed by Unity so not something we can help you with directly, if your working in a team you are intended to have each user license all assets indavidually with rare exception.
+Heathen however does provide an alternative way of licensing its assets via the GitHub Sponsor program.
+You can learn more about the Heathen Standard License available exclusivly to GitHub Sponsors here: https://kb.heathenengineering.com/assets/licensing/heathen-license-agreement
+
+You can learn more about Heathen's GitHub Sponsor program here: https://kb.heathenengineering.com/company/concepts/become-a-sponsor
+
+GitHub
+- Updated to be in line with the GitHub version, GitHub is now the primary source for Steamworks Complete Unity Asset Store will be mainted as a copy but may be a few versions behind. The following is a summary of changes but may not detail all changes.
+
+Changes
+- Added transaction completed events which can be found on the Inventory Manager componenet and on the API.Inventory.Client APIs
+- Added additional debugging and state code information to most Steam API callbacks this should make it easier to detect and debug issues that occure as a result of the Steam account being blocked, banned or limited
+- Added the ItemShoppingCartManager ... learn more here https://kb.heathenengineering.com/assets/steamworks/components/item-shopping-cart-manager
+- Added EResult information for the Lobby Create callbacks EResult is Valve's raw result code and useful for debugging and detecting unusual situations such as blocked, ban or limited user requests
+
+
+====================
+PLEASE NOTE
+====================
+
+If you have issues where in Steam attempts to launch your game (or Spacewar) when you start simulating in Unity the most likely cause of this issue is that you do not have steam_appid.txt located in the root of your project.
+steam_appid.txt is a simple text file that should be located in the root of your project (beside not in the Asset folder) it should contain only your app ID.
+
+An example of a valid steam_appid.txt follows, only the content between the dashed lines should be used e.g. only the number 480 should be in the file.
+               
+               Start File
+-----------------------------------------------
+480
+-----------------------------------------------
+               End File

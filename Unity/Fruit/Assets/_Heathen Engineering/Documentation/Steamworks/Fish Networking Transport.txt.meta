@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 272d6c3ce47184049ae32b5d7e533786
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 190316
+  packageName: Steam API - Steamworks Complete
+  packageVersion: 2020.2.20.11
+  assetPath: Assets/_Heathen Engineering/Documentation/Steamworks/Fish Networking
+    Transport.txt
+  uploadId: 530280
