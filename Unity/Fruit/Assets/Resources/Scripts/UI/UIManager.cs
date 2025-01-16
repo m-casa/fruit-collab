@@ -35,6 +35,10 @@ public class UIManager : MonoBehaviour
 
     #region MONOBEHAVIOR
 
+    /// <summary>
+    /// The initialization of this instance.
+    /// </summary>
+
     void Awake()
     {
         // Check if we have an instance of the UI manager
@@ -88,6 +92,10 @@ public class UIManager : MonoBehaviour
         SteamLogic.LobbyJoined -= HandleClientConnecting;
     }
 
+    /// <summary>
+    /// Checks every frame for user input on the start screen and when in game.
+    /// </summary>
+
     void Update()
     {
         // Detect any button press for the start screen
@@ -108,68 +116,104 @@ public class UIManager : MonoBehaviour
     #region METHODS
 
     /// <summary>
-    /// Calls the Host coroutine.
+    /// Host button will call this method.
     /// </summary>
 
     public void HostGame()
     {
-        //StartCoroutine(Host());
         OnHostGame();
     }
 
     /// <summary>
-    /// Calls the Join coroutine.
+    /// Join button will call this method.
+    /// NOTE: This button is only used for local play.
     /// </summary>
 
     public void JoinGame()
     {
-        //StartCoroutine(Join());
-        Join();
+        OnJoinGame();
     }
+
+    /// <summary>
+    /// Handles setup when hosting a game.
+    /// </summary>
 
     public void OnHostGame()
     {
-        Host();
-
         SetActivePanel(null);
+
+        Host();
 
         CameraManager.Instance.TransitionToCharacterSelect();
 
         GameManager.Instance.StartSelection();
-        // Logic for hosting a game...
     }
+
+    /// <summary>
+    /// Handles setup when joining a game.
+    /// </summary>
+
+    public void OnJoinGame()
+    {
+        SetActivePanel(null);
+
+        Join();
+
+        CameraManager.Instance.TransitionToCharacterSelect();
+
+        GameManager.Instance.StartSelection();
+    }
+
+    /// <summary>
+    /// Pause menu input toggles the pause menu on and off.
+    /// </summary>
 
     public void TogglePauseMenu()
     {
         if (!_pauseMenu.activeSelf)
         {
+            // Disable player controls here
+
             SetActivePanel(_pauseMenu);
-            // Disable player controls if needed
         }
         else
         {
-            SetActivePanel(null);
-            // Re-enable player controls
+            OnResumeGame();
         }
     }
 
+    /// <summary>
+    /// Resume button calls this method to toggle off the menus.
+    /// </summary>
+
     public void OnResumeGame()
     {
-        // Unpause the game explicitly (used by a Resume button)
         SetActivePanel(null);
 
-        // Re-enable player controls
+        // Re-enable player controls here
     }
+
+    /// <summary>
+    /// Switches back to main menu when leaving a lobby.
+    /// </summary>
 
     public void OnLeaveLobby()
     {
         // Logic for exiting the lobby
     }
 
+    /// <summary>
+    /// Settings button calls this method to enable the settings menu.
+    /// </summary>
+
     public void OnSettingsSelected()
     {
         // Logic for selecting the settings
     }
+
+    /// <summary>
+    /// Exit game button will call this method.
+    /// </summary>
 
     public void OnExitGame()
     {
@@ -177,12 +221,20 @@ public class UIManager : MonoBehaviour
         Application.Quit();
     }
 
+    /// <summary>
+    /// Updates UI with remining match time.
+    /// </summary>
+
     public void UpdateTimer(float timeRemaining)
     {
         int minutes = Mathf.FloorToInt(timeRemaining / 60f);
         int seconds = Mathf.FloorToInt(timeRemaining % 60f);
         _timerText.text = $"{minutes:00}:{seconds:00}";
     }
+
+    /// <summary>
+    /// Updates UI with new player scores.
+    /// </summary>
 
     public void UpdatePlayerScore(int playerIndex, int score)
     {
@@ -192,6 +244,10 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Updates UI with each player's health.
+    /// </summary>
+
     public void UpdatePlayerHealth(int playerIndex, float health)
     {
         if (playerIndex < _playerHealthBars.Length)
@@ -199,6 +255,10 @@ public class UIManager : MonoBehaviour
             _playerHealthBars[playerIndex].value = health;
         }
     }
+
+    /// <summary>
+    /// Sets the passed menu panel as active. Passing null exits all menus.
+    /// </summary>
 
     private void SetActivePanel(GameObject activePanel)
     {
@@ -211,6 +271,10 @@ public class UIManager : MonoBehaviour
         if (activePanel != null)
             activePanel.SetActive(true); // Enable the selected panel
     }
+
+    /// <summary>
+    /// Checks for any keyboard/gamepad input.
+    /// </summary>
 
     private bool IsAnyInputPressed()
     {
@@ -235,6 +299,10 @@ public class UIManager : MonoBehaviour
         return false; // No input detected
     }
 
+    /// <summary>
+    /// Sets the main menu to active and transitions camera.
+    /// </summary>
+
     private void OnStartGame()
     {
         SetActivePanel(_mainMenu);
@@ -242,6 +310,10 @@ public class UIManager : MonoBehaviour
         CameraManager.Instance.TransitionToMainMenu();
         // Additional logic for starting the game (e.g., enabling player controls).
     }
+
+    /// <summary>
+    /// Enables gameplay UI when in game.
+    /// </summary>
 
     private void ShowGameplayUI()
     {
@@ -255,8 +327,6 @@ public class UIManager : MonoBehaviour
 
     private void Host()
     {
-        //yield return StartCoroutine(transition.SceneChange());
-
         HandleClientConnecting();
 
         if (SteamSettings.Initialized)
@@ -276,8 +346,6 @@ public class UIManager : MonoBehaviour
 
     private void Join()
     {
-        //yield return StartCoroutine(transition.SceneChange());
-
         HandleClientConnecting();
 
         NetworkManager.singleton.StartClient();
@@ -305,9 +373,8 @@ public class UIManager : MonoBehaviour
 
     private void HandleClientConnecting()
     {
+        // Toggle on connecting text here
         //connectingTxt.SetActive(true);
-
-        //StartCoroutine(transition.ScreenFade(1.0f, 0.0f, 1.5f));
 
         SpawnNetworkManager();
     }
@@ -321,6 +388,7 @@ public class UIManager : MonoBehaviour
     {
         Destroy(networkManager);
 
+        // Toggle off connecting text here
         //connectingTxt.SetActive(false);
 
         //Re-Enable menu here:

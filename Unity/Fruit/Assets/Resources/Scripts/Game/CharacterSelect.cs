@@ -29,6 +29,10 @@ public class CharacterSelect : MonoBehaviour
 
     #region MONOBEHAVIOR
 
+    /// <summary>
+    /// Subscribes to the navigate/submit actions.
+    /// </summary>
+
     void OnEnable()
     {
         // Subscribe to the events
@@ -42,6 +46,10 @@ public class CharacterSelect : MonoBehaviour
         _navigate?.action.Enable();
         _submit?.action.Enable();
     }
+
+    /// <summary>
+    /// Unsubscribes from the navigate/submit actions.
+    /// </summary>
 
     void OnDisable()
     {
@@ -57,6 +65,10 @@ public class CharacterSelect : MonoBehaviour
         _submit?.action.Disable();
     }
 
+    /// <summary>
+    /// Sets up the selection arrow's initial position.
+    /// </summary>
+
     void Start()
     {
         if (_characterPositions.Length == 0)
@@ -71,6 +83,10 @@ public class CharacterSelect : MonoBehaviour
         _targetPosition = transform.position;
     }
 
+    /// <summary>
+    /// Calls the selection arrow's animation method every frame.
+    /// </summary>
+
     void Update()
     {
         AnimateArrow();
@@ -79,6 +95,10 @@ public class CharacterSelect : MonoBehaviour
     #endregion
 
     #region METHODS
+
+    /// <summary>
+    /// Determines which direction the user is trying to navigate towards.
+    /// </summary>
 
     private void OnNavigate(InputAction.CallbackContext context)
     {
@@ -94,6 +114,10 @@ public class CharacterSelect : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Navigates the character choices in the direction of the user's input.
+    /// </summary>
+
     private void NavigateCharacters(int direction)
     {
         // Update index and wrap around
@@ -108,6 +132,10 @@ public class CharacterSelect : MonoBehaviour
         _targetPosition = _characterPositions[_currentIndex].position + Vector3.up;
     }
 
+    /// <summary>
+    /// Tries to select the player's chosen character.
+    /// </summary>
+
     private void OnSubmit(InputAction.CallbackContext context)
     {
         string selectedCharacter = _characterNames[_currentIndex];
@@ -115,12 +143,9 @@ public class CharacterSelect : MonoBehaviour
         GameManager.Instance.SelectCharacter(selectedCharacter);
     }
 
-    private void DeselectCurrentCharacter()
-    {
-        string deselectedCharacter = _characterNames[_currentIndex];
-
-        GameManager.Instance.DeselectCharacter(deselectedCharacter);
-    }
+    /// <summary>
+    /// Logic for animating the selection arrrow.
+    /// </summary>
 
     private void AnimateArrow()
     {

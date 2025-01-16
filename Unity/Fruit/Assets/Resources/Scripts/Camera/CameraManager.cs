@@ -17,6 +17,10 @@ public class CameraManager : MonoBehaviour
 
     #region MONOBEHAVIOR
 
+    /// <summary>
+    /// The initialization of this instance.
+    /// </summary>
+
     void Awake()
     {
         // Check if we have an instance of the camera manager
@@ -37,12 +41,20 @@ public class CameraManager : MonoBehaviour
 
     #region METHODS
 
+    /// <summary>
+    /// Moves the camera from the starting position to the main menu's position.
+    /// </summary>
+
     public void TransitionToMainMenu()
     {
         // Transition to the main menu camera
         _startCamera.Priority = 0;
         _mainMenuCamera.Priority = 10;
     }
+
+    /// <summary>
+    /// Moves the camera from the main menu's position to the character select position.
+    /// </summary>
 
     public void TransitionToCharacterSelect()
     {
@@ -51,6 +63,10 @@ public class CameraManager : MonoBehaviour
         _characterSelectCamera.Priority = 10;
     }
 
+    /// <summary>
+    /// Moves the camera from the character select position to the lobby's position.
+    /// </summary>
+
     public void TransitionToLobby()
     {
         // Transition to the lobby camera
@@ -58,10 +74,20 @@ public class CameraManager : MonoBehaviour
         _lobbyCamera.Priority = 10;
     }
 
+    /// <summary>
+    /// Adds a player to the target group, 
+    ///  which the dynamic camera uses to keep all players on screen.
+    /// </summary>
+
     public void AddPlayerToCamera(GameObject player)
     {
         _playerTargetGroup.AddMember(player.transform, 1f, 2f); // Weight = 1, Radius = 2
     }
+
+    /// <summary>
+    /// Removes a player from the target group, 
+    ///  so that the dynamic camera stops tracking them.
+    /// </summary>
 
     public void RemovePlayerFromCamera(GameObject player)
     {

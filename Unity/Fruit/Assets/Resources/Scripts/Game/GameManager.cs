@@ -35,6 +35,10 @@ public class GameManager : MonoBehaviour
 
     #region MONOBEHAVIOR
 
+    /// <summary>
+    /// The initialization of this instance.
+    /// </summary>
+
     void Awake()
     {
         // Check if we have an instance of the game manager
@@ -51,6 +55,10 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    /// <summary>
+    /// Initializes the array length of the amount of characters and their props.
+    /// </summary>
+
     void Start()
     {
         _spawnedFruits = new GameObject[_fruitPrefabs.Length];
@@ -60,6 +68,10 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region METHODS
+
+    /// <summary>
+    /// Spawns the necessary game objects in charge of character selection logic.
+    /// </summary>
 
     public void StartSelection()
     {
@@ -71,6 +83,11 @@ public class GameManager : MonoBehaviour
         Debug.Log("Fruits/arrow spawned for character selection.");
     }
 
+    /// <summary>
+    /// If available, the selected character will be spawned 
+    ///  and the associated props will be destroyed.
+    /// </summary>
+
     public void SelectCharacter(string characterName)
     {
         if (IsCharacterAvailable(characterName))
@@ -80,9 +97,10 @@ public class GameManager : MonoBehaviour
             DestroyArrow();
 
             DestroyFruit(characterName);
-            _selectedCharacters.Add(characterName); // Mark character as taken
 
+            _selectedCharacters.Add(characterName); // Mark character as taken
             SpawnCharacter(characterName);
+
             CameraManager.Instance.TransitionToLobby();
 
             _inGame = true;
@@ -93,7 +111,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void DeselectCharacter(string characterName)
+    /// <summary>
+    /// Marks the appropriate character as available if they were taken.
+    /// </summary>
+
+    public void MarkAsAvailable(string characterName)
     {
         if (_selectedCharacters.Contains(characterName))
         {
@@ -103,16 +125,28 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Returns a list of available characters.
+    /// </summary>
+
     public List<string> GetAvailableCharacters()
     {
         // Return all characters that are not in the selected list
         return _allCharacters.FindAll(character => IsCharacterAvailable(character));
     }
 
+    /// <summary>
+    /// Returns true or false for whether or not the player is in game.
+    /// </summary>
+
     public bool InGame()
     {
         return _inGame;
     }
+
+    /// <summary>
+    /// Starts the match by initiating the timer and match logic.
+    /// </summary>
 
     public void StartMatch()
     {
@@ -120,16 +154,28 @@ public class GameManager : MonoBehaviour
         StartCoroutine(MatchTimer());
     }
 
+    /// <summary>
+    /// Returns the scores for each player.
+    /// </summary>
+
     public void GetPlayerScores()
     {
         // Return each player's score
     }
+
+    /// <summary>
+    /// Checks whether or not the specified character is available.
+    /// </summary>
 
     private bool IsCharacterAvailable(string characterName)
     {
         // The "!" negates the result, meaning it checks if the character is not already taken
         return !_selectedCharacters.Contains(characterName);
     }
+
+    /// <summary>
+    /// Spawns the base fruit bodies to represent each character.
+    /// </summary>
 
     private void SpawnFruit()
     {
@@ -159,6 +205,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Spawns the arrow game object which has the logic needed to select a character.
+    /// </summary>
+
     private void SpawnArrow()
     {
         if (_arrowPrefab == null)
@@ -170,6 +220,10 @@ public class GameManager : MonoBehaviour
 
         _spawnedArrow = Instantiate(_arrowPrefab);
     }
+
+    /// <summary>
+    /// Spawns the selected character along with any needed setup.
+    /// </summary>
 
     private void SpawnCharacter(string characterName)
     {
@@ -189,6 +243,7 @@ public class GameManager : MonoBehaviour
             GameObject spawnedCharacter = Instantiate(_characterPrefabs[characterIndex]);
             _spawnedCharacters[characterIndex] = spawnedCharacter;
 
+            // Setup the character's reference to the main camera
             FruitCharacter fruitCharacter = spawnedCharacter.GetComponent<FruitCharacter>();
             fruitCharacter.camera = Camera.main;
 
@@ -202,6 +257,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Destroys the arrow game object after a character has been selected.
+    /// </summary>
+
     private void DestroyArrow()
     {
         if (_spawnedArrow != null)
@@ -211,6 +270,10 @@ public class GameManager : MonoBehaviour
             Debug.Log("Arrow destroyed.");
         }
     }
+
+    /// <summary>
+    /// Destroys the fruit associated with the chosen character.
+    /// </summary>
 
     private void DestroyFruit(string characterName)
     {
@@ -237,6 +300,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Destroys the specified character no longer needed.
+    /// </summary>
+
     private void DestroyCharacter(string characterName)
     {
         // Find the index of the characterName in the _allCharacters list
@@ -262,6 +329,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Logic for the match timer.
+    /// </summary>
+
     private IEnumerator MatchTimer()
     {
         while (_remainingTime > 0)
@@ -274,6 +345,10 @@ public class GameManager : MonoBehaviour
         EndMatch();
     }
 
+    /// <summary>
+    /// Sets the lobby back up and awards the highest scoring player.
+    /// </summary>
+
     private void EndMatch()
     {
         // Determine winner and transition back to the lobby
@@ -281,6 +356,10 @@ public class GameManager : MonoBehaviour
         int winnerIndex = System.Array.IndexOf(_playerScores, highestScore);
         ShowWinner(winnerIndex);
     }
+
+    /// <summary>
+    /// The highest scoring player is marked as the winner.
+    /// </summary>
 
     private void ShowWinner(int playerIndex)
     {
