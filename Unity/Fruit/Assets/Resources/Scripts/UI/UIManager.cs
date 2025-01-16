@@ -1,3 +1,6 @@
+using HeathenEngineering.SteamworksIntegration;
+using Mirror;
+using Steamworks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
@@ -9,6 +12,12 @@ public class UIManager : MonoBehaviour
 
     public static UIManager Instance { get; private set; }
 
+    private GameObject networkManager;
+
+    [Header("Network Managers")]
+    [SerializeField] private GameObject _networkManagerPrefab;
+    [SerializeField] private GameObject _steamNetworkManagerPrefab;
+
     [Header("Menu References")]
     [SerializeField] private GameObject _startScreen; // UI for "Press Any Button to Start"
     [SerializeField] private GameObject _mainMenu; // Main menu UI
@@ -19,6 +28,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text _timerText; // Reference to the timer text
     [SerializeField] private Text[] _playerScoreTexts; // Array of score displays for each player
     [SerializeField] private Slider[] _playerHealthBars; // Array of health bars for each player
+    [SerializeField] private GameObject _joinButton;
+    [SerializeField] private GameObject _connectingTxt;
 
     #endregion
 
@@ -40,10 +51,41 @@ public class UIManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    /// <summary>
+    /// Steam API will initialize after Awake, so check for the API on Start.
+    /// </summary>
+
     void Start()
     {
         // Show the start screen initially
         SetActivePanel(_startScreen);
+
+        // Make sure the Steam API is available (Steam is running)
+        if (!SteamSettings.Initialized) { return; }
+    }
+
+    /// <summary>
+    /// Enable any events we should listen to.
+    /// </summary>
+
+    void OnEnable()
+    {
+        SurviveNetworkManager.ClientDisconnected += HandleClientDisconnected;
+
+        SteamLogic.LobbyFailed += HandleClientDisconnected;
+        SteamLogic.LobbyJoined += HandleClientConnecting;
+    }
+
+    /// <summary>
+    /// Disable any events we are still listening to.
+    /// </summary>
+
+    void OnDisable()
+    {
+        SurviveNetworkManager.ClientDisconnected -= HandleClientDisconnected;
+
+        SteamLogic.LobbyFailed -= HandleClientDisconnected;
+        SteamLogic.LobbyJoined -= HandleClientConnecting;
     }
 
     void Update()
@@ -65,8 +107,30 @@ public class UIManager : MonoBehaviour
 
     #region METHODS
 
+    /// <summary>
+    /// Calls the Host coroutine.
+    /// </summary>
+
+    public void HostGame()
+    {
+        //StartCoroutine(Host());
+        OnHostGame();
+    }
+
+    /// <summary>
+    /// Calls the Join coroutine.
+    /// </summary>
+
+    public void JoinGame()
+    {
+        //StartCoroutine(Join());
+        Join();
+    }
+
     public void OnHostGame()
     {
+        Host();
+
         SetActivePanel(null);
 
         CameraManager.Instance.TransitionToCharacterSelect();
@@ -182,6 +246,90 @@ public class UIManager : MonoBehaviour
     private void ShowGameplayUI()
     {
         SetActivePanel(_gameplayUI);
+    }
+
+    /// <summary>
+    /// Host a lobby on our local network.
+    /// Use Steam if the API is initialized
+    /// </summary>
+
+    private void Host()
+    {
+        //yield return StartCoroutine(transition.SceneChange());
+
+        HandleClientConnecting();
+
+        if (SteamSettings.Initialized)
+        {
+            SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypeFriendsOnly, NetworkManager.singleton.maxConnections);
+
+            //yield break;
+            return;
+        }
+
+        NetworkManager.singleton.StartHost();
+    }
+
+    /// <summary>
+    /// Join the lobby on our local network.
+    /// </summary>
+
+    private void Join()
+    {
+        //yield return StartCoroutine(transition.SceneChange());
+
+        HandleClientConnecting();
+
+        NetworkManager.singleton.StartClient();
+    }
+
+    /// <summary>
+    /// Spawns the appropriate Network Manager.
+    /// </summary>
+
+    private void SpawnNetworkManager()
+    {
+        if (SteamSettings.Initialized)
+        {
+            networkManager = Instantiate(_steamNetworkManagerPrefab);
+        }
+        else
+        {
+            networkManager = Instantiate(_networkManagerPrefab);
+        }
+    }
+
+    /// <summary>
+    /// What to do when connecting to the server.
+    /// </summary>
+
+    private void HandleClientConnecting()
+    {
+        //connectingTxt.SetActive(true);
+
+        //StartCoroutine(transition.ScreenFade(1.0f, 0.0f, 1.5f));
+
+        SpawnNetworkManager();
+    }
+
+    /// <summary>
+    /// What to do if we couldn't connect to the server.
+    /// 0 = Main Screen, 1 = Play Screen
+    /// </summary>
+
+    private void HandleClientDisconnected()
+    {
+        Destroy(networkManager);
+
+        //connectingTxt.SetActive(false);
+
+        //Re-Enable menu here:
+        //menuScreens[0].SetActive(true);
+
+        //foreach (Button button in menuScreens[1].GetComponentsInChildren<Button>())
+        //{
+        //    button.interactable = true;
+        //}
     }
 
     #endregion

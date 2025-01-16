@@ -75,6 +75,8 @@ public class GameManager : MonoBehaviour
     {
         if (IsCharacterAvailable(characterName))
         {
+            Debug.Log($"{characterName} selected.");
+
             DestroyArrow();
 
             DestroyFruit(characterName);
@@ -84,8 +86,6 @@ public class GameManager : MonoBehaviour
             CameraManager.Instance.TransitionToLobby();
 
             _inGame = true;
-
-            Debug.Log($"{characterName} selected.");
         }
         else
         {
@@ -98,6 +98,7 @@ public class GameManager : MonoBehaviour
         if (_selectedCharacters.Contains(characterName))
         {
             _selectedCharacters.Remove(characterName); // Mark character as available
+
             Debug.Log($"{characterName} deselected.");
         }
     }
@@ -135,6 +136,7 @@ public class GameManager : MonoBehaviour
         if (_fruitPrefabs == null)
         {
             Debug.LogError("Fruit Prefabs not assigned in the GameManager.");
+
             return;
         }
 
@@ -145,6 +147,7 @@ public class GameManager : MonoBehaviour
             if (fruit == null)
             {
                 Debug.LogWarning($"Fruit prefab at index {fruitIndex} is null. Skipping.");
+
                 fruitIndex++;
                 continue;
             }
@@ -161,6 +164,7 @@ public class GameManager : MonoBehaviour
         if (_arrowPrefab == null)
         {
             Debug.LogError("Arrow Prefab is not assigned in the GameManager.");
+
             return;
         }
 
@@ -174,6 +178,7 @@ public class GameManager : MonoBehaviour
         if (characterIndex == -1)
         {
             Debug.LogError($"Character {characterName} not found in the list of all characters.");
+
             return;
         }
 
@@ -202,6 +207,7 @@ public class GameManager : MonoBehaviour
         if (_spawnedArrow != null)
         {
             Destroy(_spawnedArrow);
+
             Debug.Log("Arrow destroyed.");
         }
     }
@@ -213,6 +219,7 @@ public class GameManager : MonoBehaviour
         if (characterIndex == -1)
         {
             Debug.LogError($"Character {characterName} not found in the list of all characters.");
+
             return;
         }
 
@@ -237,6 +244,7 @@ public class GameManager : MonoBehaviour
         if (characterIndex == -1)
         {
             Debug.LogError($"Character {characterName} not found in the list of all characters.");
+
             return;
         }
 

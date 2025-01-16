@@ -19,6 +19,6 @@ public class PlayerInfo : NetworkBehaviour
     {
         CSteamID cSteamId = new CSteamID(newSteamId);
 
-        playerName.text = SteamFriends.GetFriendPersonaName(cSteamId);
+        //playerName.text = SteamFriends.GetFriendPersonaName(cSteamId);
     }
 }

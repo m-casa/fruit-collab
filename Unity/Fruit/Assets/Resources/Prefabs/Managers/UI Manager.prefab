@@ -122,8 +122,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 6856460962515464663}
-        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: OnHostGame
+        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
+        m_MethodName: HostGame
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1207,6 +1207,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb44a623a09a74047b80a2e15761408b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _networkManagerPrefab: {fileID: 8952978014153984661, guid: 9faa0eb3ec90f9c4385d65ed68249f14, type: 3}
+  _steamNetworkManagerPrefab: {fileID: 4420752355574267088, guid: 9200cbf255f84d747b87f7eb5500d1c0, type: 3}
   _startScreen: {fileID: 5998918907946312697}
   _mainMenu: {fileID: 2578989995820065430}
   _pauseMenu: {fileID: 5348460245602812730}
@@ -1214,6 +1216,8 @@ MonoBehaviour:
   _timerText: {fileID: 0}
   _playerScoreTexts: []
   _playerHealthBars: []
+  _joinButton: {fileID: 0}
+  _connectingTxt: {fileID: 0}
 --- !u!1 &4964938973920639063
 GameObject:
   m_ObjectHideFlags: 0
