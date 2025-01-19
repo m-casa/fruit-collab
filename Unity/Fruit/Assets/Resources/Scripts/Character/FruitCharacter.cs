@@ -1,4 +1,5 @@
 using Animancer;
+using Mirror;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,6 +19,7 @@ namespace EasyCharacterMovement
         #region FIELDS
 
         [SerializeField] private NamedAnimancerComponent _animancer;
+        [SerializeField] private NetworkAnimations _networkAnimations;
         [SerializeField] private Transform _chestTransform; // Reference to the chest bone
         [SerializeField] private float _leanAmount = 12.5f; // Maximum degrees to lean
         [SerializeField] private float _leanSpeed = 8f; // Speed at which the lean is applied
@@ -26,9 +28,9 @@ namespace EasyCharacterMovement
         private bool _rightFootUp, _isSpeeding, _queueLaunch, 
             _blockButtonPressed, _isBlocking, _takingDamage, 
             _punchButtonPressed, _isGroundPunching, _isAirPunching;
-        private int _currentComboStep;
-        private int _nextComboStep; // Keep track of the next combo step
+        private int _currentComboStep, _nextComboStep; // Keep track of the next combo step
         private float _cooldownTimer;
+        private string currentAnimationClip;
         private string[] _comboAnimations = { "_Punch.1", "_Punch.2", "_Punch.3" };
         private Queue<int> _punchQueue = new Queue<int>();
         private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
@@ -106,7 +108,7 @@ namespace EasyCharacterMovement
 
         #endregion
 
-        #region METHODS  
+        #region MONOBEHAVIOR
 
         /// <summary>
         /// Called when the script instance is being loaded (Awake).
@@ -116,6 +118,9 @@ namespace EasyCharacterMovement
         protected override void OnAwake()
         {
             base.OnAwake();
+
+            // Cache the Character's starting animation clip
+            currentAnimationClip = "Idle";
 
             _rightFootUp = true;
             _isSpeeding = false;
@@ -132,6 +137,19 @@ namespace EasyCharacterMovement
             _currentComboStep = 0;
             _nextComboStep = 0;
             _cooldownTimer = 0f;
+        }
+
+        /// <summary>
+        /// Extends OnStart.
+        /// Only allow inputs on the local player's Character.
+        /// </summary>
+
+        protected override void OnStart()
+        {
+            base.OnStart();
+
+            if (!isLocalPlayer)
+                UnsubFromInputActions();
         }
 
         /// <summary>
@@ -166,9 +184,12 @@ namespace EasyCharacterMovement
 
         protected override void OnUpdate()
         {
-            base.OnUpdate();
+            if (isLocalPlayer)
+            {
+                base.OnUpdate();
 
-            HandleLeanInput();
+                HandleLeanInput();
+            }
 
             //Debug.DrawLine(transform.position, GetVelocity() * 10, Color.red, .5f);
         }
@@ -179,10 +200,15 @@ namespace EasyCharacterMovement
 
         protected override void OnLateFixedUpdate()
         {
-            ApplyLean();
-
+            if (isLocalPlayer)
+                ApplyLean();
+            
             base.OnLateFixedUpdate();
         }
+
+        #endregion
+
+        #region METHODS
 
         /// <summary>
         /// Initialize player InputActions (if any).
@@ -268,7 +294,7 @@ namespace EasyCharacterMovement
         /// Saves the rotation data needed to lean the character in the direction they move.
         /// </summary>
 
-        protected virtual void HandleLeanInput()
+        private void HandleLeanInput()
         {
             // Project on a horizontal plane so we only have to consider horizontal direction without vertical rotation creating issues
             Vector3 characterForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
@@ -301,7 +327,7 @@ namespace EasyCharacterMovement
         /// Applies the correct rotation determined in HandleLeanInput.
         /// </summary>
 
-        protected virtual void ApplyLean()
+        private void ApplyLean()
         {
             // Override animation data on the chest with our dummy transform
             _chestTransform.localRotation = _chestOverrideTransform;
@@ -447,10 +473,64 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Unsub from all input action handlers.
+        /// </summary>
+
+        private void UnsubFromInputActions()
+        {
+            movementInputAction = null;
+
+            if (sprintInputAction != null)
+            {
+                sprintInputAction.started -= OnSprint;
+                sprintInputAction.performed -= OnSprint;
+                sprintInputAction.canceled -= OnSprint;
+
+                sprintInputAction = null;
+            }
+
+            if (crouchInputAction != null)
+            {
+                crouchInputAction.started -= OnCrouch;
+                crouchInputAction.performed -= OnCrouch;
+                crouchInputAction.canceled -= OnCrouch;
+
+                crouchInputAction = null;
+            }
+
+            if (jumpInputAction != null)
+            {
+                jumpInputAction.started -= OnJump;
+                jumpInputAction.performed -= OnJump;
+                jumpInputAction.canceled -= OnJump;
+
+                jumpInputAction = null;
+            }
+
+            if (punchInputAction != null)
+            {
+                punchInputAction.started -= OnPunch;
+                punchInputAction.performed -= OnPunch;
+                punchInputAction.canceled -= OnPunch;
+
+                punchInputAction = null;
+            }
+
+            if (blockInputAction != null)
+            {
+                blockInputAction.started -= OnBlock;
+                blockInputAction.performed -= OnBlock;
+                blockInputAction.canceled -= OnBlock;
+
+                blockInputAction = null;
+            }
+        }
+
+        /// <summary>
         /// Disables Player input.
         /// </summary>
 
-        protected virtual void DisableInput()
+        private void DisableInput()
         {
             movementInputAction.Disable();
             jumpInputAction.Disable();
@@ -462,7 +542,7 @@ namespace EasyCharacterMovement
         /// Enables Player input.
         /// </summary>
 
-        protected virtual void EnableInput()
+        private void EnableInput()
         {
             movementInputAction.Enable();
             jumpInputAction.Enable();
@@ -474,7 +554,7 @@ namespace EasyCharacterMovement
         /// Captures any punches the player initiates.
         /// </summary>
 
-        protected virtual void HandlePunching()
+        private void HandlePunching()
         {
             if (IsGrounded())
             {
@@ -500,7 +580,7 @@ namespace EasyCharacterMovement
         /// Captures block input that the player initiates.
         /// </summary>
 
-        protected virtual void HandleBlocking()
+        private void HandleBlocking()
         {
             if (IsGrounded() && _blockButtonPressed)
             {
@@ -513,6 +593,12 @@ namespace EasyCharacterMovement
                     jumpInputAction.Disable();
 
                     _animancer.TryPlay("_Block", 0.15f);
+
+                    if (currentAnimationClip != "_Block")
+                    {
+                        currentAnimationClip = "_Block";
+                        _networkAnimations.CmdPlayBlockAnimation();
+                    }
                 }
             }
         }
@@ -521,7 +607,7 @@ namespace EasyCharacterMovement
         /// Start a punch initiated by the player.
         /// </summary>
 
-        protected virtual void Punch()
+        private void Punch()
         {
             if (_cooldownTimer <= 0f)
             {
@@ -533,7 +619,7 @@ namespace EasyCharacterMovement
         /// Manually releases the punch button.
         /// </summary>
 
-        protected virtual void ReleasePunch()
+        private void ReleasePunch()
         {
             _punchButtonPressed = false;
         }
@@ -597,6 +683,12 @@ namespace EasyCharacterMovement
                 _animancer.Play(state);
                 state.Speed = 1.25f;
                 state.Time = 0f;
+
+                if (currentAnimationClip != _comboAnimations[_currentComboStep])
+                {
+                    currentAnimationClip = _comboAnimations[_currentComboStep];
+                    _networkAnimations.CmdPlayPunchAnimation(currentAnimationClip);
+                }
             }
 
             // Mark as punching
@@ -656,7 +748,7 @@ namespace EasyCharacterMovement
         /// Reset the character's combo to a default state.
         /// </summary>
 
-        protected virtual void ResetCombo()
+        private void ResetCombo()
         {
             // Transition back to idle animation
             if (IsGrounded())
@@ -687,7 +779,7 @@ namespace EasyCharacterMovement
         /// Handles punch logic while the character is in the air.
         /// </summary>
 
-        protected virtual void HandleAirPunch()
+        private void HandleAirPunch()
         {
             if (_punchButtonPressed)
             {
@@ -702,6 +794,12 @@ namespace EasyCharacterMovement
                         _animancer.Play(state);
                         state.Speed = 1.25f;
                         state.Time = 0f;
+
+                        if (currentAnimationClip != airPunchClip)
+                        {
+                            currentAnimationClip = airPunchClip;
+                            _networkAnimations.CmdPlayAirPunchAnimation(currentAnimationClip);
+                        }
                     }
 
                     _isAirPunching = true;
@@ -720,7 +818,7 @@ namespace EasyCharacterMovement
         /// Reset the character's air punch to a default state.
         /// </summary
 
-        protected virtual void ResetAirPunch()
+        private void ResetAirPunch()
         {
             PlayFallAnimation();
 
@@ -733,7 +831,7 @@ namespace EasyCharacterMovement
         /// Request the character to block.
         /// </summary>
 
-        protected virtual void Block()
+        private void Block()
         {
             _blockButtonPressed = true;
         }
@@ -742,7 +840,7 @@ namespace EasyCharacterMovement
         /// Request the character to stop blocking.
         /// </summary>
 
-        protected virtual void StopBlocking()
+        private void StopBlocking()
         {
             _blockButtonPressed = false;
 
@@ -761,7 +859,7 @@ namespace EasyCharacterMovement
         /// Eg: check if a launch was queued.
         /// </summary>
 
-        protected virtual void Launching()
+        private void Launching()
         {
             if (_queueLaunch)
             {
@@ -794,16 +892,22 @@ namespace EasyCharacterMovement
         /// Play the launch animation for the character.
         /// </summary>
 
-        protected virtual void PlayLaunchAnimation()
+        private void PlayLaunchAnimation()
         {
             _animancer.TryPlay("_Launch", 0.25f);
+
+            if (currentAnimationClip != "_Launch")
+            {
+                currentAnimationClip = "_Launch";
+                _networkAnimations.CmdPlayLaunchAnimation();
+            }
         }
 
         /// <summary>
         /// Sets the right foot as up so we can use that foot to jump.
         /// </summary>
 
-        protected virtual void SetRightFootUp()
+        private void SetRightFootUp()
         {
             if (IsGrounded())
                 _rightFootUp = true;
@@ -813,7 +917,7 @@ namespace EasyCharacterMovement
         /// Sets the right foot as down so we can use the left foot to jump.
         /// </summary>
 
-        protected virtual void SetRightFootDown()
+        private void SetRightFootDown()
         {
             if (IsGrounded())
                 _rightFootUp = false;
@@ -823,14 +927,20 @@ namespace EasyCharacterMovement
         /// Play the jump animation for the character.
         /// </summary>
 
-        protected virtual void PlayJumpAnimation()
+        private void PlayJumpAnimation()
         {
             string jumpClip = _rightFootUp ? "_Jump.L" : "_Jump.R";
 
             if (_animancer.States.TryGet(jumpClip, out var state))
             {
-                state.Time = 0;
                 _animancer.Play(state, 0.25f);
+                state.Time = 0;
+
+                if (currentAnimationClip != jumpClip)
+                {
+                    currentAnimationClip = jumpClip;
+                    _networkAnimations.CmdPlayJumpAnimation(currentAnimationClip);
+                }
             }
         }
 
@@ -838,15 +948,20 @@ namespace EasyCharacterMovement
         /// Play the fall animation for the character.
         /// </summary>
 
-        protected virtual void PlayFallAnimation()
+        private void PlayFallAnimation()
         {
-            if (_rightFootUp)
+            string fallClip = _rightFootUp ? "_Fall.R" : "_Fall.L";
+
+            if (_animancer.States.TryGet(fallClip, out var state))
             {
-                _animancer.TryPlay("_Fall.R", 0.25f);
-            }
-            else
-            {
-                _animancer.TryPlay("_Fall.L", 0.25f);
+                _animancer.Play(state, 0.25f);
+                state.Time = 0;
+
+                if (currentAnimationClip != fallClip)
+                {
+                    currentAnimationClip = fallClip;
+                    _networkAnimations.CmdPlayFallAnimation(currentAnimationClip);
+                }
             }
         }
 
@@ -854,20 +969,32 @@ namespace EasyCharacterMovement
         /// Play the land animation for the character.
         /// </summary>
 
-        protected virtual void PlayLandAnimation()
+        private void PlayLandAnimation()
         {
             _animancer.TryPlay("_Land", 0.25f);
+
+            if (currentAnimationClip != "_Land")
+            {
+                currentAnimationClip = "_Land";
+                _networkAnimations.CmdPlayLandAnimation();
+            }
         }
 
         /// <summary>
         /// Play the idle animation for the character.
         /// </summary>
 
-        protected virtual void PlayIdleAnimation()
+        private void PlayIdleAnimation()
         {
             if (!_animancer.IsPlaying("_Land"))
             {
                 _animancer.TryPlay("_Idle", 0.15f);
+
+                if (currentAnimationClip != "_Idle")
+                {
+                    currentAnimationClip = "Idle";
+                    _networkAnimations.CmdPlayIdleAnimation();
+                }
             }
         }
 
@@ -875,7 +1002,7 @@ namespace EasyCharacterMovement
         /// Play the run animation for the character.
         /// </summary>
 
-        protected virtual void PlayRunAnimation(Vector2 movementInput)
+        private void PlayRunAnimation(Vector2 movementInput)
         {
             if (movementInput.y != 0f || movementInput.x != 0f)
             {
@@ -888,6 +1015,12 @@ namespace EasyCharacterMovement
 
                 var state = _animancer.TryPlay("_Run", 0.25f);
                 state.Speed = 1.25f * inputMagnitude;
+
+                if (currentAnimationClip != "_Run")
+                {
+                    currentAnimationClip = "_Run";
+                    _networkAnimations.CmdPlayRunAnimation(inputMagnitude);
+                }
             }
         }
 
@@ -895,7 +1028,7 @@ namespace EasyCharacterMovement
         /// Play the sprint animation for the character.
         /// </summary>
 
-        protected virtual void PlaySprintAnimation(Vector2 movementInput)
+        private void PlaySprintAnimation(Vector2 movementInput)
         {
             if (movementInput.y != 0f || movementInput.x != 0f)
             {
@@ -908,6 +1041,12 @@ namespace EasyCharacterMovement
 
                 var state = _animancer.TryPlay("_Sprint", 0.25f);
                 state.Speed = 1.25f * inputMagnitude;
+
+                if (currentAnimationClip != "_Sprint")
+                {
+                    currentAnimationClip = "_Sprint";
+                    _networkAnimations.CmdPlaySprintAnimation(inputMagnitude);
+                }
             }
         }
 
@@ -974,6 +1113,12 @@ namespace EasyCharacterMovement
                 {
                     _animancer.Play(state);
                     state.Time = 0f;
+
+                    if (currentAnimationClip != "_Hurt")
+                    {
+                        currentAnimationClip = "_Hurt";
+                        _networkAnimations.CmdPlayHurtAnimation();
+                    }
                 }
 
                 Invoke(nameof(StopDamage), effectDuration);

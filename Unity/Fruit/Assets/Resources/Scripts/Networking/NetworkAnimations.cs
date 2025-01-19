@@ -1,25 +1,260 @@
-using EasyCharacterMovement;
+using Animancer;
 using Mirror;
 using UnityEngine;
 
 public class NetworkAnimations : NetworkBehaviour
 {
-    [SyncVar(hook = nameof(HandleAnimationClipUpdated))]
-    private string currentAnimationClip;
+    [SerializeField] private NamedAnimancerComponent _animancer;
 
-    [SerializeField] private FruitCharacter character;
+    /// <summary>
+    /// Sends a command to the server, telling it
+    ///  to play the idle animation for this player's Character.
+    /// </summary>
 
-    public void SetAnimationClip(string newAnimationClip)
+    [Command]
+    public void CmdPlayIdleAnimation()
     {
-        currentAnimationClip = newAnimationClip;
+        RpcPlayIdleAnimation();
     }
 
-    private void HandleAnimationClipUpdated(string oldAnimationClip, string newAnimationClip)
+    /// <summary>
+    /// Plays the idle animation on
+    ///  every client's version of this player's Character.
+    /// </summary>
+
+    [ClientRpc(includeOwner = false)]
+    protected virtual void RpcPlayIdleAnimation()
     {
-        // Don't update the local player's animation
-        //  since they're updating it themselves
-        if (!isLocalPlayer)
-            Debug.Log("Animation clip updated");
-            //character.SyncAnimationClip(newAnimationClip);
+        _animancer.TryPlay("_Idle", 0.15f);
+    }
+
+    /// <summary>
+    /// Sends a command to the server, telling it
+    ///  to play the run animation for this player's Character.
+    /// </summary>
+
+    [Command]
+    public void CmdPlayRunAnimation(float inputMagnitude)
+    {
+        RpcPlayRunAnimation(inputMagnitude);
+    }
+
+    /// <summary>
+    /// Plays the run animation on
+    ///  every client's version of this player's Character.
+    /// </summary>
+
+    [ClientRpc(includeOwner = false)]
+    protected virtual void RpcPlayRunAnimation(float inputMagnitude)
+    {
+        var state = _animancer.TryPlay("_Run", 0.25f);
+        state.Speed = 1.25f * inputMagnitude;
+    }
+
+    /// <summary>
+    /// Sends a command to the server, telling it
+    ///  to play the sprint animation for this player's Character.
+    /// </summary>
+
+    [Command]
+    public void CmdPlaySprintAnimation(float inputMagnitude)
+    {
+        RpcPlaySprintAnimation(inputMagnitude);
+    }
+
+    /// <summary>
+    /// Plays the sprint animation on
+    ///  every client's version of this player's Character.
+    /// </summary>
+
+    [ClientRpc(includeOwner = false)]
+    protected virtual void RpcPlaySprintAnimation(float inputMagnitude)
+    {
+        var state = _animancer.TryPlay("_Sprint", 0.25f);
+        state.Speed = 1.25f * inputMagnitude;
+    }
+
+    /// <summary>
+    /// Sends a command to the server, telling it
+    ///  to play the jump animation for this player's Character.
+    /// </summary>
+
+    [Command]
+    public void CmdPlayJumpAnimation(string animationClip)
+    {
+        RpcPlayJumpAnimation(animationClip);
+    }
+
+    /// <summary>
+    /// Plays the jump animation on
+    ///  every client's version of this player's Character.
+    /// </summary>
+
+    [ClientRpc(includeOwner = false)]
+    protected virtual void RpcPlayJumpAnimation(string animationClip)
+    {
+        var state = _animancer.TryPlay(animationClip, 0.25f);
+        state.Time = 0f;
+    }
+
+    /// <summary>
+    /// Sends a command to the server, telling it
+    ///  to play the launch animation for this player's Character.
+    /// </summary>
+
+    [Command]
+    public void CmdPlayLaunchAnimation()
+    {
+        RpcPlayLaunchAnimation();
+    }
+
+    /// <summary>
+    /// Plays the launch animation on
+    ///  every client's version of this player's Character.
+    /// </summary>
+
+    [ClientRpc(includeOwner = false)]
+    protected virtual void RpcPlayLaunchAnimation()
+    {
+        _animancer.TryPlay("_Launch", 0.25f);
+    }
+
+    /// <summary>
+    /// Sends a command to the server, telling it
+    ///  to play the fall animation for this player's Character.
+    /// </summary>
+
+    [Command]
+    public void CmdPlayFallAnimation(string animationClip)
+    {
+        RpcPlayFallAnimation(animationClip);
+    }
+
+    /// <summary>
+    /// Plays the fall animation on
+    ///  every client's version of this player's Character.
+    /// </summary>
+
+    [ClientRpc(includeOwner = false)]
+    protected virtual void RpcPlayFallAnimation(string animationClip)
+    {
+
+        var state = _animancer.TryPlay(animationClip, 0.25f);
+        state.Time = 0f;
+    }
+
+    /// <summary>
+    /// Sends a command to the server, telling it
+    ///  to play the land animation for this player's Character.
+    /// </summary>
+
+    [Command]
+    public void CmdPlayLandAnimation()
+    {
+        RpcPlayLandAnimation();
+    }
+
+    /// <summary>
+    /// Plays the land animation on
+    ///  every client's version of this player's Character.
+    /// </summary>
+
+    [ClientRpc(includeOwner = false)]
+    protected virtual void RpcPlayLandAnimation()
+    {
+        _animancer.TryPlay("_Land", 0.25f);
+    }
+
+    /// <summary>
+    /// Sends a command to the server, telling it
+    ///  to play the punch animation for this player's Character.
+    /// </summary>
+
+    [Command]
+    public void CmdPlayPunchAnimation(string animationClip)
+    {
+        RpcPlayPunchAnimation(animationClip);
+    }
+
+    /// <summary>
+    /// Plays the punch animation on
+    ///  every client's version of this player's Character.
+    /// </summary>
+
+    [ClientRpc(includeOwner = false)]
+    protected virtual void RpcPlayPunchAnimation(string animationClip)
+    {
+        var state = _animancer.TryPlay(animationClip);
+        state.Speed = 1.25f;
+        state.Time = 0f;
+    }
+
+    /// <summary>
+    /// Sends a command to the server, telling it
+    ///  to play the air punch animation for this player's Character.
+    /// </summary>
+
+    [Command]
+    public void CmdPlayAirPunchAnimation(string animationClip)
+    {
+        RpcPlayAirPunchAnimation(animationClip);
+    }
+
+    /// <summary>
+    /// Plays the air punch animation on
+    ///  every client's version of this player's Character.
+    /// </summary>
+
+    [ClientRpc(includeOwner = false)]
+    protected virtual void RpcPlayAirPunchAnimation(string animationClip)
+    {
+        var state = _animancer.TryPlay(animationClip);
+        state.Speed = 1.25f;
+        state.Time = 0f;
+    }
+
+    /// <summary>
+    /// Sends a command to the server, telling it
+    ///  to play the hurt animation for this player's Character.
+    /// </summary>
+
+    [Command]
+    public void CmdPlayHurtAnimation()
+    {
+        RpcPlayHurtAnimation();
+    }
+
+    /// <summary>
+    /// Plays the hurt animation on
+    ///  every client's version of this player's Character.
+    /// </summary>
+
+    [ClientRpc(includeOwner = false)]
+    protected virtual void RpcPlayHurtAnimation()
+    {
+        var state = _animancer.TryPlay("_Hurt");
+        state.Time = 0f;
+    }
+
+    /// <summary>
+    /// Sends a command to the server, telling it
+    ///  to play the block animation for this player's Character.
+    /// </summary>
+
+    [Command]
+    public void CmdPlayBlockAnimation()
+    {
+        RpcPlayBlockAnimation();
+    }
+
+    /// <summary>
+    /// Plays the block animation on
+    ///  every client's version of this player's Character.
+    /// </summary>
+
+    [ClientRpc(includeOwner = false)]
+    protected virtual void RpcPlayBlockAnimation()
+    {
+        _animancer.TryPlay("_Block", 0.15f);
     }
 }

@@ -140,7 +140,7 @@ public class CharacterSelect : MonoBehaviour
     {
         string selectedCharacter = _characterNames[_currentIndex];
 
-        GameManager.Instance.SelectCharacter(selectedCharacter);
+        GameManager.Instance.CmdClaimCharacter(selectedCharacter);
     }
 
     /// <summary>

@@ -1,9 +1,11 @@
 using EasyCharacterMovement;
+using Mirror;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour
 {
     #region FIELDS
 
@@ -11,9 +13,12 @@ public class GameManager : MonoBehaviour
 
     [Header("Game States")]
     [SerializeField] private List<string> _allCharacters = new List<string> { "Apple", "Grape", "Lemon", "Peach" };
-    private List<string> _selectedCharacters = new List<string>(); // Tracks selected characters
+    private HashSet<string> _claimedCharacters = new HashSet<string>(); // Tracks taken characters
     private int[] _playerScores; // Scores for each player
     private bool _inGame;
+
+    [SyncVar(hook = nameof(OnClaimedCharactersUpdated))]
+    private string _claimedCharactersSync = ""; // Sync'd string for character selection (CSV format)
 
     [Header("Timers")]
     [SerializeField] private float _matchDuration = 150f; // 2:30 minutes in seconds
@@ -75,6 +80,8 @@ public class GameManager : MonoBehaviour
 
     public void StartSelection()
     {
+        UpdateClaimedCharacters();
+
         SpawnFruit();
 
         SpawnArrow();
@@ -88,17 +95,20 @@ public class GameManager : MonoBehaviour
     ///  and the associated props will be destroyed.
     /// </summary>
 
-    public void SelectCharacter(string characterName)
+    [Command]
+    public void CmdClaimCharacter(string characterName, NetworkConnectionToClient sender = null)
     {
         if (IsCharacterAvailable(characterName))
         {
             Debug.Log($"{characterName} selected.");
 
-            DestroyArrow();
+            TargetDestroyArrow(sender);
 
-            DestroyFruit(characterName);
+            //DestroyFruit(characterName);
 
-            _selectedCharacters.Add(characterName); // Mark character as taken
+            _claimedCharacters.Add(characterName); // Mark character as taken
+            UpdateClaimedCharactersSync();
+
             SpawnCharacter(characterName);
 
             CameraManager.Instance.TransitionToLobby();
@@ -117,22 +127,12 @@ public class GameManager : MonoBehaviour
 
     public void MarkAsAvailable(string characterName)
     {
-        if (_selectedCharacters.Contains(characterName))
+        if (!IsCharacterAvailable(characterName))
         {
-            _selectedCharacters.Remove(characterName); // Mark character as available
+            _claimedCharacters.Remove(characterName); // Mark character as available
 
             Debug.Log($"{characterName} deselected.");
         }
-    }
-
-    /// <summary>
-    /// Returns a list of available characters.
-    /// </summary>
-
-    public List<string> GetAvailableCharacters()
-    {
-        // Return all characters that are not in the selected list
-        return _allCharacters.FindAll(character => IsCharacterAvailable(character));
     }
 
     /// <summary>
@@ -170,7 +170,7 @@ public class GameManager : MonoBehaviour
     private bool IsCharacterAvailable(string characterName)
     {
         // The "!" negates the result, meaning it checks if the character is not already taken
-        return !_selectedCharacters.Contains(characterName);
+        return !_claimedCharacters.Contains(characterName);
     }
 
     /// <summary>
@@ -198,11 +198,23 @@ public class GameManager : MonoBehaviour
                 continue;
             }
 
+            // Check if this fruit's corresponding character is already claimed
+            string characterName = _allCharacters[fruitIndex]; // Get corresponding character name
+
+            if (!IsCharacterAvailable(characterName))
+            {
+                Debug.Log($"{characterName} already claimed. Skipping fruit spawn.");
+                fruitIndex++;
+                continue;
+            }
+
             // Spawn the fruit and store it in the array
             GameObject spawnedFruit = Instantiate(fruit);
             _spawnedFruits[fruitIndex] = spawnedFruit;
             fruitIndex++;
         }
+
+        Debug.Log("Available fruits spawned for character selection.");
     }
 
     /// <summary>
@@ -258,10 +270,11 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Destroys the arrow game object after a character has been selected.
+    /// Destroys the arrow game object on the client that claimed a character.
     /// </summary>
 
-    private void DestroyArrow()
+    [TargetRpc]
+    private void TargetDestroyArrow(NetworkConnection target)
     {
         if (_spawnedArrow != null)
         {
@@ -365,6 +378,51 @@ public class GameManager : MonoBehaviour
     {
         // Display crown on the winning player
         Debug.Log($"Player {playerIndex + 1} wins!");
+    }
+
+    /// <summary>
+    /// Update the actual set of claimed characters using the sync var.
+    /// </summary>
+
+    private void UpdateClaimedCharacters()
+    {
+        foreach (string character in _claimedCharactersSync.Split(','))
+        {
+            if (!string.IsNullOrWhiteSpace(character)) // Avoid empty strings
+            {
+                _claimedCharacters.Add(character);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Update the Sync var that keeps track of claimed characters.
+    /// </summary>
+
+    private void UpdateClaimedCharactersSync()
+    {
+        _claimedCharactersSync = string.Join(",", _claimedCharacters);
+    }
+
+    /// <summary>
+    /// Updates each client's list of claimed characters.
+    /// </summary>
+
+    private void OnClaimedCharactersUpdated(string oldValue, string newValue)
+    {
+        Debug.Log($"Syncing claimed characters: {newValue}");
+
+        // Update local list based on new SyncVar value
+        _claimedCharacters.Clear(); // Remove old data
+        foreach (string character in newValue.Split(','))
+        {
+            if (!string.IsNullOrWhiteSpace(character)) // Avoid empty strings
+            {
+                _claimedCharacters.Add(character);
+
+                DestroyFruit(character);
+            }
+        }
     }
 
     #endregion

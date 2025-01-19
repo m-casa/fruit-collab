@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mirror;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -50,7 +51,7 @@ namespace EasyCharacterMovement
     #endregion
 
     [RequireComponent(typeof(CharacterMovement))]
-    public class Character : MonoBehaviour
+    public class Character : NetworkBehaviour
     {
         #region EDITOR EXPOSED FIELDS
 

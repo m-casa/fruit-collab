@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5416159307642501028}
   - component: {fileID: 2690949167228660106}
+  - component: {fileID: 9193478911337098211}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -44,20 +45,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5fb352e67c2c2024e9ab593c1c337e87, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   _allCharacters:
   - Apple
   - Grape
   - Lemon
   - Peach
   _matchDuration: 150
-  _arrowPrefab: {fileID: 5716227855454253439, guid: 4d07af6445bb81e41bb7369c76c21a41, type: 3}
-  _fruitPrefabs:
-  - {fileID: 1364519068984425627, guid: d8c8d0a2924731a4cb67aa272d910316, type: 3}
-  - {fileID: 1205390737718345367, guid: 5285860d86abc5347942d5bea0b81390, type: 3}
-  - {fileID: 8689470513531395943, guid: be62c9af7d56add4fa9637e7ac92fef2, type: 3}
-  - {fileID: 3017362814864323587, guid: d7bf86ca337e63942b91b99b23ffc7ea, type: 3}
   _characterPrefabs:
   - {fileID: 2770216168605465205, guid: 385e80b150cc5334592e60686f3c3650, type: 3}
   - {fileID: 7032070106759402331, guid: a7723472d56ee0f4cbcc0708360c49f2, type: 3}
   - {fileID: 1974657863803228055, guid: 822ae2edd16d82b46857ca9a4893676b, type: 3}
   - {fileID: 2606219565802472321, guid: b2caf19a434097841ae6e9bc4e3bd89d, type: 3}
+  _fruitPrefabs:
+  - {fileID: 1364519068984425627, guid: d8c8d0a2924731a4cb67aa272d910316, type: 3}
+  - {fileID: 1205390737718345367, guid: 5285860d86abc5347942d5bea0b81390, type: 3}
+  - {fileID: 8689470513531395943, guid: be62c9af7d56add4fa9637e7ac92fef2, type: 3}
+  - {fileID: 3017362814864323587, guid: d7bf86ca337e63942b91b99b23ffc7ea, type: 3}
+  _arrowPrefab: {fileID: 5716227855454253439, guid: 4d07af6445bb81e41bb7369c76c21a41, type: 3}
+--- !u!114 &9193478911337098211
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4687058671324702134}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneId: 0
+  _assetId: 2111151483
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
