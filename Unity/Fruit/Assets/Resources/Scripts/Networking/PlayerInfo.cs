@@ -65,14 +65,27 @@ public class PlayerInfo : NetworkBehaviour
     private void HandleClientConnected()
     {
         CameraManager.Instance.TransitionToCharacterSelect();
-
-        CmdRequestStartSelection();
+        if (NetworkClient.isConnected)
+        {
+            NetworkConnection localPlayerConnection = NetworkClient.connection;
+            // Check if the local player owns the spawned character
+            if (GetComponent<NetworkIdentity>().isLocalPlayer)
+            {
+                Debug.Log("This PLAYER INFO is the local player's PLAYER INFO.");
+            }
+            else
+            {
+                Debug.Log("This PLAYER INFO is not the local player's PLAYER INFO.");
+            }
+            // Now pass the connection to the command method
+            GameManager.Instance.CmdStartSelection(connectionToClient);
+        }
     }
 
     [Command]
-    private void CmdRequestStartSelection()
+    private void CmdRequestStartSelection(NetworkConnectionToClient sender = null)
     {
-        GameManager.Instance.CmdStartSelection();
+        GameManager.Instance.CmdStartSelection(sender);
     }
 
     #endregion

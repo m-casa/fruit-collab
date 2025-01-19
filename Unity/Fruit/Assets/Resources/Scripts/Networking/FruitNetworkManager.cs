@@ -21,7 +21,17 @@ public class FruitNetworkManager : NetworkManager
 
         GameObject gminstance = Instantiate(gameManager);
         NetworkServer.Spawn(gminstance, conn);
+        // Assign ownership to the player
+        //gminstance.GetComponent<NetworkIdentity>().AssignClientAuthority(conn);
 
+        if (gminstance.GetComponent<NetworkIdentity>().isOwned)
+        {
+            Debug.Log("This GAME MANAGER is the local player's GAME MANAGER.");
+        }
+        else
+        {
+            Debug.Log("This GAME MANAGER is not the local player's GAME MANAGER.");
+        }
 
         if (SteamSettings.Initialized)
         {

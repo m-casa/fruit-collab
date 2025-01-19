@@ -72,17 +72,30 @@ public class GameManager : NetworkBehaviour
     /// Spawns the necessary game objects in charge of character selection logic.
     /// </summary>
 
-    [Command]
     public void CmdStartSelection(NetworkConnectionToClient sender = null)
     {
+        //NetworkConnection clientConnection = NetworkClient.connection;
         UpdateClaimedCharacters(sender);
 
         TargetRpcSpawnFruit(sender);
+        Debug.Log("Target Connection: " + sender.connectionId);
 
+        if (sender == null)
+        {
+            Debug.LogError("CmdStartSelection: sender is NULL!");
+            return;
+        }
+        //CmdSpawnArrow(sender);
         TargetRpcSpawnArrow(sender);
-
+        
         // Additional setup for the arrow if needed
         Debug.Log("Fruits/arrow spawned for character selection.");
+    }
+
+    [Command]
+    private void CmdSpawnArrow(NetworkConnectionToClient sender = null)
+    {
+        TargetRpcSpawnArrow(sender);
     }
 
     /// <summary>
@@ -90,7 +103,6 @@ public class GameManager : NetworkBehaviour
     ///  and the associated props will be destroyed.
     /// </summary>
 
-    [Command]
     public void CmdClaimCharacter(string characterName, NetworkConnectionToClient sender = null)
     {
         if (IsCharacterAvailable(characterName))
@@ -105,7 +117,7 @@ public class GameManager : NetworkBehaviour
             UpdateClaimedCharactersSync();
 
             // Spawn and assign the character to the correct client
-            SpawnCharacter(sender, characterName);
+            SpawnCharacter(characterName, sender);
 
             CameraManager.Instance.TransitionToLobby();
 
@@ -173,9 +185,13 @@ public class GameManager : NetworkBehaviour
     /// Spawns the base fruit bodies to represent each character.
     /// </summary>
 
-    [TargetRpc]
     private void TargetRpcSpawnFruit(NetworkConnection target)
     {
+        if (target == null)
+        {
+            Debug.LogError("CmdStartSelection: sender is NULL!");
+            return;
+        }
         if (_fruitPrefabs == null)
         {
             Debug.LogError("Fruit Prefabs not assigned in the GameManager.");
@@ -218,9 +234,14 @@ public class GameManager : NetworkBehaviour
     /// Spawns the arrow game object which has the logic needed to select a character.
     /// </summary>
 
-    [TargetRpc]
     private void TargetRpcSpawnArrow(NetworkConnection target)
     {
+        if (target == null)
+        {
+            Debug.LogError("TargetRpcSpawnArrow: target is NULL!");
+            return;
+        }
+
         if (_arrowPrefab == null)
         {
             Debug.LogError("Arrow Prefab is not assigned in the GameManager.");
@@ -229,17 +250,28 @@ public class GameManager : NetworkBehaviour
         }
 
         _spawnedArrow = Instantiate(_arrowPrefab);
-
+        Debug.Log("Target Connection: " + target);
         // Assign authority to the player's connection
-        NetworkServer.Spawn(_spawnedArrow, target);
+        //NetworkServer.Spawn(_spawnedArrow, target);
+        // Assign ownership to the player
+        //_spawnedArrow.GetComponent<NetworkIdentity>().AssignClientAuthority(connectionToClient);
+        // Check if the local player owns the spawned character
+        if (_spawnedArrow.GetComponent<NetworkIdentity>().isOwned)
+        {
+            Debug.Log("This ARROW is the local player's ARROW.");
+        }
+        else
+        {
+            Debug.Log("This ARROW is not the local player's ARROW.");
+        }
     }
 
     /// <summary>
     /// Spawns the selected character along with any needed setup.
     /// </summary>
 
-    [TargetRpc]
-    private void SpawnCharacter(NetworkConnection target, string characterName)
+    [Command]
+    private void SpawnCharacter(string characterName, NetworkConnectionToClient target)
     {
         // Find the index of the characterName in the _allCharacters list
         int characterIndex = _allCharacters.IndexOf(characterName);
@@ -260,6 +292,18 @@ public class GameManager : NetworkBehaviour
             // Spawn the character on the network for the other clients
             // Assign authority to the player's connection
             NetworkServer.Spawn(spawnedCharacter, target);
+
+            NetworkServer.ReplacePlayerForConnection(target, spawnedCharacter, ReplacePlayerOptions.KeepAuthority);
+
+            // Check if the local player owns the spawned character
+            if (spawnedCharacter.GetComponent<NetworkIdentity>().isOwned)
+            {
+                Debug.Log("This character is the local player's character.");
+            }
+            else
+            {
+                Debug.Log("This character is not the local player's character.");
+            }
 
             // Setup the character's reference to the main camera
             FruitCharacter fruitCharacter = spawnedCharacter.GetComponent<FruitCharacter>();
@@ -390,7 +434,6 @@ public class GameManager : NetworkBehaviour
     /// Update the actual set of claimed characters using the Sync var.
     /// </summary>
 
-    [TargetRpc]
     private void UpdateClaimedCharacters(NetworkConnection target)
     {
         foreach (string character in _claimedCharactersSync.Split(','))

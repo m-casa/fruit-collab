@@ -1,7 +1,8 @@
+using Mirror;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class CharacterSelect : MonoBehaviour
+public class CharacterSelect : NetworkBehaviour
 {
     #region FIELDS
 
@@ -139,8 +140,8 @@ public class CharacterSelect : MonoBehaviour
     private void OnSubmit(InputAction.CallbackContext context)
     {
         string selectedCharacter = _characterNames[_currentIndex];
-
-        GameManager.Instance.CmdClaimCharacter(selectedCharacter);
+        NetworkConnection localPlayerConnection = NetworkClient.connection;
+        GameManager.Instance.CmdClaimCharacter(selectedCharacter, connectionToClient);
     }
 
     /// <summary>
