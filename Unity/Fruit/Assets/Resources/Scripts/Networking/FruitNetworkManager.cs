@@ -4,15 +4,24 @@ using Steamworks;
 using System;
 using UnityEngine;
 
-public class SurviveNetworkManager : NetworkManager
+public class FruitNetworkManager : NetworkManager
 {
-    public static event Action ClientDisconnected;
+    public GameObject gameManager;
+
+    // Define a delegate and event to notify when the client is fully connected or disconnects
+    public static event Action OnClientConnected;
+    public static event Action OnClientDisconnected;
 
     public override void OnServerAddPlayer(NetworkConnectionToClient conn)
     {
         // Add player
         GameObject player = Instantiate(playerPrefab);
         NetworkServer.AddPlayerForConnection(conn, player);
+
+
+        GameObject gminstance = Instantiate(gameManager);
+        NetworkServer.Spawn(gminstance, conn);
+
 
         if (SteamSettings.Initialized)
         {
@@ -27,12 +36,17 @@ public class SurviveNetworkManager : NetworkManager
             // NOTE: This is only being set on the server's version of the player
             playerInfo.SetSteamId(cSteamId.m_SteamID);
         }
+
+        Debug.Log("Player added for connection");
+        // Trigger the event after the player has been added
+        OnClientConnected?.Invoke();
     }
 
-    public override void OnServerDisconnect(NetworkConnectionToClient conn)
+    public override void OnStartServer()
     {
-        // Call base functionality (actually destroys the player)
-        base.OnServerDisconnect(conn);
+        base.OnStartServer();
+
+        Debug.Log("SERVER HAS STARTED");
     }
 
     public override void OnClientDisconnect()
@@ -40,6 +54,12 @@ public class SurviveNetworkManager : NetworkManager
         base.OnClientDisconnect();
 
         // If not null, call the event
-        ClientDisconnected?.Invoke();
+        OnClientDisconnected?.Invoke();
+    }
+
+    public override void OnServerDisconnect(NetworkConnectionToClient conn)
+    {
+        // Call base functionality (actually destroys the player)
+        base.OnServerDisconnect(conn);
     }
 }

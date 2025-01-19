@@ -78,6 +78,7 @@ MonoBehaviour:
   evaluationMethod: 0
   evaluationInterval: 3
   timeInterpolationGui: 0
+  gameManager: {fileID: 4687058671324702134, guid: ca985a1b6941e164ca95666ceb3b4f3a, type: 3}
 --- !u!114 &4682374621303315790
 MonoBehaviour:
   m_ObjectHideFlags: 0

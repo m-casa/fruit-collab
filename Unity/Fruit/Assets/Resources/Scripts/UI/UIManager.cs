@@ -74,10 +74,10 @@ public class UIManager : MonoBehaviour
 
     void OnEnable()
     {
-        SurviveNetworkManager.ClientDisconnected += HandleClientDisconnected;
+        FruitNetworkManager.OnClientDisconnected += HandleClientDisconnected;
 
-        SteamLogic.LobbyFailed += HandleClientDisconnected;
         SteamLogic.LobbyJoined += HandleClientConnecting;
+        SteamLogic.LobbyFailed += HandleClientDisconnected;
     }
 
     /// <summary>
@@ -86,10 +86,10 @@ public class UIManager : MonoBehaviour
 
     void OnDisable()
     {
-        SurviveNetworkManager.ClientDisconnected -= HandleClientDisconnected;
+        FruitNetworkManager.OnClientDisconnected -= HandleClientDisconnected;
 
-        SteamLogic.LobbyFailed -= HandleClientDisconnected;
         SteamLogic.LobbyJoined -= HandleClientConnecting;
+        SteamLogic.LobbyFailed -= HandleClientDisconnected;
     }
 
     /// <summary>
@@ -105,6 +105,7 @@ public class UIManager : MonoBehaviour
         }
 
         // Detect pause input (e.g., ESC or Start button on a controller)
+        if  (GameManager.Instance != null)
         if (GameManager.Instance.InGame())
         {
             // Toggle pause menu
@@ -143,10 +144,6 @@ public class UIManager : MonoBehaviour
         SetActivePanel(null);
 
         Host();
-
-        CameraManager.Instance.TransitionToCharacterSelect();
-
-        GameManager.Instance.StartSelection();
     }
 
     /// <summary>
@@ -158,10 +155,6 @@ public class UIManager : MonoBehaviour
         SetActivePanel(null);
 
         Join();
-
-        CameraManager.Instance.TransitionToCharacterSelect();
-
-        GameManager.Instance.StartSelection();
     }
 
     /// <summary>
@@ -308,7 +301,6 @@ public class UIManager : MonoBehaviour
         SetActivePanel(_mainMenu);
 
         CameraManager.Instance.TransitionToMainMenu();
-        // Additional logic for starting the game (e.g., enabling player controls).
     }
 
     /// <summary>
@@ -333,7 +325,6 @@ public class UIManager : MonoBehaviour
         {
             SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypeFriendsOnly, NetworkManager.singleton.maxConnections);
 
-            //yield break;
             return;
         }
 
@@ -391,7 +382,7 @@ public class UIManager : MonoBehaviour
         // Toggle off connecting text here
         //connectingTxt.SetActive(false);
 
-        //Re-Enable menu here:
+        // Re-Enable menu here:
         //menuScreens[0].SetActive(true);
 
         //foreach (Button button in menuScreens[1].GetComponentsInChildren<Button>())

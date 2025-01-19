@@ -23,7 +23,7 @@ public class NetworkAnimations : NetworkBehaviour
     /// </summary>
 
     [ClientRpc(includeOwner = false)]
-    protected virtual void RpcPlayIdleAnimation()
+    private void RpcPlayIdleAnimation()
     {
         _animancer.TryPlay("_Idle", 0.15f);
     }
@@ -45,7 +45,7 @@ public class NetworkAnimations : NetworkBehaviour
     /// </summary>
 
     [ClientRpc(includeOwner = false)]
-    protected virtual void RpcPlayRunAnimation(float inputMagnitude)
+    private void RpcPlayRunAnimation(float inputMagnitude)
     {
         var state = _animancer.TryPlay("_Run", 0.25f);
         state.Speed = 1.25f * inputMagnitude;
@@ -68,7 +68,7 @@ public class NetworkAnimations : NetworkBehaviour
     /// </summary>
 
     [ClientRpc(includeOwner = false)]
-    protected virtual void RpcPlaySprintAnimation(float inputMagnitude)
+    private void RpcPlaySprintAnimation(float inputMagnitude)
     {
         var state = _animancer.TryPlay("_Sprint", 0.25f);
         state.Speed = 1.25f * inputMagnitude;
@@ -91,7 +91,7 @@ public class NetworkAnimations : NetworkBehaviour
     /// </summary>
 
     [ClientRpc(includeOwner = false)]
-    protected virtual void RpcPlayJumpAnimation(string animationClip)
+    private void RpcPlayJumpAnimation(string animationClip)
     {
         var state = _animancer.TryPlay(animationClip, 0.25f);
         state.Time = 0f;
@@ -114,7 +114,7 @@ public class NetworkAnimations : NetworkBehaviour
     /// </summary>
 
     [ClientRpc(includeOwner = false)]
-    protected virtual void RpcPlayLaunchAnimation()
+    private void RpcPlayLaunchAnimation()
     {
         _animancer.TryPlay("_Launch", 0.25f);
     }
@@ -136,9 +136,8 @@ public class NetworkAnimations : NetworkBehaviour
     /// </summary>
 
     [ClientRpc(includeOwner = false)]
-    protected virtual void RpcPlayFallAnimation(string animationClip)
+    private void RpcPlayFallAnimation(string animationClip)
     {
-
         var state = _animancer.TryPlay(animationClip, 0.25f);
         state.Time = 0f;
     }
@@ -160,7 +159,7 @@ public class NetworkAnimations : NetworkBehaviour
     /// </summary>
 
     [ClientRpc(includeOwner = false)]
-    protected virtual void RpcPlayLandAnimation()
+    private void RpcPlayLandAnimation()
     {
         _animancer.TryPlay("_Land", 0.25f);
     }
@@ -182,7 +181,7 @@ public class NetworkAnimations : NetworkBehaviour
     /// </summary>
 
     [ClientRpc(includeOwner = false)]
-    protected virtual void RpcPlayPunchAnimation(string animationClip)
+    private void RpcPlayPunchAnimation(string animationClip)
     {
         var state = _animancer.TryPlay(animationClip);
         state.Speed = 1.25f;
@@ -206,7 +205,7 @@ public class NetworkAnimations : NetworkBehaviour
     /// </summary>
 
     [ClientRpc(includeOwner = false)]
-    protected virtual void RpcPlayAirPunchAnimation(string animationClip)
+    private void RpcPlayAirPunchAnimation(string animationClip)
     {
         var state = _animancer.TryPlay(animationClip);
         state.Speed = 1.25f;
@@ -230,7 +229,7 @@ public class NetworkAnimations : NetworkBehaviour
     /// </summary>
 
     [ClientRpc(includeOwner = false)]
-    protected virtual void RpcPlayHurtAnimation()
+    private void RpcPlayHurtAnimation()
     {
         var state = _animancer.TryPlay("_Hurt");
         state.Time = 0f;
@@ -253,7 +252,7 @@ public class NetworkAnimations : NetworkBehaviour
     /// </summary>
 
     [ClientRpc(includeOwner = false)]
-    protected virtual void RpcPlayBlockAnimation()
+    private void RpcPlayBlockAnimation()
     {
         _animancer.TryPlay("_Block", 0.15f);
     }

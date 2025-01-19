@@ -365,7 +365,6 @@ GameObject:
   - component: {fileID: 8638801432728212291}
   - component: {fileID: 910159796586076118}
   - component: {fileID: 2243606611860745446}
-  - component: {fileID: 3864797150544816585}
   m_Layer: 0
   m_Name: Apple
   m_TagString: Player
@@ -494,6 +493,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3173229f67ff32e4daffe67b37c03dfe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   _inputActions: {fileID: -944628639613478452, guid: be75f5bbb6028fd4689fb7b31fd2ebfa, type: 3}
   _rotationMode: 1
   _rotationRate: 540
@@ -545,6 +547,7 @@ MonoBehaviour:
   _standingDownwardForceScale: 1
   _camera: {fileID: 0}
   _animancer: {fileID: 6772837597104904537}
+  _networkAnimations: {fileID: 2243606611860745446}
   _chestTransform: {fileID: 8303410903216220320}
   _leanAmount: 12.5
   _leanSpeed: 8
@@ -645,7 +648,6 @@ MonoBehaviour:
   interpolateRotation: 1
   interpolateScale: 0
   coordinateSpace: 0
-  sendIntervalMultiplier: 1
   timelineOffset: 0
   showGizmos: 0
   showOverlay: 0
@@ -669,23 +671,7 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0.05
-  character: {fileID: 7030750300313085983}
---- !u!114 &3864797150544816585
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2770216168605465205}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: daedc3398e2c6ba42bf0395d146a1b1a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0.05
-  playerName: {fileID: 0}
+  _animancer: {fileID: 6772837597104904537}
 --- !u!1 &2897429832833513327
 GameObject:
   m_ObjectHideFlags: 0

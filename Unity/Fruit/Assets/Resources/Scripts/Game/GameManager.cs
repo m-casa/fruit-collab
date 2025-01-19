@@ -2,8 +2,8 @@ using EasyCharacterMovement;
 using Mirror;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using static UnityEngine.UI.GridLayoutGroup;
 
 public class GameManager : NetworkBehaviour
 {
@@ -56,18 +56,12 @@ public class GameManager : NetworkBehaviour
         // Set this game manager as the primary instance since we don't have one
         Instance = this;
 
-        // When our new scene loads, don't delete the game manager
-        DontDestroyOnLoad(gameObject);
-    }
-
-    /// <summary>
-    /// Initializes the array length of the amount of characters and their props.
-    /// </summary>
-
-    void Start()
-    {
+        // Set the array lengths early on to avoid null references
         _spawnedFruits = new GameObject[_fruitPrefabs.Length];
         _spawnedCharacters = new GameObject[_characterPrefabs.Length];
+
+        // When our new scene loads, don't delete the game manager
+        DontDestroyOnLoad(gameObject);
     }
 
     #endregion
@@ -78,13 +72,14 @@ public class GameManager : NetworkBehaviour
     /// Spawns the necessary game objects in charge of character selection logic.
     /// </summary>
 
-    public void StartSelection()
+    [Command]
+    public void CmdStartSelection(NetworkConnectionToClient sender = null)
     {
-        UpdateClaimedCharacters();
+        UpdateClaimedCharacters(sender);
 
-        SpawnFruit();
+        TargetRpcSpawnFruit(sender);
 
-        SpawnArrow();
+        TargetRpcSpawnArrow(sender);
 
         // Additional setup for the arrow if needed
         Debug.Log("Fruits/arrow spawned for character selection.");
@@ -102,14 +97,15 @@ public class GameManager : NetworkBehaviour
         {
             Debug.Log($"{characterName} selected.");
 
-            TargetDestroyArrow(sender);
+            TargetRpcDestroyArrow(sender);
 
             //DestroyFruit(characterName);
 
             _claimedCharacters.Add(characterName); // Mark character as taken
             UpdateClaimedCharactersSync();
 
-            SpawnCharacter(characterName);
+            // Spawn and assign the character to the correct client
+            SpawnCharacter(sender, characterName);
 
             CameraManager.Instance.TransitionToLobby();
 
@@ -177,7 +173,8 @@ public class GameManager : NetworkBehaviour
     /// Spawns the base fruit bodies to represent each character.
     /// </summary>
 
-    private void SpawnFruit()
+    [TargetRpc]
+    private void TargetRpcSpawnFruit(NetworkConnection target)
     {
         if (_fruitPrefabs == null)
         {
@@ -221,7 +218,8 @@ public class GameManager : NetworkBehaviour
     /// Spawns the arrow game object which has the logic needed to select a character.
     /// </summary>
 
-    private void SpawnArrow()
+    [TargetRpc]
+    private void TargetRpcSpawnArrow(NetworkConnection target)
     {
         if (_arrowPrefab == null)
         {
@@ -231,13 +229,17 @@ public class GameManager : NetworkBehaviour
         }
 
         _spawnedArrow = Instantiate(_arrowPrefab);
+
+        // Assign authority to the player's connection
+        NetworkServer.Spawn(_spawnedArrow, target);
     }
 
     /// <summary>
     /// Spawns the selected character along with any needed setup.
     /// </summary>
 
-    private void SpawnCharacter(string characterName)
+    [TargetRpc]
+    private void SpawnCharacter(NetworkConnection target, string characterName)
     {
         // Find the index of the characterName in the _allCharacters list
         int characterIndex = _allCharacters.IndexOf(characterName);
@@ -255,6 +257,10 @@ public class GameManager : NetworkBehaviour
             GameObject spawnedCharacter = Instantiate(_characterPrefabs[characterIndex]);
             _spawnedCharacters[characterIndex] = spawnedCharacter;
 
+            // Spawn the character on the network for the other clients
+            // Assign authority to the player's connection
+            NetworkServer.Spawn(spawnedCharacter, target);
+
             // Setup the character's reference to the main camera
             FruitCharacter fruitCharacter = spawnedCharacter.GetComponent<FruitCharacter>();
             fruitCharacter.camera = Camera.main;
@@ -270,11 +276,11 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Destroys the arrow game object on the client that claimed a character.
+    /// Destroys the arrow game object.
     /// </summary>
 
     [TargetRpc]
-    private void TargetDestroyArrow(NetworkConnection target)
+    private void TargetRpcDestroyArrow(NetworkConnection target)
     {
         if (_spawnedArrow != null)
         {
@@ -381,10 +387,11 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Update the actual set of claimed characters using the sync var.
+    /// Update the actual set of claimed characters using the Sync var.
     /// </summary>
 
-    private void UpdateClaimedCharacters()
+    [TargetRpc]
+    private void UpdateClaimedCharacters(NetworkConnection target)
     {
         foreach (string character in _claimedCharactersSync.Split(','))
         {

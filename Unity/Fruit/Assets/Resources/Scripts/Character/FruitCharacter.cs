@@ -30,7 +30,7 @@ namespace EasyCharacterMovement
             _punchButtonPressed, _isGroundPunching, _isAirPunching;
         private int _currentComboStep, _nextComboStep; // Keep track of the next combo step
         private float _cooldownTimer;
-        private string currentAnimationClip;
+        private string _currentAnimationClip;
         private string[] _comboAnimations = { "_Punch.1", "_Punch.2", "_Punch.3" };
         private Queue<int> _punchQueue = new Queue<int>();
         private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
@@ -120,7 +120,7 @@ namespace EasyCharacterMovement
             base.OnAwake();
 
             // Cache the Character's starting animation clip
-            currentAnimationClip = "Idle";
+            _currentAnimationClip = "Idle";
 
             _rightFootUp = true;
             _isSpeeding = false;
@@ -291,49 +291,6 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Saves the rotation data needed to lean the character in the direction they move.
-        /// </summary>
-
-        private void HandleLeanInput()
-        {
-            // Project on a horizontal plane so we only have to consider horizontal direction without vertical rotation creating issues
-            Vector3 characterForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
-            Vector3 movementDirection = Vector3.ProjectOnPlane(GetMovementDirection(), Vector3.up);
-
-            // Calculate the signed angle between character's forward direction and target movement direction
-            float angleDifference = Vector3.SignedAngle(characterForward, movementDirection, transform.up);
-
-            if (angleDifference < -15)
-            {
-                // Calculate target rotation for leaning left
-                _chestTargetRotation = Quaternion.Euler(0, 0, _leanAmount);
-            }
-            else if (angleDifference > 15)
-            {
-                // Calculate target rotation for leaning right
-                _chestTargetRotation = Quaternion.Euler(0, 0, -_leanAmount);
-            }
-            else
-            {
-                // Return to upright position
-                _chestTargetRotation = Quaternion.Euler(0, 0, 0);
-            }
-
-            // Smoothly interpolate to the target rotation on the chest
-            _chestOverrideTransform = Quaternion.Slerp(_chestTransform.localRotation, _chestTargetRotation, Time.fixedDeltaTime * _leanSpeed);
-        }
-
-        /// <summary>
-        /// Applies the correct rotation determined in HandleLeanInput.
-        /// </summary>
-
-        private void ApplyLean()
-        {
-            // Override animation data on the chest with our dummy transform
-            _chestTransform.localRotation = _chestOverrideTransform;
-        }
-
-        /// <summary>
         /// Updates the character's rotation based on its current RotationMode PLUS its current up direction.
         /// </summary>
 
@@ -473,6 +430,49 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Saves the rotation data needed to lean the character in the direction they move.
+        /// </summary>
+
+        private void HandleLeanInput()
+        {
+            // Project on a horizontal plane so we only have to consider horizontal direction without vertical rotation creating issues
+            Vector3 characterForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+            Vector3 movementDirection = Vector3.ProjectOnPlane(GetMovementDirection(), Vector3.up);
+
+            // Calculate the signed angle between character's forward direction and target movement direction
+            float angleDifference = Vector3.SignedAngle(characterForward, movementDirection, transform.up);
+
+            if (angleDifference < -15)
+            {
+                // Calculate target rotation for leaning left
+                _chestTargetRotation = Quaternion.Euler(0, 0, _leanAmount);
+            }
+            else if (angleDifference > 15)
+            {
+                // Calculate target rotation for leaning right
+                _chestTargetRotation = Quaternion.Euler(0, 0, -_leanAmount);
+            }
+            else
+            {
+                // Return to upright position
+                _chestTargetRotation = Quaternion.Euler(0, 0, 0);
+            }
+
+            // Smoothly interpolate to the target rotation on the chest
+            _chestOverrideTransform = Quaternion.Slerp(_chestTransform.localRotation, _chestTargetRotation, Time.fixedDeltaTime * _leanSpeed);
+        }
+
+        /// <summary>
+        /// Applies the correct rotation determined in HandleLeanInput.
+        /// </summary>
+
+        private void ApplyLean()
+        {
+            // Override animation data on the chest with our dummy transform
+            _chestTransform.localRotation = _chestOverrideTransform;
+        }
+
+        /// <summary>
         /// Unsub from all input action handlers.
         /// </summary>
 
@@ -594,9 +594,9 @@ namespace EasyCharacterMovement
 
                     _animancer.TryPlay("_Block", 0.15f);
 
-                    if (currentAnimationClip != "_Block")
+                    if (_currentAnimationClip != "_Block")
                     {
-                        currentAnimationClip = "_Block";
+                        _currentAnimationClip = "_Block";
                         _networkAnimations.CmdPlayBlockAnimation();
                     }
                 }
@@ -684,10 +684,10 @@ namespace EasyCharacterMovement
                 state.Speed = 1.25f;
                 state.Time = 0f;
 
-                if (currentAnimationClip != _comboAnimations[_currentComboStep])
+                if (_currentAnimationClip != _comboAnimations[_currentComboStep])
                 {
-                    currentAnimationClip = _comboAnimations[_currentComboStep];
-                    _networkAnimations.CmdPlayPunchAnimation(currentAnimationClip);
+                    _currentAnimationClip = _comboAnimations[_currentComboStep];
+                    _networkAnimations.CmdPlayPunchAnimation(_currentAnimationClip);
                 }
             }
 
@@ -795,10 +795,10 @@ namespace EasyCharacterMovement
                         state.Speed = 1.25f;
                         state.Time = 0f;
 
-                        if (currentAnimationClip != airPunchClip)
+                        if (_currentAnimationClip != airPunchClip)
                         {
-                            currentAnimationClip = airPunchClip;
-                            _networkAnimations.CmdPlayAirPunchAnimation(currentAnimationClip);
+                            _currentAnimationClip = airPunchClip;
+                            _networkAnimations.CmdPlayAirPunchAnimation(_currentAnimationClip);
                         }
                     }
 
@@ -896,9 +896,9 @@ namespace EasyCharacterMovement
         {
             _animancer.TryPlay("_Launch", 0.25f);
 
-            if (currentAnimationClip != "_Launch")
+            if (_currentAnimationClip != "_Launch")
             {
-                currentAnimationClip = "_Launch";
+                _currentAnimationClip = "_Launch";
                 _networkAnimations.CmdPlayLaunchAnimation();
             }
         }
@@ -936,10 +936,10 @@ namespace EasyCharacterMovement
                 _animancer.Play(state, 0.25f);
                 state.Time = 0;
 
-                if (currentAnimationClip != jumpClip)
+                if (_currentAnimationClip != jumpClip)
                 {
-                    currentAnimationClip = jumpClip;
-                    _networkAnimations.CmdPlayJumpAnimation(currentAnimationClip);
+                    _currentAnimationClip = jumpClip;
+                    _networkAnimations.CmdPlayJumpAnimation(_currentAnimationClip);
                 }
             }
         }
@@ -957,10 +957,10 @@ namespace EasyCharacterMovement
                 _animancer.Play(state, 0.25f);
                 state.Time = 0;
 
-                if (currentAnimationClip != fallClip)
+                if (_currentAnimationClip != fallClip)
                 {
-                    currentAnimationClip = fallClip;
-                    _networkAnimations.CmdPlayFallAnimation(currentAnimationClip);
+                    _currentAnimationClip = fallClip;
+                    _networkAnimations.CmdPlayFallAnimation(_currentAnimationClip);
                 }
             }
         }
@@ -973,9 +973,9 @@ namespace EasyCharacterMovement
         {
             _animancer.TryPlay("_Land", 0.25f);
 
-            if (currentAnimationClip != "_Land")
+            if (_currentAnimationClip != "_Land")
             {
-                currentAnimationClip = "_Land";
+                _currentAnimationClip = "_Land";
                 _networkAnimations.CmdPlayLandAnimation();
             }
         }
@@ -990,9 +990,9 @@ namespace EasyCharacterMovement
             {
                 _animancer.TryPlay("_Idle", 0.15f);
 
-                if (currentAnimationClip != "_Idle")
+                if (_currentAnimationClip != "_Idle")
                 {
-                    currentAnimationClip = "Idle";
+                    _currentAnimationClip = "Idle";
                     _networkAnimations.CmdPlayIdleAnimation();
                 }
             }
@@ -1016,9 +1016,9 @@ namespace EasyCharacterMovement
                 var state = _animancer.TryPlay("_Run", 0.25f);
                 state.Speed = 1.25f * inputMagnitude;
 
-                if (currentAnimationClip != "_Run")
+                if (_currentAnimationClip != "_Run")
                 {
-                    currentAnimationClip = "_Run";
+                    _currentAnimationClip = "_Run";
                     _networkAnimations.CmdPlayRunAnimation(inputMagnitude);
                 }
             }
@@ -1042,12 +1042,34 @@ namespace EasyCharacterMovement
                 var state = _animancer.TryPlay("_Sprint", 0.25f);
                 state.Speed = 1.25f * inputMagnitude;
 
-                if (currentAnimationClip != "_Sprint")
+                if (_currentAnimationClip != "_Sprint")
                 {
-                    currentAnimationClip = "_Sprint";
+                    _currentAnimationClip = "_Sprint";
                     _networkAnimations.CmdPlaySprintAnimation(inputMagnitude);
                 }
             }
+        }
+
+        /// <summary>
+        /// Reset the character's speed.
+        /// </summary>
+
+        private void ResetSpeed()
+        {
+            maxWalkSpeed = 3f;
+
+            _isSpeeding = false;
+        }
+
+        /// <summary>
+        /// Take the character out of the damage state.
+        /// </summary>
+
+        private void StopDamage()
+        {
+            _takingDamage = false;
+
+            EnableInput();
         }
 
         /// <summary>
@@ -1064,17 +1086,6 @@ namespace EasyCharacterMovement
 
                 Invoke(nameof(ResetSpeed), effectDuration);
             }
-        }
-
-        /// <summary>
-        /// Reset the character's speed.
-        /// </summary>
-
-        private void ResetSpeed()
-        {
-            maxWalkSpeed = 3f;
-
-            _isSpeeding = false;
         }
 
         /// <summary>
@@ -1108,32 +1119,21 @@ namespace EasyCharacterMovement
 
                 // Push the player back
                 LaunchCharacter((direction * 5f) + (GetUpVector() * 2.5f), true);
-                
+
                 if (_animancer.States.TryGet("_Hurt", out var state))
                 {
                     _animancer.Play(state);
                     state.Time = 0f;
 
-                    if (currentAnimationClip != "_Hurt")
+                    if (_currentAnimationClip != "_Hurt")
                     {
-                        currentAnimationClip = "_Hurt";
+                        _currentAnimationClip = "_Hurt";
                         _networkAnimations.CmdPlayHurtAnimation();
                     }
                 }
 
                 Invoke(nameof(StopDamage), effectDuration);
             }
-        }
-
-        /// <summary>
-        /// Take the character out of the damage state.
-        /// </summary>
-
-        private void StopDamage()
-        {
-            _takingDamage = false;
-
-            EnableInput();
         }
 
         #endregion

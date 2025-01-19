@@ -524,6 +524,9 @@ GameObject:
   - component: {fileID: 1375651957225080573}
   - component: {fileID: 8180022915292359122}
   - component: {fileID: 5895507634475034396}
+  - component: {fileID: 3342176222406481639}
+  - component: {fileID: -2156554060568411090}
+  - component: {fileID: -4341405161139843939}
   m_Layer: 0
   m_Name: Peach
   m_TagString: Player
@@ -652,6 +655,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3173229f67ff32e4daffe67b37c03dfe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   _inputActions: {fileID: -944628639613478452, guid: be75f5bbb6028fd4689fb7b31fd2ebfa, type: 3}
   _rotationMode: 1
   _rotationRate: 540
@@ -703,6 +709,7 @@ MonoBehaviour:
   _standingDownwardForceScale: 1
   _camera: {fileID: 0}
   _animancer: {fileID: 5895507634475034396}
+  _networkAnimations: {fileID: -4341405161139843939}
   _chestTransform: {fileID: 2284284205523213089}
   _leanAmount: 12.5
   _leanSpeed: 8
@@ -761,6 +768,72 @@ MonoBehaviour:
   - {fileID: 7400000, guid: 6255e4d75b591d643b349b9e4cf720fc, type: 2}
   - {fileID: 7400000, guid: c43553004d9509440825e41d996508d1, type: 2}
   - {fileID: 7400000, guid: d00d9c99b88467240b28e02c1ddf0215, type: 2}
+--- !u!114 &3342176222406481639
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2606219565802472321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneId: 0
+  _assetId: 75460494
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
+--- !u!114 &-2156554060568411090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2606219565802472321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ff3ba0becae47b8b9381191598957c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 1
+  syncMode: 0
+  syncInterval: 0
+  target: {fileID: 2386393758480652437, guid: 385e80b150cc5334592e60686f3c3650, type: 3}
+  syncPosition: 1
+  syncRotation: 1
+  syncScale: 0
+  onlySyncOnChange: 1
+  compressRotation: 1
+  interpolatePosition: 1
+  interpolateRotation: 1
+  interpolateScale: 0
+  coordinateSpace: 0
+  timelineOffset: 0
+  showGizmos: 0
+  showOverlay: 0
+  overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
+  onlySyncOnChangeCorrectionMultiplier: 2
+  rotationSensitivity: 0.01
+  positionPrecision: 0.01
+  scalePrecision: 0.01
+--- !u!114 &-4341405161139843939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2606219565802472321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 227f0c8abd69baa499cb988227bc0896, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0.05
+  _animancer: {fileID: 5895507634475034396}
 --- !u!1 &2653771818352750789
 GameObject:
   m_ObjectHideFlags: 0
