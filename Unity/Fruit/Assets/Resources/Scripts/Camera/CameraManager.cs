@@ -45,7 +45,7 @@ public class CameraManager : MonoBehaviour
     /// Moves the camera from the starting position to the main menu's position.
     /// </summary>
 
-    public void TransitionToMainMenu()
+    public void MoveCameraToMainMenu()
     {
         // Transition to the main menu camera
         _startCamera.Priority = 0;
@@ -56,7 +56,7 @@ public class CameraManager : MonoBehaviour
     /// Moves the camera from the main menu's position to the character select position.
     /// </summary>
 
-    public void TransitionToCharacterSelect()
+    public void MoveCameraToCharacterSelect()
     {
         // Transition to the character selection camera
         _mainMenuCamera.Priority = 0;
@@ -67,7 +67,7 @@ public class CameraManager : MonoBehaviour
     /// Moves the camera from the character select position to the lobby's position.
     /// </summary>
 
-    public void TransitionToLobby()
+    public void MoveCameraToLobby()
     {
         // Transition to the lobby camera
         _characterSelectCamera.Priority = 0;

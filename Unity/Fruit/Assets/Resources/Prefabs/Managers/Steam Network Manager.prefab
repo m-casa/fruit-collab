@@ -62,7 +62,13 @@ MonoBehaviour:
   playerPrefab: {fileID: 698956042404409252, guid: 973dcf861be38394692f41e2e13e46b4, type: 3}
   autoCreatePlayer: 1
   playerSpawnMethod: 0
-  spawnPrefabs: []
+  spawnPrefabs:
+  - {fileID: 4687058671324702134, guid: ca985a1b6941e164ca95666ceb3b4f3a, type: 3}
+  - {fileID: 5716227855454253439, guid: 4d07af6445bb81e41bb7369c76c21a41, type: 3}
+  - {fileID: 2770216168605465205, guid: 385e80b150cc5334592e60686f3c3650, type: 3}
+  - {fileID: 7032070106759402331, guid: a7723472d56ee0f4cbcc0708360c49f2, type: 3}
+  - {fileID: 1974657863803228055, guid: 822ae2edd16d82b46857ca9a4893676b, type: 3}
+  - {fileID: 2606219565802472321, guid: b2caf19a434097841ae6e9bc4e3bd89d, type: 3}
   exceptionsDisconnect: 1
   snapshotSettings:
     bufferTimeMultiplier: 2
@@ -78,7 +84,7 @@ MonoBehaviour:
   evaluationMethod: 0
   evaluationInterval: 3
   timeInterpolationGui: 0
-  gameManager: {fileID: 4687058671324702134, guid: ca985a1b6941e164ca95666ceb3b4f3a, type: 3}
+  _gameManager: {fileID: 4687058671324702134, guid: ca985a1b6941e164ca95666ceb3b4f3a, type: 3}
 --- !u!114 &6409434890242685418
 MonoBehaviour:
   m_ObjectHideFlags: 0

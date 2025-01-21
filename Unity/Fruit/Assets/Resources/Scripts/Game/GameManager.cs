@@ -3,7 +3,6 @@ using Mirror;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.UI.GridLayoutGroup;
 
 public class GameManager : NetworkBehaviour
 {
@@ -17,7 +16,7 @@ public class GameManager : NetworkBehaviour
     private int[] _playerScores; // Scores for each player
     private bool _inGame;
 
-    [SyncVar(hook = nameof(OnClaimedCharactersUpdated))]
+    [SyncVar(hook = nameof(OnClaimedCharactersSyncUpdated))]
     private string _claimedCharactersSync = ""; // Sync'd string for character selection (CSV format)
 
     [Header("Timers")]
@@ -71,31 +70,14 @@ public class GameManager : NetworkBehaviour
     /// <summary>
     /// Spawns the necessary game objects in charge of character selection logic.
     /// </summary>
-
-    public void CmdStartSelection(NetworkConnectionToClient sender = null)
+    
+    public void StartSelection(NetworkConnectionToClient sender = null)
     {
-        //NetworkConnection clientConnection = NetworkClient.connection;
-        UpdateClaimedCharacters(sender);
+        //UpdateClaimedCharacters();
 
-        TargetRpcSpawnFruit(sender);
-        Debug.Log("Target Connection: " + sender.connectionId);
+        SpawnFruit();
 
-        if (sender == null)
-        {
-            Debug.LogError("CmdStartSelection: sender is NULL!");
-            return;
-        }
-        //CmdSpawnArrow(sender);
-        TargetRpcSpawnArrow(sender);
-        
-        // Additional setup for the arrow if needed
-        Debug.Log("Fruits/arrow spawned for character selection.");
-    }
-
-    [Command]
-    private void CmdSpawnArrow(NetworkConnectionToClient sender = null)
-    {
-        TargetRpcSpawnArrow(sender);
+        SpawnArrow(sender);
     }
 
     /// <summary>
@@ -103,15 +85,15 @@ public class GameManager : NetworkBehaviour
     ///  and the associated props will be destroyed.
     /// </summary>
 
-    public void CmdClaimCharacter(string characterName, NetworkConnectionToClient sender = null)
+    public void ClaimCharacter(string characterName, NetworkConnectionToClient sender = null)
     {
         if (IsCharacterAvailable(characterName))
         {
-            Debug.Log($"{characterName} selected.");
+            Debug.Log($"{characterName} character selected.");
 
-            TargetRpcDestroyArrow(sender);
+            DestroyArrow();
 
-            //DestroyFruit(characterName);
+            //DestroyFruit(characterName);  // Should be handled by Sync var
 
             _claimedCharacters.Add(characterName); // Mark character as taken
             UpdateClaimedCharactersSync();
@@ -119,7 +101,7 @@ public class GameManager : NetworkBehaviour
             // Spawn and assign the character to the correct client
             SpawnCharacter(characterName, sender);
 
-            CameraManager.Instance.TransitionToLobby();
+            CameraManager.Instance.MoveCameraToLobby();
 
             _inGame = true;
         }
@@ -185,13 +167,8 @@ public class GameManager : NetworkBehaviour
     /// Spawns the base fruit bodies to represent each character.
     /// </summary>
 
-    private void TargetRpcSpawnFruit(NetworkConnection target)
+    private void SpawnFruit()
     {
-        if (target == null)
-        {
-            Debug.LogError("CmdStartSelection: sender is NULL!");
-            return;
-        }
         if (_fruitPrefabs == null)
         {
             Debug.LogError("Fruit Prefabs not assigned in the GameManager.");
@@ -216,7 +193,7 @@ public class GameManager : NetworkBehaviour
 
             if (!IsCharacterAvailable(characterName))
             {
-                Debug.Log($"{characterName} already claimed. Skipping fruit spawn.");
+                Debug.Log($"{characterName} already claimed. Skipping.");
                 fruitIndex++;
                 continue;
             }
@@ -227,21 +204,15 @@ public class GameManager : NetworkBehaviour
             fruitIndex++;
         }
 
-        Debug.Log("Available fruits spawned for character selection.");
+        Debug.Log("Available fruit prefabs spawned for character selection.");
     }
 
     /// <summary>
     /// Spawns the arrow game object which has the logic needed to select a character.
     /// </summary>
-
-    private void TargetRpcSpawnArrow(NetworkConnection target)
+    [TargetRpc]
+    private void SpawnArrow(NetworkConnection target)
     {
-        if (target == null)
-        {
-            Debug.LogError("TargetRpcSpawnArrow: target is NULL!");
-            return;
-        }
-
         if (_arrowPrefab == null)
         {
             Debug.LogError("Arrow Prefab is not assigned in the GameManager.");
@@ -250,31 +221,25 @@ public class GameManager : NetworkBehaviour
         }
 
         _spawnedArrow = Instantiate(_arrowPrefab);
-        Debug.Log("Target Connection: " + target);
-        // Assign authority to the player's connection
+
+        PlayerInfo localPlayerInfo = NetworkClient.localPlayer.GetComponent<PlayerInfo>();
+        _spawnedArrow.GetComponent<CharacterSelect>().SetLocalPlayer(localPlayerInfo);
+
+        // Spawn the character on the network for the other clients
         //NetworkServer.Spawn(_spawnedArrow, target);
-        // Assign ownership to the player
-        //_spawnedArrow.GetComponent<NetworkIdentity>().AssignClientAuthority(connectionToClient);
-        // Check if the local player owns the spawned character
-        if (_spawnedArrow.GetComponent<NetworkIdentity>().isOwned)
-        {
-            Debug.Log("This ARROW is the local player's ARROW.");
-        }
-        else
-        {
-            Debug.Log("This ARROW is not the local player's ARROW.");
-        }
+
+        Debug.Log("Arrow spawned for character selection.");
     }
 
     /// <summary>
     /// Spawns the selected character along with any needed setup.
     /// </summary>
 
-    [Command]
     private void SpawnCharacter(string characterName, NetworkConnectionToClient target)
     {
         // Find the index of the characterName in the _allCharacters list
         int characterIndex = _allCharacters.IndexOf(characterName);
+
         if (characterIndex == -1)
         {
             Debug.LogError($"Character {characterName} not found in the list of all characters.");
@@ -290,20 +255,10 @@ public class GameManager : NetworkBehaviour
             _spawnedCharacters[characterIndex] = spawnedCharacter;
 
             // Spawn the character on the network for the other clients
-            // Assign authority to the player's connection
             NetworkServer.Spawn(spawnedCharacter, target);
 
+            // Assign authority to the player's connection
             NetworkServer.ReplacePlayerForConnection(target, spawnedCharacter, ReplacePlayerOptions.KeepAuthority);
-
-            // Check if the local player owns the spawned character
-            if (spawnedCharacter.GetComponent<NetworkIdentity>().isOwned)
-            {
-                Debug.Log("This character is the local player's character.");
-            }
-            else
-            {
-                Debug.Log("This character is not the local player's character.");
-            }
 
             // Setup the character's reference to the main camera
             FruitCharacter fruitCharacter = spawnedCharacter.GetComponent<FruitCharacter>();
@@ -311,7 +266,7 @@ public class GameManager : NetworkBehaviour
 
             CameraManager.Instance.AddPlayerToCamera(spawnedCharacter);
 
-            Debug.Log($"{characterName} spawned.");
+            Debug.Log($"{characterName} character spawned.");
         }
         else
         {
@@ -323,8 +278,7 @@ public class GameManager : NetworkBehaviour
     /// Destroys the arrow game object.
     /// </summary>
 
-    [TargetRpc]
-    private void TargetRpcDestroyArrow(NetworkConnection target)
+    private void DestroyArrow()
     {
         if (_spawnedArrow != null)
         {
@@ -342,6 +296,7 @@ public class GameManager : NetworkBehaviour
     {
         // Find the index of the characterName in the _allCharacters list
         int characterIndex = _allCharacters.IndexOf(characterName);
+
         if (characterIndex == -1)
         {
             Debug.LogError($"Character {characterName} not found in the list of all characters.");
@@ -355,7 +310,7 @@ public class GameManager : NetworkBehaviour
             Destroy(_spawnedFruits[characterIndex]);
             _spawnedFruits[characterIndex] = null;
 
-            Debug.Log($"Fruit {characterName} destroyed.");
+            Debug.Log($"Fruit {characterName} prefab destroyed.");
         }
         else
         {
@@ -371,6 +326,7 @@ public class GameManager : NetworkBehaviour
     {
         // Find the index of the characterName in the _allCharacters list
         int characterIndex = _allCharacters.IndexOf(characterName);
+
         if (characterIndex == -1)
         {
             Debug.LogError($"Character {characterName} not found in the list of all characters.");
@@ -434,7 +390,7 @@ public class GameManager : NetworkBehaviour
     /// Update the actual set of claimed characters using the Sync var.
     /// </summary>
 
-    private void UpdateClaimedCharacters(NetworkConnection target)
+    private void UpdateClaimedCharacters()
     {
         foreach (string character in _claimedCharactersSync.Split(','))
         {
@@ -455,10 +411,11 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Updates each client's list of claimed characters.
+    /// Updates each client's list of claimed characters 
+    ///  after the Syn var is updated.
     /// </summary>
 
-    private void OnClaimedCharactersUpdated(string oldValue, string newValue)
+    private void OnClaimedCharactersSyncUpdated(string oldValue, string newValue)
     {
         Debug.Log($"Syncing claimed characters: {newValue}");
 

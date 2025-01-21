@@ -171,6 +171,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Steamworks
       objectReference: {fileID: 0}
+    - target: {fileID: 6034499517370282976, guid: 6d7a7b94ce59e2547ac0da21a8452a1e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -23,6 +23,7 @@ public class CharacterSelect : NetworkBehaviour
     [SerializeField] private InputActionReference _navigate; // Input for left/right navigation
     [SerializeField] private InputActionReference _submit;
 
+    private PlayerInfo _playerInfo;
     private Vector3 _arrowBasePosition;
     private Vector3 _targetPosition; // New target position for the arrow
 
@@ -97,6 +98,11 @@ public class CharacterSelect : NetworkBehaviour
 
     #region METHODS
 
+    public void SetLocalPlayer(PlayerInfo playerInfo)
+    {
+        _playerInfo = playerInfo;
+    }
+
     /// <summary>
     /// Determines which direction the user is trying to navigate towards.
     /// </summary>
@@ -140,8 +146,9 @@ public class CharacterSelect : NetworkBehaviour
     private void OnSubmit(InputAction.CallbackContext context)
     {
         string selectedCharacter = _characterNames[_currentIndex];
-        NetworkConnection localPlayerConnection = NetworkClient.connection;
-        GameManager.Instance.CmdClaimCharacter(selectedCharacter, connectionToClient);
+
+        _playerInfo.CmdRequestCharacter(selectedCharacter);
+        //GameManager.Instance.ClaimCharacter(selectedCharacter, connectionToClient);
     }
 
     /// <summary>

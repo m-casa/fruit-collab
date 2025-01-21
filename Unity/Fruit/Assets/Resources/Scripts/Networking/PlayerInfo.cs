@@ -20,19 +20,19 @@ public class PlayerInfo : NetworkBehaviour
     /// Enable any events we should listen to.
     /// </summary>
 
-    void OnEnable()
-    {
-        FruitNetworkManager.OnClientConnected += HandleClientConnected;
-    }
+    //void OnEnable()
+    //{
+    //    FruitNetworkManager.OnClientConnected += TransitionToCharacterSelect;
+    //}
 
     /// <summary>
     /// Disable any events we are still listening to.
     /// </summary>
 
-    void OnDisable()
-    {
-        FruitNetworkManager.OnClientConnected -= HandleClientConnected;
-    }
+    //void OnDisable()
+    //{
+    //    FruitNetworkManager.OnClientConnected -= TransitionToCharacterSelect;
+    //}
 
     #endregion
 
@@ -48,6 +48,30 @@ public class PlayerInfo : NetworkBehaviour
     }
 
     /// <summary>
+    /// What to do when successfully connected to the server.
+    /// </summary>
+    
+    [TargetRpc]
+    public void TransitionToCharacterSelect(NetworkConnection conn)
+    {
+        CameraManager.Instance.MoveCameraToCharacterSelect();
+
+        CmdStartSelection();
+    }
+
+    [Command]
+    public void CmdRequestCharacter(string selectedCharacter)
+    {
+        GameManager.Instance.ClaimCharacter(selectedCharacter, connectionToClient);
+    }
+
+    [Command]
+    private void CmdStartSelection()
+    {
+        GameManager.Instance.StartSelection(connectionToClient);
+    }
+
+    /// <summary>
     /// When this client's steam id is updated, the id is updated for the other clients.
     /// </summary>
 
@@ -56,36 +80,6 @@ public class PlayerInfo : NetworkBehaviour
         CSteamID cSteamId = new CSteamID(newSteamId);
 
         //playerName.text = SteamFriends.GetFriendPersonaName(cSteamId);
-    }
-
-    /// <summary>
-    /// What to do when successfully connected to the server.
-    /// </summary>
-
-    private void HandleClientConnected()
-    {
-        CameraManager.Instance.TransitionToCharacterSelect();
-        if (NetworkClient.isConnected)
-        {
-            NetworkConnection localPlayerConnection = NetworkClient.connection;
-            // Check if the local player owns the spawned character
-            if (GetComponent<NetworkIdentity>().isLocalPlayer)
-            {
-                Debug.Log("This PLAYER INFO is the local player's PLAYER INFO.");
-            }
-            else
-            {
-                Debug.Log("This PLAYER INFO is not the local player's PLAYER INFO.");
-            }
-            // Now pass the connection to the command method
-            GameManager.Instance.CmdStartSelection(connectionToClient);
-        }
-    }
-
-    [Command]
-    private void CmdRequestStartSelection(NetworkConnectionToClient sender = null)
-    {
-        GameManager.Instance.CmdStartSelection(sender);
     }
 
     #endregion

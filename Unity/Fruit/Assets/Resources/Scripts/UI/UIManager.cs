@@ -300,7 +300,7 @@ public class UIManager : MonoBehaviour
     {
         SetActivePanel(_mainMenu);
 
-        CameraManager.Instance.TransitionToMainMenu();
+        CameraManager.Instance.MoveCameraToMainMenu();
     }
 
     /// <summary>

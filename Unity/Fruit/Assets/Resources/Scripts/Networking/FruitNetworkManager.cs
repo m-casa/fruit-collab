@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class FruitNetworkManager : NetworkManager
 {
-    public GameObject gameManager;
+    [SerializeField] private GameObject _gameManager;
 
     // Define a delegate and event to notify when the client is fully connected or disconnects
     public static event Action OnClientConnected;
@@ -14,24 +14,19 @@ public class FruitNetworkManager : NetworkManager
 
     public override void OnServerAddPlayer(NetworkConnectionToClient conn)
     {
+        // When the host is "connected" spawn the Game Manager in for the server
+        if (conn.connectionId == 0 && GameManager.Instance == null)
+        {
+            GameObject gameManagerInstance = Instantiate(_gameManager);
+            NetworkServer.Spawn(gameManagerInstance);
+        }
+
         // Add player
         GameObject player = Instantiate(playerPrefab);
+        player.name = $"{playerPrefab.name} [connId={conn.connectionId}]";
         NetworkServer.AddPlayerForConnection(conn, player);
 
-
-        GameObject gminstance = Instantiate(gameManager);
-        NetworkServer.Spawn(gminstance, conn);
-        // Assign ownership to the player
-        //gminstance.GetComponent<NetworkIdentity>().AssignClientAuthority(conn);
-
-        if (gminstance.GetComponent<NetworkIdentity>().isOwned)
-        {
-            Debug.Log("This GAME MANAGER is the local player's GAME MANAGER.");
-        }
-        else
-        {
-            Debug.Log("This GAME MANAGER is not the local player's GAME MANAGER.");
-        }
+        PlayerInfo playerInfo = conn.identity.GetComponent<PlayerInfo>();
 
         if (SteamSettings.Initialized)
         {
@@ -41,22 +36,16 @@ public class FruitNetworkManager : NetworkManager
                 SteamLogic.LobbyId,
                 numPlayers - 1);
 
-            PlayerInfo playerInfo = conn.identity.GetComponent<PlayerInfo>();
-
             // NOTE: This is only being set on the server's version of the player
             playerInfo.SetSteamId(cSteamId.m_SteamID);
         }
 
-        Debug.Log("Player added for connection");
+        playerInfo.TransitionToCharacterSelect(conn);
+
+        Debug.Log("Player " + conn.connectionId + " added for connection.");
+
         // Trigger the event after the player has been added
-        OnClientConnected?.Invoke();
-    }
-
-    public override void OnStartServer()
-    {
-        base.OnStartServer();
-
-        Debug.Log("SERVER HAS STARTED");
+        //OnClientConnected?.Invoke();
     }
 
     public override void OnClientDisconnect()
@@ -65,6 +54,13 @@ public class FruitNetworkManager : NetworkManager
 
         // If not null, call the event
         OnClientDisconnected?.Invoke();
+    }
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+
+        Debug.Log("SERVER HAS STARTED.");
     }
 
     public override void OnServerDisconnect(NetworkConnectionToClient conn)
