@@ -23,7 +23,6 @@ public class CharacterSelect : NetworkBehaviour
     [SerializeField] private InputActionReference _navigate; // Input for left/right navigation
     [SerializeField] private InputActionReference _submit;
 
-    private PlayerInfo _playerInfo;
     private Vector3 _arrowBasePosition;
     private Vector3 _targetPosition; // New target position for the arrow
 
@@ -98,11 +97,6 @@ public class CharacterSelect : NetworkBehaviour
 
     #region METHODS
 
-    public void SetLocalPlayer(PlayerInfo playerInfo)
-    {
-        _playerInfo = playerInfo;
-    }
-
     /// <summary>
     /// Determines which direction the user is trying to navigate towards.
     /// </summary>
@@ -140,15 +134,14 @@ public class CharacterSelect : NetworkBehaviour
     }
 
     /// <summary>
-    /// Tries to select the player's chosen character.
+    /// Sends a request to the server to try and claim the selected character.
     /// </summary>
 
     private void OnSubmit(InputAction.CallbackContext context)
     {
         string selectedCharacter = _characterNames[_currentIndex];
 
-        _playerInfo.CmdRequestCharacter(selectedCharacter);
-        //GameManager.Instance.ClaimCharacter(selectedCharacter, connectionToClient);
+        NetworkPlayer.LocalInstance.CmdRequestCharacter(selectedCharacter);
     }
 
     /// <summary>
@@ -167,12 +160,12 @@ public class CharacterSelect : NetworkBehaviour
         // Normalize hover offset to range [0, 1] (0 = lowest, 1 = highest)
         float normalizedHover = (hoverOffset + _arrowHoverAmount) / (2 * _arrowHoverAmount);
 
-        // Rotation animation (continuous spin)
-        transform.rotation *= Quaternion.Euler(_arrowRotationSpeed * Time.deltaTime, 0, 0);
-
         // Calculate scale for growing/shrinking animation
         Vector3 targetScale = Vector3.Lerp(_arrowMaxScale, _arrowMinScale, normalizedHover);
         transform.localScale = targetScale;
+
+        // Rotation animation (continuous spin)
+        transform.rotation *= Quaternion.Euler(_arrowRotationSpeed * Time.deltaTime, 0, 0);
     }
 
     #endregion

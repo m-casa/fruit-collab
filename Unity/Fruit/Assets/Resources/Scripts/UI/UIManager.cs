@@ -105,8 +105,7 @@ public class UIManager : MonoBehaviour
         }
 
         // Detect pause input (e.g., ESC or Start button on a controller)
-        if  (GameManager.Instance != null)
-        if (GameManager.Instance.InGame())
+        if (NetworkPlayer.LocalInstance != null && NetworkPlayer.LocalInstance.InGame())
         {
             // Toggle pause menu
         }
@@ -187,7 +186,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Switches back to main menu when leaving a lobby.
+    /// Switches back to the main menu when leaving a lobby.
     /// </summary>
 
     public void OnLeaveLobby()
@@ -293,7 +292,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Sets the main menu to active and transitions camera.
+    /// Sets the main menu to active and moves the camera.
     /// </summary>
 
     private void OnStartGame()
@@ -364,7 +363,7 @@ public class UIManager : MonoBehaviour
 
     private void HandleClientConnecting()
     {
-        // Toggle on connecting text here
+        // ---> Toggle on connecting text here.
         //connectingTxt.SetActive(true);
 
         SpawnNetworkManager();
@@ -372,23 +371,16 @@ public class UIManager : MonoBehaviour
 
     /// <summary>
     /// What to do if we couldn't connect to the server.
-    /// 0 = Main Screen, 1 = Play Screen
     /// </summary>
 
     private void HandleClientDisconnected()
     {
         Destroy(networkManager);
 
-        // Toggle off connecting text here
+        // ---> Toggle off connecting text here.
         //connectingTxt.SetActive(false);
 
-        // Re-Enable menu here:
-        //menuScreens[0].SetActive(true);
-
-        //foreach (Button button in menuScreens[1].GetComponentsInChildren<Button>())
-        //{
-        //    button.interactable = true;
-        //}
+        // ---> Re-Enable menu here.
     }
 
     #endregion

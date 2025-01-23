@@ -26,7 +26,8 @@ public class FruitNetworkManager : NetworkManager
         player.name = $"{playerPrefab.name} [connId={conn.connectionId}]";
         NetworkServer.AddPlayerForConnection(conn, player);
 
-        PlayerInfo playerInfo = conn.identity.GetComponent<PlayerInfo>();
+        // Don't use LocalInstance here since the newly added player isn't always the local player
+        NetworkPlayer networkPlayer = conn.identity.GetComponent<NetworkPlayer>();
 
         if (SteamSettings.Initialized)
         {
@@ -37,15 +38,13 @@ public class FruitNetworkManager : NetworkManager
                 numPlayers - 1);
 
             // NOTE: This is only being set on the server's version of the player
-            playerInfo.SetSteamId(cSteamId.m_SteamID);
+            networkPlayer.SetSteamId(cSteamId.m_SteamID);
         }
 
-        playerInfo.TransitionToCharacterSelect(conn);
+        // When the player is setup server side, move them to character selection
+        networkPlayer.RpcTransitionToCharacterSelect(conn);
 
         Debug.Log("Player " + conn.connectionId + " added for connection.");
-
-        // Trigger the event after the player has been added
-        //OnClientConnected?.Invoke();
     }
 
     public override void OnClientDisconnect()

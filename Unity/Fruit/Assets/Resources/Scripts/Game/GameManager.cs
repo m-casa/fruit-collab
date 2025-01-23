@@ -14,7 +14,6 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private List<string> _allCharacters = new List<string> { "Apple", "Grape", "Lemon", "Peach" };
     private HashSet<string> _claimedCharacters = new HashSet<string>(); // Tracks taken characters
     private int[] _playerScores; // Scores for each player
-    private bool _inGame;
 
     [SyncVar(hook = nameof(OnClaimedCharactersSyncUpdated))]
     private string _claimedCharactersSync = ""; // Sync'd string for character selection (CSV format)
@@ -77,7 +76,7 @@ public class GameManager : NetworkBehaviour
 
         SpawnFruit();
 
-        SpawnArrow(sender);
+        RpcSpawnArrow(sender);
     }
 
     /// <summary>
@@ -102,8 +101,6 @@ public class GameManager : NetworkBehaviour
             SpawnCharacter(characterName, sender);
 
             CameraManager.Instance.MoveCameraToLobby();
-
-            _inGame = true;
         }
         else
         {
@@ -123,15 +120,6 @@ public class GameManager : NetworkBehaviour
 
             Debug.Log($"{characterName} deselected.");
         }
-    }
-
-    /// <summary>
-    /// Returns true or false for whether or not the player is in game.
-    /// </summary>
-
-    public bool InGame()
-    {
-        return _inGame;
     }
 
     /// <summary>
@@ -210,8 +198,9 @@ public class GameManager : NetworkBehaviour
     /// <summary>
     /// Spawns the arrow game object which has the logic needed to select a character.
     /// </summary>
+    
     [TargetRpc]
-    private void SpawnArrow(NetworkConnection target)
+    private void RpcSpawnArrow(NetworkConnection target)
     {
         if (_arrowPrefab == null)
         {
@@ -221,12 +210,6 @@ public class GameManager : NetworkBehaviour
         }
 
         _spawnedArrow = Instantiate(_arrowPrefab);
-
-        PlayerInfo localPlayerInfo = NetworkClient.localPlayer.GetComponent<PlayerInfo>();
-        _spawnedArrow.GetComponent<CharacterSelect>().SetLocalPlayer(localPlayerInfo);
-
-        // Spawn the character on the network for the other clients
-        //NetworkServer.Spawn(_spawnedArrow, target);
 
         Debug.Log("Arrow spawned for character selection.");
     }
