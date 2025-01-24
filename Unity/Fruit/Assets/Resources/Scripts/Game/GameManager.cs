@@ -2,6 +2,7 @@ using EasyCharacterMovement;
 using Mirror;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class GameManager : NetworkBehaviour
@@ -70,13 +71,11 @@ public class GameManager : NetworkBehaviour
     /// Spawns the necessary game objects in charge of character selection logic.
     /// </summary>
     
-    public void StartSelection(NetworkConnectionToClient sender = null)
+    public void StartSelection(NetworkConnectionToClient target)
     {
-        //UpdateClaimedCharacters();
+        RpcSpawnFruit(target);
 
-        SpawnFruit();
-
-        RpcSpawnArrow(sender);
+        RpcSpawnArrow(target);
     }
 
     /// <summary>
@@ -84,23 +83,32 @@ public class GameManager : NetworkBehaviour
     ///  and the associated props will be destroyed.
     /// </summary>
 
-    public void ClaimCharacter(string characterName, NetworkConnectionToClient sender = null)
+    public void ClaimCharacter(string characterName, NetworkConnectionToClient target)
     {
         if (IsCharacterAvailable(characterName))
         {
             Debug.Log($"{characterName} character selected.");
 
-            DestroyArrow();
+            // Destroy the target client's character selection arrow
+            RpcDestroyArrow(target);
 
-            //DestroyFruit(characterName);  // Should be handled by Sync var
-
-            _claimedCharacters.Add(characterName); // Mark character as taken
+            // Mark character as taken
+            _claimedCharacters.Add(characterName);
             UpdateClaimedCharactersSync();
 
-            // Spawn and assign the character to the correct client
-            SpawnCharacter(characterName, sender);
+            // Spawn and assign the character to the target client
+            SpawnCharacter(characterName, target);
 
-            CameraManager.Instance.MoveCameraToLobby();
+            // Send a reference of all the active characters to the target client's camera
+            NetworkIdentity[] characterIdentities = _spawnedCharacters
+                .Where(c => c != null)
+                .Select(c => c.GetComponent<NetworkIdentity>())
+                .ToArray();
+
+            RpcAddAllCharactersToCamera(target, characterIdentities);
+
+            // Move the target client's camera to the lobby
+            RpcMoveCameraToLobby(target);
         }
         else
         {
@@ -155,7 +163,8 @@ public class GameManager : NetworkBehaviour
     /// Spawns the base fruit bodies to represent each character.
     /// </summary>
 
-    private void SpawnFruit()
+    [TargetRpc]
+    private void RpcSpawnFruit(NetworkConnection conn)
     {
         if (_fruitPrefabs == null)
         {
@@ -200,7 +209,7 @@ public class GameManager : NetworkBehaviour
     /// </summary>
     
     [TargetRpc]
-    private void RpcSpawnArrow(NetworkConnection target)
+    private void RpcSpawnArrow(NetworkConnection conn)
     {
         if (_arrowPrefab == null)
         {
@@ -233,21 +242,24 @@ public class GameManager : NetworkBehaviour
         // Check if the prefab exists and spawn the character
         if (characterIndex < _characterPrefabs.Length && _characterPrefabs[characterIndex] != null)
         {
-            // Spawn the character and store it in the array
+            // Spawn the character on the server and store it in the array
             GameObject spawnedCharacter = Instantiate(_characterPrefabs[characterIndex]);
             _spawnedCharacters[characterIndex] = spawnedCharacter;
 
             // Spawn the character on the network for the other clients
             NetworkServer.Spawn(spawnedCharacter, target);
 
-            // Assign authority to the player's connection
+            // Assign the spawned character to the target client
             NetworkServer.ReplacePlayerForConnection(target, spawnedCharacter, ReplacePlayerOptions.KeepAuthority);
 
-            // Setup the character's reference to the main camera
-            FruitCharacter fruitCharacter = spawnedCharacter.GetComponent<FruitCharacter>();
-            fruitCharacter.camera = Camera.main;
+            // Reference to the spawned character's network identity
+            NetworkIdentity characterIdentity = spawnedCharacter.GetComponent<NetworkIdentity>();
 
-            CameraManager.Instance.AddPlayerToCamera(spawnedCharacter);
+            // Assign the main camera to the target client's character so movement is not broken
+            RpcAssignMainCamera(target, characterIdentity);
+
+            // Send a reference of the newly spawned character to each client's camera
+            RpcAddNewCharacterToCamera(characterIdentity);
 
             Debug.Log($"{characterName} character spawned.");
         }
@@ -258,10 +270,71 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Destroys the arrow game object.
+    /// Setup the character's reference to the main camera.
     /// </summary>
 
-    private void DestroyArrow()
+    [TargetRpc]
+    private void RpcAssignMainCamera(NetworkConnection conn, NetworkIdentity characterIdentity)
+    {
+        FruitCharacter fruitCharacter = characterIdentity.GetComponent<FruitCharacter>();
+        fruitCharacter.camera = Camera.main;
+    }
+
+    /// <summary>
+    /// Updates every client's dynamic camera with the newly added character.
+    /// </summary>
+
+    [ClientRpc]
+    private void RpcAddNewCharacterToCamera(NetworkIdentity identity)
+    {
+        if (identity != null)
+        {
+            GameObject character = identity.gameObject; // Convert back to GameObject
+            CameraManager.Instance.AddCharacterToCamera(character);
+        }
+        else
+        {
+            Debug.LogError("RpcAddNewCharacterToCamera received a null character identity!");
+        }
+    }
+
+    /// <summary>
+    /// Updates the target client's dynamic camera with every active character.
+    /// </summary>
+
+    [TargetRpc]
+    private void RpcAddAllCharactersToCamera(NetworkConnection conn, NetworkIdentity[] characterIdentities)
+    {
+        foreach (NetworkIdentity identity in characterIdentities)
+        {
+            if (identity != null)
+            {
+                GameObject character = identity.gameObject; // Convert back to GameObject
+                CameraManager.Instance.AddCharacterToCamera(character);
+            }
+            else
+            {
+                Debug.LogError("RpcAddAllCharactersToCamera received a null character identity!");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Moves the target client's camera to the lobby.
+    /// </summary>
+
+    [TargetRpc]
+    private void RpcMoveCameraToLobby(NetworkConnection conn)
+    {
+        CameraManager.Instance.MoveCameraToLobby();
+    }
+
+    /// <summary>
+    /// Destroys the target client's arrow game object.
+    /// </summary>
+
+    [TargetRpc]
+    private void RpcDestroyArrow(NetworkConnection conn)
     {
         if (_spawnedArrow != null)
         {
@@ -367,21 +440,6 @@ public class GameManager : NetworkBehaviour
     {
         // Display crown on the winning player
         Debug.Log($"Player {playerIndex + 1} wins!");
-    }
-
-    /// <summary>
-    /// Update the actual set of claimed characters using the Sync var.
-    /// </summary>
-
-    private void UpdateClaimedCharacters()
-    {
-        foreach (string character in _claimedCharactersSync.Split(','))
-        {
-            if (!string.IsNullOrWhiteSpace(character)) // Avoid empty strings
-            {
-                _claimedCharacters.Add(character);
-            }
-        }
     }
 
     /// <summary>

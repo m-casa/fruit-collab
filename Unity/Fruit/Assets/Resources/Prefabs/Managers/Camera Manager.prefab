@@ -503,7 +503,7 @@ MonoBehaviour:
   _mainMenuCamera: {fileID: 8254671525475504002}
   _characterSelectCamera: {fileID: 6075895168630086990}
   _lobbyCamera: {fileID: 6587572951930767207}
-  _playerTargetGroup: {fileID: 8189357236766673952}
+  _characterTargetGroup: {fileID: 8189357236766673952}
 --- !u!1 &6718730079568398173
 GameObject:
   m_ObjectHideFlags: 0
@@ -590,7 +590,7 @@ GameObject:
   - component: {fileID: 4156106250833950175}
   - component: {fileID: 8189357236766673952}
   m_Layer: 0
-  m_Name: Player Target Group
+  m_Name: Character Target Group
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

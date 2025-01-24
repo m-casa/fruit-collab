@@ -11,7 +11,7 @@ public class CameraManager : MonoBehaviour
     [SerializeField] private CinemachineCamera _mainMenuCamera;
     [SerializeField] private CinemachineCamera _characterSelectCamera;
     [SerializeField] private CinemachineCamera _lobbyCamera;
-    [SerializeField] private CinemachineTargetGroup _playerTargetGroup;
+    [SerializeField] private CinemachineTargetGroup _characterTargetGroup;
 
     #endregion
 
@@ -75,24 +75,49 @@ public class CameraManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Adds a player to the target group, 
+    /// Adds a character to the target group, 
     ///  which the dynamic camera uses to keep all players on screen.
     /// </summary>
 
-    public void AddPlayerToCamera(GameObject player)
+    public void AddCharacterToCamera(GameObject character)
     {
-        _playerTargetGroup.AddMember(player.transform, 1f, 2f); // Weight = 1, Radius = 2
+        if (!IsCharacterInCameraGroup(character))
+        {
+            _characterTargetGroup.AddMember(character.transform, 1f, 2f); // Weight = 1, Radius = 2
+        }
+        else
+        {
+            Debug.Log($"[CameraManager] {character.name} is already in the target group.");
+        }
     }
 
     /// <summary>
-    /// Removes a player from the target group, 
+    /// Removes a character from the target group, 
     ///  so that the dynamic camera stops tracking them.
     /// </summary>
 
-    public void RemovePlayerFromCamera(GameObject player)
+    public void RemoveCharacterFromCamera(GameObject character)
     {
-        _playerTargetGroup.RemoveMember(player.transform);
+        _characterTargetGroup.RemoveMember(character.transform);
     }
 
+    /// <summary>
+    /// Checks if the passed character is already being tracked by the camera.
+    /// </summary>
+
+    private bool IsCharacterInCameraGroup(GameObject character)
+    {
+        foreach (var member in _characterTargetGroup.Targets)
+        {
+            if (member.Object != null)
+            {
+                if (member.Object.transform == character.transform)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
     #endregion
 }

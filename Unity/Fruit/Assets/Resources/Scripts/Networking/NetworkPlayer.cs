@@ -55,7 +55,7 @@ public class NetworkPlayer : NetworkBehaviour
     }
 
     /// <summary>
-    /// Moves the player's camera to the character selection area.
+    /// Moves the target client's camera to the character selection area.
     /// Then sends a request to the server to start the character selection process.
     /// </summary>
 
@@ -71,7 +71,7 @@ public class NetworkPlayer : NetworkBehaviour
 
     /// <summary>
     /// Begins the character selection process on the server 
-    ///  for the player that requested it.
+    ///  for the client that requested it.
     /// </summary>
 
     [Command]
