@@ -117,7 +117,7 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Marks the appropriate character as available if they were taken.
+    /// Marks the appropriate character as available if they were previously taken.
     /// </summary>
 
     public void MarkAsAvailable(string characterName)

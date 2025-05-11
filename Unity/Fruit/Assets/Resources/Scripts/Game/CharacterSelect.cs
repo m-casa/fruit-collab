@@ -12,7 +12,7 @@ public class CharacterSelect : NetworkBehaviour
     private int _currentIndex = 0; // Currently selected character index
 
     [Header("Arrow Setup")]
-    [SerializeField] private float _arrowMoveSpeed = 5f; // Speed of smooth movement
+    [SerializeField] private float _arrowMoveSpeed = 10f; // Speed of smooth movement
     [SerializeField] private float _arrowRotationSpeed = 100f; // Degrees per second
     [SerializeField] private float _arrowHoverSpeed = 3.5f; // Speed of up-and-down hover animation
     [SerializeField] private float _arrowHoverAmount = 0.1f; // Distance of the hover animation

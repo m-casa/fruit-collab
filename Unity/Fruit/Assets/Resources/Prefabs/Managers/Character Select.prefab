@@ -100,6 +100,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4dfc091491b7451478f415e18263718e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   _characterPositions:
   - {fileID: 9186333507326073891, guid: d8c8d0a2924731a4cb67aa272d910316, type: 3}
   - {fileID: 4074328096017738570, guid: 5285860d86abc5347942d5bea0b81390, type: 3}
@@ -110,7 +113,7 @@ MonoBehaviour:
   - Grape
   - Lemon
   - Peach
-  _arrowMoveSpeed: 4
+  _arrowMoveSpeed: 10
   _arrowRotationSpeed: 100
   _arrowHoverSpeed: 3.5
   _arrowHoverAmount: 0.1
