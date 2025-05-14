@@ -28,7 +28,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text _timerText; // Reference to the timer text
     [SerializeField] private Text[] _playerScoreTexts; // Array of score displays for each player
     [SerializeField] private Slider[] _playerHealthBars; // Array of health bars for each player
-    [SerializeField] private GameObject _joinButton;
+    [SerializeField] private RectTransform[] _mainMenuButtons;
     [SerializeField] private GameObject _connectingTxt;
 
     #endregion
@@ -61,11 +61,14 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
+        // If we're running on a LAN, include a join button
+        if (!SteamSettings.Initialized) 
+        {
+            IncludeJoinButton();
+        }
+
         // Show the start screen initially
         SetActivePanel(_startScreen);
-
-        // Make sure the Steam API is available (Steam is running)
-        if (!SteamSettings.Initialized) { return; }
     }
 
     /// <summary>
@@ -249,6 +252,24 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Moves the main menu buttons down to include a join button when not using Steam.
+    /// </summary>
+
+    private void IncludeJoinButton()
+    {
+        // Activate the join button
+        _mainMenuButtons[0].gameObject.SetActive(true);
+
+        // Shift all buttons down a bit to include join
+        foreach (RectTransform btn in _mainMenuButtons)
+        {
+            Vector3 newAnchoredPosition = btn.anchoredPosition;
+            newAnchoredPosition.y -= 125f;
+            btn.anchoredPosition = newAnchoredPosition;
+        }
+    }
+
+    /// <summary>
     /// Sets the passed menu panel as active. Passing null exits all menus.
     /// </summary>
 
@@ -342,22 +363,6 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Spawns the appropriate Network Manager.
-    /// </summary>
-
-    private void SpawnNetworkManager()
-    {
-        if (SteamSettings.Initialized)
-        {
-            networkManager = Instantiate(_steamNetworkManagerPrefab);
-        }
-        else
-        {
-            networkManager = Instantiate(_networkManagerPrefab);
-        }
-    }
-
-    /// <summary>
     /// What to do when connecting to the server.
     /// </summary>
 
@@ -381,6 +386,22 @@ public class UIManager : MonoBehaviour
         //connectingTxt.SetActive(false);
 
         // ---> Re-Enable menu here.
+    }
+
+    /// <summary>
+    /// Spawns the appropriate Network Manager.
+    /// </summary>
+
+    private void SpawnNetworkManager()
+    {
+        if (SteamSettings.Initialized)
+        {
+            networkManager = Instantiate(_steamNetworkManagerPrefab);
+        }
+        else
+        {
+            networkManager = Instantiate(_networkManagerPrefab);
+        }
     }
 
     #endregion

@@ -955,10 +955,11 @@ namespace EasyCharacterMovement
             if (_animancer.States.TryGet(fallClip, out var state))
             {
                 _animancer.Play(state, 0.25f);
-                state.Time = 0;
 
                 if (_currentAnimationClip != fallClip)
                 {
+                    state.Time = 0;
+
                     _currentAnimationClip = fallClip;
                     _networkAnimations.CmdPlayFallAnimation(_currentAnimationClip);
                 }
