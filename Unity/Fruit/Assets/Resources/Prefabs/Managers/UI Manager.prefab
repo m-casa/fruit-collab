@@ -204,7 +204,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -650, y: 375}
+  m_AnchoredPosition: {x: -650, y: 250}
   m_SizeDelta: {x: 400, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7161553087820621894
@@ -1354,6 +1354,9 @@ MonoBehaviour:
   - {fileID: 7850834088151214191}
   - {fileID: 7880174736654103984}
   - {fileID: 7304707529141446207}
+  _pauseMenuButtons:
+  - {fileID: 228111224124642998}
+  - {fileID: 2155795549264931153}
   _connectingTxt: {fileID: 0}
 --- !u!1 &4964938973920639063
 GameObject:
@@ -1556,7 +1559,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Resume Game
+  m_text: Resume
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}
@@ -1793,8 +1796,8 @@ RectTransform:
   m_Children:
   - {fileID: 3776306115116538619}
   - {fileID: 3461700790045859820}
-  - {fileID: 2155795549264931153}
   - {fileID: 228111224124642998}
+  - {fileID: 2155795549264931153}
   m_Father: {fileID: 2526266474240023494}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -2072,12 +2075,12 @@ GameObject:
   - component: {fileID: 1988897230871937437}
   - component: {fileID: 1219375958278580051}
   m_Layer: 0
-  m_Name: Exit Btn
+  m_Name: End Btn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &228111224124642998
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2192,7 +2195,7 @@ GameObject:
   - component: {fileID: 2082185910430145313}
   - component: {fileID: 8125013189978902203}
   m_Layer: 0
-  m_Name: Exit Txt
+  m_Name: End Txt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2245,7 +2248,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Exit Game
+  m_text: End Match
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}

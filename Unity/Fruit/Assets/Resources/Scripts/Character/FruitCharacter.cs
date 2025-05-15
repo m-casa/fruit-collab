@@ -27,7 +27,8 @@ namespace EasyCharacterMovement
 
         private bool _rightFootUp, _isSpeeding, _queueLaunch, 
             _blockButtonPressed, _isBlocking, _takingDamage, 
-            _punchButtonPressed, _isGroundPunching, _isAirPunching;
+            _punchButtonPressed, _isGroundPunching, _isAirPunching,
+            _pauseButtonPressed;
         private int _currentComboStep, _nextComboStep; // Keep track of the next combo step
         private float _cooldownTimer;
         private string _currentAnimationClip;
@@ -53,6 +54,12 @@ namespace EasyCharacterMovement
         /// </summary>
 
         protected InputAction blockInputAction { get; set; }
+
+        /// <summary>
+        /// Pause InputAction.
+        /// </summary>
+
+        protected InputAction pauseInputAction { get; set; }
 
         /// <summary>
         /// Cursor Lock InputAction.
@@ -92,6 +99,23 @@ namespace EasyCharacterMovement
                 Block();
             else if (context.canceled)
                 StopBlocking();
+        }
+
+        /// <summary>
+        /// Pause input action handler.
+        /// </summary>
+
+        protected virtual void OnPause(InputAction.CallbackContext context)
+        {
+            if (context.started || context.performed)
+            {
+                if (!_pauseButtonPressed)
+                    Pause();
+            }
+            else if (context.canceled)
+            {
+                ReleasePause();
+            }
         }
 
         #endregion
@@ -134,6 +158,8 @@ namespace EasyCharacterMovement
             _isBlocking = false;
             _takingDamage = false;
 
+            _pauseButtonPressed = false;
+
             _currentComboStep = 0;
             _nextComboStep = 0;
             _cooldownTimer = 0f;
@@ -148,8 +174,23 @@ namespace EasyCharacterMovement
         {
             base.OnStart();
 
+            // We don't want to take control of another player's character
             if (!isLocalPlayer)
                 UnsubFromInputActions();
+        }
+
+        /// <summary>
+        /// Extends OnStartLocalPlayer.
+        /// Check if this client is the host of the server,
+        ///  since they'll need the option to end the match.
+        /// </summary>
+
+        public override void OnStartLocalPlayer()
+        {
+            base.OnStartLocalPlayer();
+
+            UIManager.Instance.SetupPauseMenu(GetComponent<NetworkIdentity>());
+            camera = Camera.main;
         }
 
         /// <summary>
@@ -245,6 +286,17 @@ namespace EasyCharacterMovement
 
                 blockInputAction.Enable();
             }
+
+            // Setup Pause input action handlers
+            pauseInputAction = inputActions.FindAction("Pause");
+            if (pauseInputAction != null)
+            {
+                pauseInputAction.started += OnPause;
+                pauseInputAction.performed += OnPause;
+                pauseInputAction.canceled += OnPause;
+
+                pauseInputAction.Enable();
+            }
         }
 
         /// <summary>
@@ -274,6 +326,16 @@ namespace EasyCharacterMovement
 
                 blockInputAction.Disable();
                 blockInputAction = null;
+            }
+
+            if (pauseInputAction != null)
+            {
+                pauseInputAction.started -= OnPause;
+                pauseInputAction.performed -= OnPause;
+                pauseInputAction.canceled -= OnPause;
+
+                pauseInputAction.Disable();
+                pauseInputAction = null;
             }
         }
 
@@ -524,13 +586,22 @@ namespace EasyCharacterMovement
 
                 blockInputAction = null;
             }
+
+            if (pauseInputAction != null)
+            {
+                pauseInputAction.started -= OnPause;
+                pauseInputAction.performed -= OnPause;
+                pauseInputAction.canceled -= OnPause;
+
+                pauseInputAction = null;
+            }
         }
 
         /// <summary>
-        /// Disables Player input.
+        /// Disables the player's character.
         /// </summary>
 
-        private void DisableInput()
+        private void DisableCharacter()
         {
             movementInputAction.Disable();
             jumpInputAction.Disable();
@@ -539,10 +610,10 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Enables Player input.
+        /// Enables the player's character.
         /// </summary>
 
-        private void EnableInput()
+        private void EnableCharacter()
         {
             movementInputAction.Enable();
             jumpInputAction.Enable();
@@ -855,6 +926,27 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Opens/closes the pause menu.
+        /// </summary>
+
+        private void Pause()
+        {
+            _pauseButtonPressed = true;
+
+            UIManager.Instance.TogglePauseMenu();
+        }
+
+        /// <summary>
+        /// Releases the pause button, 
+        ///  allowing user to open or close the pause menu again.
+        /// </summary>
+
+        private void ReleasePause()
+        {
+            _pauseButtonPressed = false;
+        }
+
+        /// <summary>
         /// Handle launching state.
         /// Eg: check if a launch was queued.
         /// </summary>
@@ -1070,7 +1162,7 @@ namespace EasyCharacterMovement
         {
             _takingDamage = false;
 
-            EnableInput();
+            EnableCharacter();
         }
 
         /// <summary>
@@ -1112,7 +1204,7 @@ namespace EasyCharacterMovement
                 ResetCombo();
                 ResetAirPunch();
 
-                DisableInput();
+                DisableCharacter();
 
                 SetVelocity(Vector3.zero);
 

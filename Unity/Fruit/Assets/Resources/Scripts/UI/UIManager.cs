@@ -28,7 +28,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Text _timerText; // Reference to the timer text
     [SerializeField] private Text[] _playerScoreTexts; // Array of score displays for each player
     [SerializeField] private Slider[] _playerHealthBars; // Array of health bars for each player
-    [SerializeField] private RectTransform[] _mainMenuButtons;
+    [SerializeField] private RectTransform[] _mainMenuButtons, _pauseMenuButtons;
     [SerializeField] private GameObject _connectingTxt;
 
     #endregion
@@ -66,6 +66,10 @@ public class UIManager : MonoBehaviour
         {
             IncludeJoinButton();
         }
+        else
+        {
+            ExcludeJoinButton();
+        }
     }
 
     /// <summary>
@@ -102,12 +106,6 @@ public class UIManager : MonoBehaviour
         if (_startScreen.activeSelf && IsAnyInputPressed())
         {
             OnStartGame();
-        }
-
-        // Detect pause input (e.g., ESC or Start button on a controller)
-        if (NetworkPlayer.LocalInstance != null && NetworkPlayer.LocalInstance.InGame())
-        {
-            // Toggle pause menu
         }
     }
 
@@ -163,6 +161,34 @@ public class UIManager : MonoBehaviour
         SetActivePanel(null);
 
         Join();
+    }
+
+    /// <summary>
+    /// Toggles end match on/off depending on whether the player is host.
+    /// </summary>
+
+    public void SetupPauseMenu(NetworkIdentity characterIdentity)
+    {
+        if (characterIdentity.isServer && characterIdentity.connectionToClient == NetworkServer.localConnection)
+        {
+            // Activate the end match button
+            _pauseMenuButtons[0].gameObject.SetActive(true);
+
+            // Shift the leave game button down
+            Vector3 newAnchoredPosition = _pauseMenuButtons[1].anchoredPosition;
+            newAnchoredPosition.y = 0f;
+            _pauseMenuButtons[1].anchoredPosition = newAnchoredPosition;
+        }
+        else
+        {
+            // Deactivate the end match button
+            _pauseMenuButtons[0].gameObject.SetActive(false);
+
+            // Shift the leave game button up
+            Vector3 newAnchoredPosition = _pauseMenuButtons[1].anchoredPosition;
+            newAnchoredPosition.y = 125f;
+            _pauseMenuButtons[1].anchoredPosition = newAnchoredPosition;
+        }
     }
 
     /// <summary>
@@ -266,13 +292,35 @@ public class UIManager : MonoBehaviour
         // Activate the join button
         _mainMenuButtons[0].gameObject.SetActive(true);
 
-        // Shift all buttons down a bit to include join
-        foreach (RectTransform btn in _mainMenuButtons)
-        {
-            Vector3 newAnchoredPosition = btn.anchoredPosition;
-            newAnchoredPosition.y -= 125f;
-            btn.anchoredPosition = newAnchoredPosition;
-        }
+        // Shift the settings button down
+        Vector3 newAnchoredPosition = _mainMenuButtons[1].anchoredPosition;
+        newAnchoredPosition.y = 125f;
+        _mainMenuButtons[1].anchoredPosition = newAnchoredPosition;
+
+        // Shift the exit button down
+        newAnchoredPosition = _mainMenuButtons[2].anchoredPosition;
+        newAnchoredPosition.y = 0f;
+        _mainMenuButtons[2].anchoredPosition = newAnchoredPosition;
+    }
+
+    /// <summary>
+    /// Moves the main menu buttons up if the join button is not needed.
+    /// </summary>
+
+    private void ExcludeJoinButton()
+    {
+        // Deactivate the join button
+        _mainMenuButtons[0].gameObject.SetActive(false);
+
+        // Shift the settings button up
+        Vector3 newAnchoredPosition = _mainMenuButtons[1].anchoredPosition;
+        newAnchoredPosition.y = 250f;
+        _mainMenuButtons[1].anchoredPosition = newAnchoredPosition;
+
+        // Shift the exit button up
+        newAnchoredPosition = _mainMenuButtons[2].anchoredPosition;
+        newAnchoredPosition.y = 125f;
+        _mainMenuButtons[2].anchoredPosition = newAnchoredPosition;
     }
 
     /// <summary>

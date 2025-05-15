@@ -18,7 +18,7 @@
                     "name": "Jump",
                     "type": "Button",
                     "id": "db3fa715-1c30-4f05-8493-b21ddf3bea2e",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -27,7 +27,7 @@
                     "name": "Punch",
                     "type": "Button",
                     "id": "f6a9268e-95dc-4b9c-99e9-2fe26817b559",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -36,7 +36,7 @@
                     "name": "Block",
                     "type": "Button",
                     "id": "59a8cc20-f8b8-40d7-a5da-76e84f4ca242",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -45,7 +45,7 @@
                     "name": "Cursor Lock",
                     "type": "Button",
                     "id": "ebac10f6-fa6e-45fc-a11d-a47eca9a2b97",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -54,7 +54,16 @@
                     "name": "Cursor Unlock",
                     "type": "Button",
                     "id": "12a1d28f-aeba-4eed-963a-db43508fafef",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Pause",
+                    "type": "Button",
+                    "id": "8db92a9d-e0be-4c1d-8abe-d26bedfeb725",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -285,6 +294,28 @@
                     "action": "Block",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "1fc26396-8746-4f07-9973-a05f6c281a51",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard And Mouse",
+                    "action": "Pause",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "14899fcc-91f0-4077-be76-5fc09f7c625c",
+                    "path": "<Gamepad>/start",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Gamepad",
+                    "action": "Pause",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -294,7 +325,7 @@
             "actions": [
                 {
                     "name": "Navigate",
-                    "type": "Value",
+                    "type": "PassThrough",
                     "id": "3321eadf-7830-44eb-8f9a-40b3655413a0",
                     "expectedControlType": "Vector2",
                     "processors": "",
@@ -305,7 +336,7 @@
                     "name": "Submit",
                     "type": "Button",
                     "id": "04796f04-ae1b-40ec-b433-b82fa3e94b4a",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -314,7 +345,7 @@
                     "name": "Cancel",
                     "type": "Button",
                     "id": "dc29ab7b-fabb-4b64-8f79-969f1eba0236",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
