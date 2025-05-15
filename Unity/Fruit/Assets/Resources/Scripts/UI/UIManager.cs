@@ -66,9 +66,6 @@ public class UIManager : MonoBehaviour
         {
             IncludeJoinButton();
         }
-
-        // Show the start screen initially
-        SetActivePanel(_startScreen);
     }
 
     /// <summary>
@@ -117,6 +114,15 @@ public class UIManager : MonoBehaviour
     #endregion
 
     #region METHODS
+
+    /// <summary>
+    /// Show the start screen initially.
+    /// </summary>
+
+    public void ShowStartScreen()
+    {
+        SetActivePanel(_startScreen);
+    }
 
     /// <summary>
     /// Host button will call this method.

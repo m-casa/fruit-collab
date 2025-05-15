@@ -1,5 +1,5 @@
-using UnityEngine;
 using Unity.Cinemachine;
+using UnityEngine;
 
 public class CameraManager : MonoBehaviour
 {
@@ -40,6 +40,15 @@ public class CameraManager : MonoBehaviour
     #endregion
 
     #region METHODS
+
+    /// <summary>
+    /// Show the start screen initially.
+    /// </summary>
+
+    public void EnableCamera()
+    {
+        GetComponentInChildren<Camera>().enabled = true;
+    }
 
     /// <summary>
     /// Moves the camera from the starting position to the main menu's position.
