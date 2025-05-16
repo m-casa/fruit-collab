@@ -20,9 +20,10 @@ public class UIManager : MonoBehaviour
 
     [Header("Menu References")]
     [SerializeField] private GameObject _startScreen; // UI for "Press Any Button to Start"
-    [SerializeField] private GameObject _mainMenu; // Main menu UI
-    [SerializeField] private GameObject _pauseMenu; // Pause menu UI
-    [SerializeField] private GameObject _gameplayUI; // Gameplay UI
+    [SerializeField] private GameObject _mainMenu;
+    [SerializeField] private GameObject _pauseMenu;
+    [SerializeField] private GameObject _settingsMenu;
+    [SerializeField] private GameObject _gameplayUI;
 
     [Header("UI References")]
     [SerializeField] private Text _timerText; // Reference to the timer text
@@ -30,6 +31,18 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Slider[] _playerHealthBars; // Array of health bars for each player
     [SerializeField] private RectTransform[] _mainMenuButtons, _pauseMenuButtons;
     [SerializeField] private GameObject _connectingTxt;
+
+    #endregion
+
+    #region EVENTS
+
+    public delegate void UIEventHandler();
+
+    /// <summary>
+    /// Event triggered when pause initiated.
+    /// </summary>
+
+    public event UIEventHandler Paused;
 
     #endregion
 
@@ -199,14 +212,23 @@ public class UIManager : MonoBehaviour
     {
         if (!_pauseMenu.activeSelf)
         {
-            // Disable player controls here
-
             SetActivePanel(_pauseMenu);
+
+            Paused?.Invoke();
         }
         else
         {
             OnResumeGame();
         }
+    }
+
+    /// <summary>
+    /// Returns whether or not the pause menu is active.
+    /// </summary>
+
+    public bool PauseMenuActive()
+    {
+        return _pauseMenu.activeSelf;
     }
 
     /// <summary>
@@ -217,7 +239,7 @@ public class UIManager : MonoBehaviour
     {
         SetActivePanel(null);
 
-        // Re-enable player controls here
+        Paused?.Invoke();
     }
 
     /// <summary>
@@ -235,7 +257,7 @@ public class UIManager : MonoBehaviour
 
     public void OnSettingsSelected()
     {
-        // Logic for selecting the settings
+        SetActivePanel(_settingsMenu);
     }
 
     /// <summary>
@@ -244,7 +266,6 @@ public class UIManager : MonoBehaviour
 
     public void OnExitGame()
     {
-        // Logic for exiting the game
         Application.Quit();
     }
 

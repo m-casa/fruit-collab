@@ -128,5 +128,6 @@ public class CameraManager : MonoBehaviour
         }
         return false;
     }
+    
     #endregion
 }

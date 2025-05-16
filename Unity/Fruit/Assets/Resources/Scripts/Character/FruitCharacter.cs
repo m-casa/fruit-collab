@@ -108,14 +108,9 @@ namespace EasyCharacterMovement
         protected virtual void OnPause(InputAction.CallbackContext context)
         {
             if (context.started || context.performed)
-            {
-                if (!_pauseButtonPressed)
-                    Pause();
-            }
+                Pause();
             else if (context.canceled)
-            {
                 ReleasePause();
-            }
         }
 
         #endregion
@@ -181,8 +176,7 @@ namespace EasyCharacterMovement
 
         /// <summary>
         /// Extends OnStartLocalPlayer.
-        /// Check if this client is the host of the server,
-        ///  since they'll need the option to end the match.
+        /// Setup the local player's pause menu and camera.
         /// </summary>
 
         public override void OnStartLocalPlayer()
@@ -204,6 +198,8 @@ namespace EasyCharacterMovement
             Jumped += PlayJumpAnimation;
             Landed += PlayLandAnimation;
             Launched += PlayLaunchAnimation;
+
+            UIManager.Instance.Paused += CheckIfPaused;
         }
 
         /// <summary>
@@ -217,6 +213,8 @@ namespace EasyCharacterMovement
             Jumped -= PlayJumpAnimation;
             Landed -= PlayLandAnimation;
             Launched -= PlayLaunchAnimation;
+
+            UIManager.Instance.Paused -= CheckIfPaused;
         }
 
         /// <summary>
@@ -350,6 +348,8 @@ namespace EasyCharacterMovement
             HandlePunching();
 
             HandleBlocking();
+
+            HandlePausing();
         }
 
         /// <summary>
@@ -598,6 +598,23 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Check whether the pause menu is active/inactive,
+        ///  and disable/enable player controls.
+        /// </summary>
+
+        private void CheckIfPaused()
+        {
+            if (UIManager.Instance.PauseMenuActive())
+            {
+                DisableCharacter();
+            }
+            else
+            {
+                EnableCharacter();
+            }
+        }
+
+        /// <summary>
         /// Disables the player's character.
         /// </summary>
 
@@ -675,6 +692,20 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Captures pause input that the player initiates.
+        /// </summary>
+
+        private void HandlePausing()
+        {
+            if (_pauseButtonPressed)
+            {
+                _pauseButtonPressed = false;
+
+                UIManager.Instance.TogglePauseMenu();
+            }
+        }
+
+        /// <summary>
         /// Start a punch initiated by the player.
         /// </summary>
 
@@ -687,7 +718,8 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Manually releases the punch button.
+        /// Manually releases the punch button, allowing the player
+        ///  to initiate another punch, possibly a combo.
         /// </summary>
 
         private void ReleasePunch()
@@ -832,9 +864,12 @@ namespace EasyCharacterMovement
             // Clear the queue
             _punchQueue.Clear();
 
-            // Re-enable input when done punching
-            movementInputAction.Enable();
-            jumpInputAction.Enable();
+            // If the player didn't pause while punching, re-enable movement
+            if (!UIManager.Instance.PauseMenuActive())
+            {
+                movementInputAction.Enable();
+                jumpInputAction.Enable();
+            }
         }
 
         /// <summary>
@@ -899,7 +934,7 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Request the character to block.
+        /// Start blocking, initiated by the player.
         /// </summary>
 
         private void Block()
@@ -908,7 +943,8 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Request the character to stop blocking.
+        /// Manually releases the block button,
+        ///  stopping the player from blocking.
         /// </summary>
 
         private void StopBlocking()
@@ -919,26 +955,28 @@ namespace EasyCharacterMovement
             {
                 _isBlocking = false;
 
-                punchInputAction.Enable();
-                movementInputAction.Enable();
-                jumpInputAction.Enable();
+                // If the player didn't pause while blocking, re-enable movement
+                if (!UIManager.Instance.PauseMenuActive())
+                {
+                    punchInputAction.Enable();
+                    movementInputAction.Enable();
+                    jumpInputAction.Enable();
+                }
             }
         }
 
         /// <summary>
-        /// Opens/closes the pause menu.
+        /// Initiate the pause menu.
         /// </summary>
 
         private void Pause()
         {
             _pauseButtonPressed = true;
-
-            UIManager.Instance.TogglePauseMenu();
         }
 
         /// <summary>
-        /// Releases the pause button, 
-        ///  allowing user to open or close the pause menu again.
+        /// Release the pause button, allowing the player 
+        ///  to open or close the pause menu again.
         /// </summary>
 
         private void ReleasePause()
