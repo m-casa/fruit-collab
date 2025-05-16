@@ -162,7 +162,7 @@ namespace EasyCharacterMovement
 
         /// <summary>
         /// Extends OnStart.
-        /// Only allow inputs on the local player's Character.
+        /// Setup the local player's Character.
         /// </summary>
 
         protected override void OnStart()
@@ -171,36 +171,52 @@ namespace EasyCharacterMovement
 
             // We don't want to take control of another player's character
             if (!isLocalPlayer)
-                UnsubFromInputActions();
+            {
+                //UnsubFromInputActions();
+
+                return;
+            }
+
+            NetworkIdentity characterIdentity = GetComponent<NetworkIdentity>();
+            UIManager.Instance.SetupPauseMenu(characterIdentity);
+
+            InitPlayerInput();
+            
+            camera = Camera.main;
+
+            Jumped += PlayJumpAnimation;
+            Landed += PlayLandAnimation;
+            Launched += PlayLaunchAnimation;
+            UIManager.Instance.Paused += CheckIfPaused;
         }
 
         /// <summary>
         /// Extends OnStartLocalPlayer.
-        /// Setup the local player's pause menu and camera.
+        /// Setup the local player's input, pause menu, and camera.
         /// </summary>
 
-        public override void OnStartLocalPlayer()
-        {
-            base.OnStartLocalPlayer();
+        //public override void OnStartLocalPlayer()
+        //{
+        //    base.OnStartLocalPlayer();
 
-            UIManager.Instance.SetupPauseMenu(GetComponent<NetworkIdentity>());
-            camera = Camera.main;
-        }
+        //    UIManager.Instance.SetupPauseMenu(GetComponent<NetworkIdentity>());
+        //    camera = Camera.main;
+        //}
 
         /// <summary>
         /// Subscribe to events related to being off the ground.
         /// </summary>
 
-        protected override void OnOnEnable()
-        {
-            base.OnOnEnable();
+        //protected override void OnOnEnable()
+        //{
+        //    base.OnOnEnable();
 
-            Jumped += PlayJumpAnimation;
-            Landed += PlayLandAnimation;
-            Launched += PlayLaunchAnimation;
+        //    Jumped += PlayJumpAnimation;
+        //    Landed += PlayLandAnimation;
+        //    Launched += PlayLaunchAnimation;
 
-            UIManager.Instance.Paused += CheckIfPaused;
-        }
+        //    UIManager.Instance.Paused += CheckIfPaused;
+        //}
 
         /// <summary>
         /// Unsubscribe from events related to being off the ground.
@@ -213,7 +229,6 @@ namespace EasyCharacterMovement
             Jumped -= PlayJumpAnimation;
             Landed -= PlayLandAnimation;
             Launched -= PlayLaunchAnimation;
-
             UIManager.Instance.Paused -= CheckIfPaused;
         }
 
@@ -538,64 +553,66 @@ namespace EasyCharacterMovement
         /// Unsub from all input action handlers.
         /// </summary>
 
-        private void UnsubFromInputActions()
-        {
-            movementInputAction = null;
+        //private void UnsubFromInputActions()
+        //{
+        //    movementInputAction = null;
 
-            if (sprintInputAction != null)
-            {
-                sprintInputAction.started -= OnSprint;
-                sprintInputAction.performed -= OnSprint;
-                sprintInputAction.canceled -= OnSprint;
+        //    if (sprintInputAction != null)
+        //    {
+        //        sprintInputAction.started -= OnSprint;
+        //        sprintInputAction.performed -= OnSprint;
+        //        sprintInputAction.canceled -= OnSprint;
 
-                sprintInputAction = null;
-            }
+        //        sprintInputAction = null;
+        //    }
 
-            if (crouchInputAction != null)
-            {
-                crouchInputAction.started -= OnCrouch;
-                crouchInputAction.performed -= OnCrouch;
-                crouchInputAction.canceled -= OnCrouch;
+        //    if (crouchInputAction != null)
+        //    {
+        //        crouchInputAction.started -= OnCrouch;
+        //        crouchInputAction.performed -= OnCrouch;
+        //        crouchInputAction.canceled -= OnCrouch;
 
-                crouchInputAction = null;
-            }
+        //        crouchInputAction = null;
+        //    }
 
-            if (jumpInputAction != null)
-            {
-                jumpInputAction.started -= OnJump;
-                jumpInputAction.performed -= OnJump;
-                jumpInputAction.canceled -= OnJump;
+        //    if (jumpInputAction != null)
+        //    {
+        //        jumpInputAction.started -= OnJump;
+        //        jumpInputAction.performed -= OnJump;
+        //        jumpInputAction.canceled -= OnJump;
 
-                jumpInputAction = null;
-            }
+        //        jumpInputAction = null;
+        //    }
 
-            if (punchInputAction != null)
-            {
-                punchInputAction.started -= OnPunch;
-                punchInputAction.performed -= OnPunch;
-                punchInputAction.canceled -= OnPunch;
+        //    if (punchInputAction != null)
+        //    {
+        //        punchInputAction.started -= OnPunch;
+        //        punchInputAction.performed -= OnPunch;
+        //        punchInputAction.canceled -= OnPunch;
 
-                punchInputAction = null;
-            }
+        //        punchInputAction = null;
+        //    }
 
-            if (blockInputAction != null)
-            {
-                blockInputAction.started -= OnBlock;
-                blockInputAction.performed -= OnBlock;
-                blockInputAction.canceled -= OnBlock;
+        //    if (blockInputAction != null)
+        //    {
+        //        blockInputAction.started -= OnBlock;
+        //        blockInputAction.performed -= OnBlock;
+        //        blockInputAction.canceled -= OnBlock;
 
-                blockInputAction = null;
-            }
+        //        blockInputAction = null;
+        //    }
 
-            if (pauseInputAction != null)
-            {
-                pauseInputAction.started -= OnPause;
-                pauseInputAction.performed -= OnPause;
-                pauseInputAction.canceled -= OnPause;
+        //    if (pauseInputAction != null)
+        //    {
+        //        pauseInputAction.started -= OnPause;
+        //        pauseInputAction.performed -= OnPause;
+        //        pauseInputAction.canceled -= OnPause;
 
-                pauseInputAction = null;
-            }
-        }
+        //        pauseInputAction = null;
+        //    }
+
+        //    UIManager.Instance.Paused -= CheckIfPaused;
+        //}
 
         /// <summary>
         /// Check whether the pause menu is active/inactive,
@@ -608,8 +625,10 @@ namespace EasyCharacterMovement
             {
                 DisableCharacter();
             }
-            else
+            else if (!_takingDamage)
             {
+                // We shouldn't re-enable movement if taking damage
+                //  Instead, the StopDamage method will re-enable movement
                 EnableCharacter();
             }
         }
@@ -864,7 +883,7 @@ namespace EasyCharacterMovement
             // Clear the queue
             _punchQueue.Clear();
 
-            // If the player didn't pause while punching, re-enable movement
+            // Only re-enable movement if the player isn't paused
             if (!UIManager.Instance.PauseMenuActive())
             {
                 movementInputAction.Enable();
@@ -955,7 +974,7 @@ namespace EasyCharacterMovement
             {
                 _isBlocking = false;
 
-                // If the player didn't pause while blocking, re-enable movement
+                // Only re-enable movement if the player isn't paused
                 if (!UIManager.Instance.PauseMenuActive())
                 {
                     punchInputAction.Enable();
@@ -1200,7 +1219,11 @@ namespace EasyCharacterMovement
         {
             _takingDamage = false;
 
-            EnableCharacter();
+            // Only re-enable movement if the player isn't paused
+            if (!UIManager.Instance.PauseMenuActive())
+            {
+                EnableCharacter();
+            }
         }
 
         /// <summary>

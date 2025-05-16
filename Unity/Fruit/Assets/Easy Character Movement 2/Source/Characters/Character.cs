@@ -3492,7 +3492,7 @@ namespace EasyCharacterMovement
         {
             // Setup player InputActions (if any).
 
-            InitPlayerInput();
+            //InitPlayerInput();
 
             // Subscribe to CharacterMovement events
 

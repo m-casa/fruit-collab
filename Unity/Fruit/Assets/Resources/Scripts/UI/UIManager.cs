@@ -182,7 +182,7 @@ public class UIManager : MonoBehaviour
 
     public void SetupPauseMenu(NetworkIdentity characterIdentity)
     {
-        if (characterIdentity.isServer && characterIdentity.connectionToClient == NetworkServer.localConnection)
+        if (characterIdentity.isServer && characterIdentity.isLocalPlayer)
         {
             // Activate the end match button
             _pauseMenuButtons[0].gameObject.SetActive(true);

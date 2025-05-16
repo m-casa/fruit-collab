@@ -255,12 +255,6 @@ public class GameManager : NetworkBehaviour
             // Reference to the spawned character's network identity
             NetworkIdentity characterIdentity = spawnedCharacter.GetComponent<NetworkIdentity>();
 
-            // Setup the client's pause menu
-            //RpcSetupPauseMenu(target, characterIdentity);
-
-            // Assign the main camera to the target client's character so movement is not broken
-            //RpcAssignMainCamera(target, characterIdentity);
-
             // Send a reference of the newly spawned character to each client's camera
             RpcAddNewCharacterToCamera(characterIdentity);
 
@@ -270,27 +264,6 @@ public class GameManager : NetworkBehaviour
         {
             Debug.LogError($"Prefab for character {characterName} not found.");
         }
-    }
-
-    /// <summary>
-    /// Setup the client's pause menu depending on whether they're host.
-    /// </summary>
-
-    [TargetRpc]
-    private void RpcSetupPauseMenu(NetworkConnection conn, NetworkIdentity characterIdentity)
-    {
-        UIManager.Instance.SetupPauseMenu(characterIdentity);
-    }
-
-    /// <summary>
-    /// Setup the character's reference to the main camera.
-    /// </summary>
-
-    [TargetRpc]
-    private void RpcAssignMainCamera(NetworkConnection conn, NetworkIdentity characterIdentity)
-    {
-        FruitCharacter fruitCharacter = characterIdentity.GetComponent<FruitCharacter>();
-        fruitCharacter.camera = Camera.main;
     }
 
     /// <summary>
