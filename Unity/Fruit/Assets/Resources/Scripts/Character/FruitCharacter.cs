@@ -1159,7 +1159,7 @@ namespace EasyCharacterMovement
             {
                 // Input magnitude determines how fast to animate the run animation
                 // When the player is slightly tilting the control stick
-                // Rount to the nerest 0.1f
+                // Round to the nerest 0.1f
                 float inputMagnitude = Mathf.Round(movementInput.magnitude * 10f) / 10f;
                 bool shouldUpdateNetworkAnimation = false;
 
