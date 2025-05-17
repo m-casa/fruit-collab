@@ -36,6 +36,7 @@ namespace EasyCharacterMovement
         private Queue<int> _punchQueue = new Queue<int>();
         private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
         private Quaternion _chestTargetRotation; // Target rotation for the lean
+        private float currentRunMagnitude; // Keeps track of the current run magnitude input
 
         private bool _isPunching => _isGroundPunching || _isAirPunching;
 
@@ -1157,16 +1158,30 @@ namespace EasyCharacterMovement
             if (movementInput.y != 0f || movementInput.x != 0f)
             {
                 // Input magnitude determines how fast to animate the run animation
-                //  when the player is slightly tilting the control stick
-                float inputMagnitude = movementInput.magnitude;
+                // When the player is slightly tilting the control stick
+                // Rount to the nerest 0.1f
+                float inputMagnitude = Mathf.Round(movementInput.magnitude * 10f) / 10f;
+                bool shouldUpdateNetworkAnimation = false;
 
-                if (inputMagnitude < 0.25f)
-                    inputMagnitude = 0.25f;
+
+                if (inputMagnitude < 0.2f)
+                {
+                    inputMagnitude = 0.2f;
+                }
+
+                // Update the run magnitude if it has changed
+                // This is used to determine if we need to update the network animation
+                // To avoid sending too many network messages
+                if (currentRunMagnitude != inputMagnitude)
+                {
+                    currentRunMagnitude = inputMagnitude;
+                    shouldUpdateNetworkAnimation = true;
+                }
 
                 var state = _animancer.TryPlay("_Run", 0.25f);
                 state.Speed = 1.25f * inputMagnitude;
 
-                if (_currentAnimationClip != "_Run")
+                if (_currentAnimationClip != "_Run" || shouldUpdateNetworkAnimation)
                 {
                     _currentAnimationClip = "_Run";
                     _networkAnimations.CmdPlayRunAnimation(inputMagnitude);
