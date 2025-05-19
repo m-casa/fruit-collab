@@ -1,7 +1,9 @@
 using HeathenEngineering.SteamworksIntegration;
 using Mirror;
 using Steamworks;
+using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.UI;
@@ -13,6 +15,7 @@ public class UIManager : MonoBehaviour
     public static UIManager Instance { get; private set; }
 
     private GameObject networkManager;
+    private bool _inMainMenu;
 
     [Header("Network Managers")]
     [SerializeField] private GameObject _networkManagerPrefab;
@@ -42,7 +45,7 @@ public class UIManager : MonoBehaviour
     /// Event triggered when pause initiated.
     /// </summary>
 
-    public event UIEventHandler Paused;
+    public event UIEventHandler PauseToggled;
 
     #endregion
 
@@ -66,6 +69,8 @@ public class UIManager : MonoBehaviour
 
         // When our new scene loads, don't delete the UI manager
         DontDestroyOnLoad(gameObject);
+
+        _inMainMenu = true;
     }
 
     /// <summary>
@@ -155,25 +160,12 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Handles setup when hosting a game.
+    /// Set whether or not the player is in the main menu.
     /// </summary>
 
-    public void OnHostGame()
+    public void SetMainMenuStatus(bool val)
     {
-        SetActivePanel(null);
-
-        Host();
-    }
-
-    /// <summary>
-    /// Handles setup when joining a game.
-    /// </summary>
-
-    public void OnJoinGame()
-    {
-        SetActivePanel(null);
-
-        Join();
+        _inMainMenu = val;
     }
 
     /// <summary>
@@ -205,7 +197,7 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Pause menu input toggles the pause menu on and off.
+    /// Toggles the pause menu on and off.
     /// </summary>
 
     public void TogglePauseMenu()
@@ -214,7 +206,7 @@ public class UIManager : MonoBehaviour
         {
             SetActivePanel(_pauseMenu);
 
-            Paused?.Invoke();
+            PauseToggled?.Invoke();
         }
         else
         {
@@ -232,6 +224,15 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Enables gameplay UI when in game.
+    /// </summary>
+
+    public void ShowGameplayUI()
+    {
+        SetActivePanel(_gameplayUI);
+    }
+
+    /// <summary>
     /// Resume button calls this method to toggle off the menus.
     /// </summary>
 
@@ -239,16 +240,7 @@ public class UIManager : MonoBehaviour
     {
         SetActivePanel(null);
 
-        Paused?.Invoke();
-    }
-
-    /// <summary>
-    /// Switches back to the main menu when leaving a lobby.
-    /// </summary>
-
-    public void OnLeaveLobby()
-    {
-        // Logic for exiting the lobby
+        PauseToggled?.Invoke();
     }
 
     /// <summary>
@@ -258,6 +250,32 @@ public class UIManager : MonoBehaviour
     public void OnSettingsSelected()
     {
         SetActivePanel(_settingsMenu);
+    }
+
+    /// <summary>
+    /// Backing out of settings shows the correct UI,
+    ///  based on whether the player is in the main menu or in game.
+    /// </summary>
+
+    public void OnReturnFromSettings()
+    {
+        if (_inMainMenu)
+        {
+            SetActivePanel(_mainMenu);
+        }
+        else
+        {
+            TogglePauseMenu();
+        }
+    }
+
+    /// <summary>
+    /// Switches back to the main menu when leaving a lobby.
+    /// </summary>
+
+    public void OnLeaveLobby()
+    {
+        // Logic for exiting the lobby
     }
 
     /// <summary>
@@ -345,22 +363,6 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Sets the passed menu panel as active. Passing null exits all menus.
-    /// </summary>
-
-    private void SetActivePanel(GameObject activePanel)
-    {
-        // Disable all panels
-        _startScreen.SetActive(false);
-        _mainMenu.SetActive(false);
-        _pauseMenu.SetActive(false);
-        _gameplayUI.SetActive(false);
-
-        if (activePanel != null)
-            activePanel.SetActive(true); // Enable the selected panel
-    }
-
-    /// <summary>
     /// Checks for any keyboard/gamepad input.
     /// </summary>
 
@@ -399,12 +401,61 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Enables gameplay UI when in game.
+    /// Sets the passed menu panel as active. Passing null exits all menus.
     /// </summary>
 
-    private void ShowGameplayUI()
+    private void SetActivePanel(GameObject activePanel)
     {
-        SetActivePanel(_gameplayUI);
+        // Disable all panels
+        _startScreen.SetActive(false);
+        _mainMenu.SetActive(false);
+        _pauseMenu.SetActive(false);
+        _settingsMenu.SetActive(false);
+        _gameplayUI.SetActive(false);
+
+        if (activePanel != null)
+        {
+            activePanel.SetActive(true); // Enable the selected panel
+
+            StartCoroutine(SelectFirstButtonNextFrame(activePanel));
+        }
+    }
+
+    /// <summary>
+    /// Ensures there is a selected menu choice at all times.
+    /// </summary>
+
+    private IEnumerator SelectFirstButtonNextFrame(GameObject activePanel)
+    {
+        yield return null; // Wait one frame for UI to rebuild
+
+        Selectable firstSelectable = activePanel.GetComponentInChildren<Selectable>();
+        if (firstSelectable != null)
+        {
+            EventSystem.current.SetSelectedGameObject(firstSelectable.gameObject);
+        }
+    }
+
+    /// <summary>
+    /// Handles setup when hosting a game.
+    /// </summary>
+
+    private void OnHostGame()
+    {
+        SetActivePanel(null);
+
+        Host();
+    }
+
+    /// <summary>
+    /// Handles setup when joining a game.
+    /// </summary>
+
+    private void OnJoinGame()
+    {
+        SetActivePanel(null);
+
+        Join();
     }
 
     /// <summary>

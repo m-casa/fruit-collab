@@ -173,8 +173,6 @@ namespace EasyCharacterMovement
             // We don't want to take control of another player's character
             if (!isLocalPlayer)
             {
-                //UnsubFromInputActions();
-
                 return;
             }
 
@@ -188,36 +186,8 @@ namespace EasyCharacterMovement
             Jumped += PlayJumpAnimation;
             Landed += PlayLandAnimation;
             Launched += PlayLaunchAnimation;
-            UIManager.Instance.Paused += CheckIfPaused;
+            UIManager.Instance.PauseToggled += CheckIfPauseMenuActive;
         }
-
-        /// <summary>
-        /// Extends OnStartLocalPlayer.
-        /// Setup the local player's input, pause menu, and camera.
-        /// </summary>
-
-        //public override void OnStartLocalPlayer()
-        //{
-        //    base.OnStartLocalPlayer();
-
-        //    UIManager.Instance.SetupPauseMenu(GetComponent<NetworkIdentity>());
-        //    camera = Camera.main;
-        //}
-
-        /// <summary>
-        /// Subscribe to events related to being off the ground.
-        /// </summary>
-
-        //protected override void OnOnEnable()
-        //{
-        //    base.OnOnEnable();
-
-        //    Jumped += PlayJumpAnimation;
-        //    Landed += PlayLandAnimation;
-        //    Launched += PlayLaunchAnimation;
-
-        //    UIManager.Instance.Paused += CheckIfPaused;
-        //}
 
         /// <summary>
         /// Unsubscribe from events related to being off the ground.
@@ -230,7 +200,7 @@ namespace EasyCharacterMovement
             Jumped -= PlayJumpAnimation;
             Landed -= PlayLandAnimation;
             Launched -= PlayLaunchAnimation;
-            UIManager.Instance.Paused -= CheckIfPaused;
+            UIManager.Instance.PauseToggled -= CheckIfPauseMenuActive;
         }
 
         /// <summary>
@@ -551,76 +521,11 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Unsub from all input action handlers.
-        /// </summary>
-
-        //private void UnsubFromInputActions()
-        //{
-        //    movementInputAction = null;
-
-        //    if (sprintInputAction != null)
-        //    {
-        //        sprintInputAction.started -= OnSprint;
-        //        sprintInputAction.performed -= OnSprint;
-        //        sprintInputAction.canceled -= OnSprint;
-
-        //        sprintInputAction = null;
-        //    }
-
-        //    if (crouchInputAction != null)
-        //    {
-        //        crouchInputAction.started -= OnCrouch;
-        //        crouchInputAction.performed -= OnCrouch;
-        //        crouchInputAction.canceled -= OnCrouch;
-
-        //        crouchInputAction = null;
-        //    }
-
-        //    if (jumpInputAction != null)
-        //    {
-        //        jumpInputAction.started -= OnJump;
-        //        jumpInputAction.performed -= OnJump;
-        //        jumpInputAction.canceled -= OnJump;
-
-        //        jumpInputAction = null;
-        //    }
-
-        //    if (punchInputAction != null)
-        //    {
-        //        punchInputAction.started -= OnPunch;
-        //        punchInputAction.performed -= OnPunch;
-        //        punchInputAction.canceled -= OnPunch;
-
-        //        punchInputAction = null;
-        //    }
-
-        //    if (blockInputAction != null)
-        //    {
-        //        blockInputAction.started -= OnBlock;
-        //        blockInputAction.performed -= OnBlock;
-        //        blockInputAction.canceled -= OnBlock;
-
-        //        blockInputAction = null;
-        //    }
-
-        //    if (pauseInputAction != null)
-        //    {
-        //        pauseInputAction.started -= OnPause;
-        //        pauseInputAction.performed -= OnPause;
-        //        pauseInputAction.canceled -= OnPause;
-
-        //        pauseInputAction = null;
-        //    }
-
-        //    UIManager.Instance.Paused -= CheckIfPaused;
-        //}
-
-        /// <summary>
         /// Check whether the pause menu is active/inactive,
         ///  and disable/enable player controls.
         /// </summary>
 
-        private void CheckIfPaused()
+        private void CheckIfPauseMenuActive()
         {
             if (UIManager.Instance.PauseMenuActive())
             {

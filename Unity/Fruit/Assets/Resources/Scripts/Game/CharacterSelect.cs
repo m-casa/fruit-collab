@@ -44,8 +44,8 @@ public class CharacterSelect : NetworkBehaviour
             _submit.action.performed += OnSubmit;
 
         // Enable the actions
-        _navigate?.action.Enable();
-        _submit?.action.Enable();
+        //_navigate?.action.Enable();
+        //_submit?.action.Enable();
     }
 
     /// <summary>
@@ -62,8 +62,8 @@ public class CharacterSelect : NetworkBehaviour
             _submit.action.performed -= OnSubmit;
 
         // Disable the actions
-        _navigate?.action.Disable();
-        _submit?.action.Disable();
+        //_navigate?.action.Disable();
+        //_submit?.action.Disable();
     }
 
     /// <summary>

@@ -15,8 +15,6 @@ public class NetworkPlayer : NetworkBehaviour
 
     [SerializeField] private TextMeshProUGUI _playerName;
 
-    private bool _inGame;
-
     #endregion
 
     #region MONOBEHAVIOR
@@ -37,15 +35,6 @@ public class NetworkPlayer : NetworkBehaviour
     #region METHODS
 
     /// <summary>
-    /// Returns true or false for whether or not the player is in game.
-    /// </summary>
-
-    public bool InGame()
-    {
-        return _inGame;
-    }
-
-    /// <summary>
     /// Sets the steam id for this client.
     /// </summary>
 
@@ -64,7 +53,7 @@ public class NetworkPlayer : NetworkBehaviour
     {
         CameraManager.Instance.MoveCameraToCharacterSelect();
 
-        _inGame = true;
+        UIManager.Instance.SetMainMenuStatus(false);
 
         CmdRequestSelectionStart();
     }

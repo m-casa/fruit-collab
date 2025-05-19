@@ -1,4 +1,3 @@
-using EasyCharacterMovement;
 using Mirror;
 using System.Collections;
 using System.Collections.Generic;
