@@ -149,6 +149,32 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
+    /// Destroys every fruit prefab; Used when leaving a lobby.
+    /// </summary>
+
+    public void DestroyAllFruit()
+    {
+        // Check if the array has been initialized
+        if (_spawnedFruits != null)
+        {
+            foreach (GameObject fruit in _spawnedFruits)
+            {
+                // Only attempt to destroy prefabs that aren't null
+                if (fruit == null)
+                    continue;
+
+                Destroy(fruit);
+
+                Debug.Log($"Fruit {fruit} prefab destroyed.");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"No active fruit instances to destroy.");
+        }
+    }
+
+    /// <summary>
     /// Checks whether or not the specified character is available.
     /// </summary>
 
@@ -330,7 +356,7 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Destroys the fruit associated with the chosen character.
+    /// Destroys the fruit prefab associated with the chosen character.
     /// </summary>
 
     private void DestroyFruit(string characterName)

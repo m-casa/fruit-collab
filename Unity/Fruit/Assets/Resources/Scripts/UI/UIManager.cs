@@ -275,7 +275,15 @@ public class UIManager : MonoBehaviour
 
     public void OnLeaveLobby()
     {
-        // Logic for exiting the lobby
+        NetworkManager.singleton.StopClient();
+
+        GameManager.Instance.DestroyAllFruit();
+
+        CameraManager.Instance.RemoveAllCharactersFromCamera();
+
+        CameraManager.Instance.MoveCameraToMainMenu();
+
+        SetActivePanel(_mainMenu);
     }
 
     /// <summary>
@@ -395,9 +403,9 @@ public class UIManager : MonoBehaviour
 
     private void OnStartGame()
     {
-        SetActivePanel(_mainMenu);
-
         CameraManager.Instance.MoveCameraToMainMenu();
+
+        SetActivePanel(_mainMenu);
     }
 
     /// <summary>

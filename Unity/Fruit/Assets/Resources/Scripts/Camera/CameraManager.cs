@@ -51,13 +51,14 @@ public class CameraManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Moves the camera from the starting position to the main menu's position.
+    /// Moves the camera from the starting position/lobby to the main menu's position.
     /// </summary>
 
     public void MoveCameraToMainMenu()
     {
         // Transition to the main menu camera
         _startCamera.Priority = 0;
+        _lobbyCamera.Priority = 0;
         _mainMenuCamera.Priority = 10;
     }
 
@@ -108,6 +109,18 @@ public class CameraManager : MonoBehaviour
     public void RemoveCharacterFromCamera(GameObject character)
     {
         _characterTargetGroup.RemoveMember(character.transform);
+    }
+
+    /// <summary>
+    /// Removes all characters from the target group.
+    /// </summary>
+
+    public void RemoveAllCharactersFromCamera()
+    {
+        if (_characterTargetGroup != null && _characterTargetGroup.Targets != null)
+        {
+            _characterTargetGroup.Targets.Clear();
+        }
     }
 
     /// <summary>
