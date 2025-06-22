@@ -53,6 +53,7 @@ MonoBehaviour:
   - Grape
   - Lemon
   - Peach
+  _ready: {fileID: -599488784621216830, guid: be75f5bbb6028fd4689fb7b31fd2ebfa, type: 3}
   _matchDuration: 150
   _characterPrefabs:
   - {fileID: 2770216168605465205, guid: 385e80b150cc5334592e60686f3c3650, type: 3}

@@ -28,7 +28,7 @@ namespace EasyCharacterMovement
         private bool _rightFootUp, _isSpeeding, _queueLaunch, 
             _blockButtonPressed, _isBlocking, _takingDamage, 
             _punchButtonPressed, _isGroundPunching, _isAirPunching,
-            _pauseButtonPressed;
+            _pauseButtonPressed, _readyButtonPressed;
         private int _currentComboStep, _nextComboStep; // Keep track of the next combo step
         private float _cooldownTimer;
         private string _currentAnimationClip;
@@ -55,6 +55,12 @@ namespace EasyCharacterMovement
         /// </summary>
 
         protected InputAction blockInputAction { get; set; }
+
+        /// <summary>
+        /// Ready InputAction.
+        /// </summary>
+
+        protected InputAction readyInputAction { get; set; }
 
         /// <summary>
         /// Pause InputAction.
@@ -114,6 +120,18 @@ namespace EasyCharacterMovement
                 ReleasePause();
         }
 
+        /// <summary>
+        /// Ready input action handler.
+        /// </summary>
+
+        protected virtual void OnReady(InputAction.CallbackContext context)
+        {
+            if (context.started || context.performed)
+                Ready();
+            else if (context.canceled)
+                ReleaseReady();
+        }
+
         #endregion
 
         #region EVENTS
@@ -155,6 +173,7 @@ namespace EasyCharacterMovement
             _takingDamage = false;
 
             _pauseButtonPressed = false;
+            _readyButtonPressed = false;
 
             _currentComboStep = 0;
             _nextComboStep = 0;
@@ -281,6 +300,17 @@ namespace EasyCharacterMovement
 
                 pauseInputAction.Enable();
             }
+
+            // Setup Ready input action handlers
+            readyInputAction = inputActions.FindAction("Ready");
+            if (readyInputAction != null)
+            {
+                readyInputAction.started += OnReady;
+                readyInputAction.performed += OnReady;
+                readyInputAction.canceled += OnReady;
+
+                readyInputAction.Enable();
+            }
         }
 
         /// <summary>
@@ -321,6 +351,16 @@ namespace EasyCharacterMovement
                 pauseInputAction.Disable();
                 pauseInputAction = null;
             }
+
+            if (readyInputAction != null)
+            {
+                readyInputAction.started -= OnReady;
+                readyInputAction.performed -= OnReady;
+                readyInputAction.canceled -= OnReady;
+
+                readyInputAction.Disable();
+                readyInputAction = null;
+            }
         }
 
         /// <summary>
@@ -336,6 +376,8 @@ namespace EasyCharacterMovement
             HandleBlocking();
 
             HandlePausing();
+
+            HandleReadyUp();
         }
 
         /// <summary>
@@ -631,6 +673,20 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
+        /// Captures ready input that the player initiates.
+        /// </summary>
+
+        private void HandleReadyUp()
+        {
+            if (_readyButtonPressed)
+            {
+                _readyButtonPressed = false;
+
+                GameManager.Instance.CmdToggleReady();
+            }
+        }
+
+        /// <summary>
         /// Start a punch initiated by the player.
         /// </summary>
 
@@ -907,6 +963,24 @@ namespace EasyCharacterMovement
         private void ReleasePause()
         {
             _pauseButtonPressed = false;
+        }
+
+        /// <summary>
+        /// Initiate the ready up state.
+        /// </summary>
+
+        private void Ready()
+        {
+            _readyButtonPressed = true;
+        }
+
+        /// <summary>
+        /// Release the ready button.
+        /// </summary>
+
+        private void ReleaseReady()
+        {
+            _readyButtonPressed = false;
         }
 
         /// <summary>

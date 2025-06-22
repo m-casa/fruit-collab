@@ -13,6 +13,7 @@ public class GameManager : NetworkBehaviour
     [Header("Game States")]
     [SerializeField] private List<string> _allCharacters = new List<string> { "Apple", "Grape", "Lemon", "Peach" };
     private HashSet<string> _claimedCharacters = new HashSet<string>(); // Tracks taken characters
+    private HashSet<NetworkConnectionToClient> _readyPlayers = new HashSet<NetworkConnectionToClient>();
     private int[] _playerScores; // Scores for each player
 
     [SyncVar(hook = nameof(OnClaimedCharactersSyncUpdated))]
@@ -127,6 +128,44 @@ public class GameManager : NetworkBehaviour
 
             Debug.Log($"{characterName} deselected.");
         }
+    }
+
+    /// <summary>
+    /// Will ready/unready the client that sent the request;
+    /// If all clients are ready, begin the countdown to start the match.
+    /// If not all client are ready and the countdown is active, stop it.
+    /// </summary>
+
+    [Command]
+    public void CmdToggleReady()
+    {
+        NetworkConnectionToClient conn = connectionToClient;
+
+        if (_readyPlayers.Contains(conn))
+        {
+            _readyPlayers.Remove(conn);
+            Debug.Log($"Player {conn.connectionId} is now UNREADY");
+        }
+        else
+        {
+            _readyPlayers.Add(conn);
+            Debug.Log($"Player {conn.connectionId} is now READY");
+        }
+
+        RpcUpdateReadyStatus(conn.connectionId, _readyPlayers.Contains(conn));
+
+        // TODO: Create a method here that checks if all players on the server are ready,
+        //  then begin a countdown to start the match.
+    }
+
+    /// <summary>
+    /// Notify all clients that the specified player is ready.
+    /// </summary>
+
+    [ClientRpc]
+    public void RpcUpdateReadyStatus(int connectionId, bool state)
+    {
+        // TODO: Just use the new state to update the UI for the specified player.
     }
 
     /// <summary>
