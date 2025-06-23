@@ -12,6 +12,7 @@ public class GameManager : NetworkBehaviour
 
     [Header("Game States")]
     [SerializeField] private List<string> _allCharacters = new List<string> { "Apple", "Grape", "Lemon", "Peach" };
+    [SerializeField] private Transform[] _lobbySpawns, _matchSpawns;
     private HashSet<string> _claimedCharacters = new HashSet<string>(); // Tracks taken characters
     private HashSet<NetworkConnectionToClient> _readyPlayers = new HashSet<NetworkConnectionToClient>();
     private int[] _playerScores; // Scores for each player
@@ -154,6 +155,8 @@ public class GameManager : NetworkBehaviour
 
         RpcUpdateReadyStatus(conn.connectionId, _readyPlayers.Contains(conn));
 
+        BeginCountdown(3f);
+
         // TODO: Create a method here that checks if all players on the server are ready,
         //  then begin a countdown to start the match.
     }
@@ -166,16 +169,6 @@ public class GameManager : NetworkBehaviour
     public void RpcUpdateReadyStatus(int connectionId, bool state)
     {
         // TODO: Just use the new state to update the UI for the specified player.
-    }
-
-    /// <summary>
-    /// Starts the match by initiating the timer and match logic.
-    /// </summary>
-
-    public void StartMatch()
-    {
-        _remainingTime = _matchDuration;
-        StartCoroutine(MatchTimer());
     }
 
     /// <summary>
@@ -452,6 +445,52 @@ public class GameManager : NetworkBehaviour
         {
             Debug.LogWarning($"No active instance of {characterName} to destroy.");
         }
+    }
+
+    /// <summary>
+    /// Begins a contdown to start the match .
+    /// </summary>
+
+    private void BeginCountdown(float timer)
+    {
+        StartCoroutine(CountdownTimer(timer));
+    }
+
+    /// <summary>
+    /// Logic for the countdown timer.
+    /// </summary>
+
+    private IEnumerator CountdownTimer(float timer)
+    {
+        while (timer > 0)
+        {
+            yield return new WaitForSeconds(1f);
+            timer--;
+            Debug.Log(timer);
+        }
+
+        StartMatch();
+    }
+
+    /// <summary>
+    /// Starts the match by initiating the timer and match logic.
+    /// </summary>
+
+    private void StartMatch()
+    {
+        MovePlayersToMatch();
+
+        _remainingTime = _matchDuration;
+        StartCoroutine(MatchTimer());
+    }
+
+    /// <summary>
+    /// Logic for the match timer.
+    /// </summary>
+
+    private void MovePlayersToMatch()
+    {
+
     }
 
     /// <summary>
