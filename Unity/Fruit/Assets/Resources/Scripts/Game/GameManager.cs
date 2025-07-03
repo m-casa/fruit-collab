@@ -12,15 +12,17 @@ public class GameManager : NetworkBehaviour
 
     [Header("Game States")]
     [SerializeField] private List<string> _allCharacters = new List<string> { "Apple", "Grape", "Lemon", "Peach" };
-    [SerializeField] private Transform[] _lobbySpawns, _matchSpawns;
+    private List<Transform> _lobbySpawns, _matchSpawns;
     private HashSet<string> _claimedCharacters = new HashSet<string>(); // Tracks taken characters
     private HashSet<NetworkConnectionToClient> _readyPlayers = new HashSet<NetworkConnectionToClient>();
     private int[] _playerScores; // Scores for each player
+    private bool _inLobby = true;
 
     [SyncVar(hook = nameof(OnClaimedCharactersSyncUpdated))]
     private string _claimedCharactersSync = ""; // Sync'd string for character selection (CSV format)
 
     [Header("Timers")]
+    private Coroutine _startCountdownCoroutine;
     [SerializeField] private float _matchDuration = 150f; // 2:30 minutes in seconds
     private float _remainingTime;
 
@@ -56,12 +58,22 @@ public class GameManager : NetworkBehaviour
         // Set this game manager as the primary instance since we don't have one
         Instance = this;
 
+        // When our new scene loads, don't delete the game manager
+        DontDestroyOnLoad(gameObject);
+
         // Set the array lengths early on to avoid null references
         _spawnedFruits = new GameObject[_fruitPrefabs.Length];
         _spawnedCharacters = new GameObject[_characterPrefabs.Length];
 
-        // When our new scene loads, don't delete the game manager
-        DontDestroyOnLoad(gameObject);
+        _lobbySpawns = FindObjectsByType<LobbySpawn>(FindObjectsSortMode.None)
+                        .OrderBy(sp => sp.index)
+                        .Select(sp => sp.transform)
+                        .ToList();
+
+        _matchSpawns = FindObjectsByType<MatchSpawn>(FindObjectsSortMode.None)
+                        .OrderBy(sp => sp.index)
+                        .Select(sp => sp.transform)
+                        .ToList();
     }
 
     #endregion
@@ -71,7 +83,7 @@ public class GameManager : NetworkBehaviour
     /// <summary>
     /// Spawns the necessary game objects in charge of character selection logic.
     /// </summary>
-    
+
     public void StartSelection(NetworkConnectionToClient target)
     {
         RpcSpawnFruit(target);
@@ -132,13 +144,21 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
+    /// Check if the state of the game is in the lobby.
+    /// </summary>
+
+    public bool InLobby()
+    {
+        return _inLobby;
+    }
+
+    /// <summary>
     /// Will ready/unready the client that sent the request;
     /// If all clients are ready, begin the countdown to start the match.
     /// If not all client are ready and the countdown is active, stop it.
     /// </summary>
 
-    [Command]
-    public void CmdToggleReady()
+    public void ToggleReadyStatus()
     {
         NetworkConnectionToClient conn = connectionToClient;
 
@@ -146,19 +166,24 @@ public class GameManager : NetworkBehaviour
         {
             _readyPlayers.Remove(conn);
             Debug.Log($"Player {conn.connectionId} is now UNREADY");
+
+            if (_startCountdownCoroutine != null)
+            {
+                StopCoroutine(_startCountdownCoroutine);
+                _startCountdownCoroutine = null;
+
+                Debug.Log("Countdown canceled, someone unreadied.");
+            }
         }
         else
         {
             _readyPlayers.Add(conn);
             Debug.Log($"Player {conn.connectionId} is now READY");
+
+            CheckAllPlayersReady();
         }
 
         RpcUpdateReadyStatus(conn.connectionId, _readyPlayers.Contains(conn));
-
-        BeginCountdown(3f);
-
-        // TODO: Create a method here that checks if all players on the server are ready,
-        //  then begin a countdown to start the match.
     }
 
     /// <summary>
@@ -448,16 +473,23 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Begins a contdown to start the match .
+    /// Check if all players in the server are ready.
     /// </summary>
 
-    private void BeginCountdown(float timer)
+    private void CheckAllPlayersReady()
     {
-        StartCoroutine(CountdownTimer(timer));
+        if (_readyPlayers.Count == NetworkServer.connections.Count)
+        {
+            if (_startCountdownCoroutine == null)
+            {
+                Debug.Log("All players ready. Starting countdown...");
+                _startCountdownCoroutine = StartCoroutine(CountdownTimer(3f));
+            }
+        }
     }
 
     /// <summary>
-    /// Logic for the countdown timer.
+    /// Begins a contdown to start the match.
     /// </summary>
 
     private IEnumerator CountdownTimer(float timer)
@@ -466,7 +498,7 @@ public class GameManager : NetworkBehaviour
         {
             yield return new WaitForSeconds(1f);
             timer--;
-            Debug.Log(timer);
+            Debug.Log("Game starts in " + timer);
         }
 
         StartMatch();
@@ -478,10 +510,14 @@ public class GameManager : NetworkBehaviour
 
     private void StartMatch()
     {
+        _inLobby = false;
+        _startCountdownCoroutine = null;
+
         MovePlayersToMatch();
 
-        _remainingTime = _matchDuration;
         StartCoroutine(MatchTimer());
+
+        Debug.Log("Match Started!");
     }
 
     /// <summary>
@@ -499,6 +535,8 @@ public class GameManager : NetworkBehaviour
 
     private IEnumerator MatchTimer()
     {
+        _remainingTime = _matchDuration;
+
         while (_remainingTime > 0)
         {
             yield return new WaitForSeconds(1f);
@@ -515,6 +553,9 @@ public class GameManager : NetworkBehaviour
 
     private void EndMatch()
     {
+        _inLobby = true;
+        Debug.Log("Match Ended!");
+
         // Determine winner and transition back to the lobby
         int highestScore = Mathf.Max(_playerScores);
         int winnerIndex = System.Array.IndexOf(_playerScores, highestScore);

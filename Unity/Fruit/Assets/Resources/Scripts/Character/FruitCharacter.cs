@@ -678,12 +678,22 @@ namespace EasyCharacterMovement
 
         private void HandleReadyUp()
         {
-            if (_readyButtonPressed)
+            if (GameManager.Instance.InLobby() && _readyButtonPressed)
             {
                 _readyButtonPressed = false;
 
-                GameManager.Instance.CmdToggleReady();
+                CmdToggleReadyStatus();
             }
+        }
+
+        /// <summary>
+        /// Send a request to the server to ready this player.
+        /// </summary>
+
+        [Command]
+        private void CmdToggleReadyStatus()
+        {
+            GameManager.Instance.ToggleReadyStatus();
         }
 
         /// <summary>
