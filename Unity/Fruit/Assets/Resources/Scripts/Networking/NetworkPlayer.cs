@@ -2,6 +2,7 @@ using Mirror;
 using Steamworks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 /// <summary>Represents the player’s networked state and actions.</summary>
 public class NetworkPlayer : NetworkBehaviour
@@ -13,9 +14,12 @@ public class NetworkPlayer : NetworkBehaviour
     [SyncVar(hook = nameof(HandleSteamIdUpdated))]
     private ulong _steamId;
 
+    [SyncVar]
+    private NetworkIdentity _characterIdentity;
+
     [SerializeField] private TextMeshProUGUI _playerName;
 
-    private GameObject _playerCharacter;
+    //private GameObject _playerCharacter;
 
     #endregion
 
@@ -51,16 +55,8 @@ public class NetworkPlayer : NetworkBehaviour
 
     public void SetCharacter(GameObject character)
     {
-        _playerCharacter = character;
-    }
-
-    /// <summary>
-    /// Return the character for this client.
-    /// </summary>
-
-    public GameObject GetCharacter()
-    {
-        return _playerCharacter;
+        //_playerCharacter = character;
+        _characterIdentity = character.GetComponent<NetworkIdentity>();
     }
 
     /// <summary>
@@ -85,8 +81,17 @@ public class NetworkPlayer : NetworkBehaviour
     [TargetRpc]
     public void RpcTeleportCharacter(NetworkConnection conn, Vector3 pos, Quaternion rot)
     {
-        if (_playerCharacter != null)
-            _playerCharacter.transform.SetPositionAndRotation(pos, rot);
+        //if (_playerCharacter != null)
+        //    _playerCharacter.transform.SetPositionAndRotation(pos, rot);
+
+        if (_characterIdentity != null)
+        {
+            _characterIdentity.transform.SetPositionAndRotation(pos, rot);
+        }
+        else
+        {
+            Debug.LogWarning("No character identity assigned on client.");
+        }
     }
 
     /// <summary>

@@ -329,7 +329,7 @@ public class GameManager : NetworkBehaviour
             // Spawn the character on the network for the other clients
             NetworkServer.Spawn(spawnedCharacter, target);
 
-            // Set character reference on NetworkPlayer before it's replaced
+            // Set a reference to the client's character on NetworkPlayer before it's replaced
             target.identity.GetComponent<NetworkPlayer>().SetCharacter(spawnedCharacter);
 
             // Assign the spawned character to the client that requested it
@@ -530,35 +530,53 @@ public class GameManager : NetworkBehaviour
         List<Transform> shuffledSpawns = _matchSpawns.OrderBy(x => Random.value).ToList();
         int i = 0;
 
-        foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
+        //foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
+        //{
+        //    if (conn.identity != null && i < shuffledSpawns.Count)
+        //    {
+        //        //GameObject playerObject = conn.identity.gameObject;
+        //        //NetworkPlayer networkPlayer = playerObject.GetComponent<NetworkPlayer>();
+        //        //Transform spawn = _matchSpawns[i];
+
+        //        //networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
+        //        //Debug.Log($"Teleported player {conn.connectionId} to match spawn {i}.");
+
+        //        // Find the NetworkPlayer manually (not from conn.identity!)
+        //        NetworkPlayer networkPlayer = FindNetworkPlayerForConnection(conn);
+
+        //        if (networkPlayer != null)
+        //        {
+        //            Transform spawn = shuffledSpawns[i];
+        //            networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
+        //            Debug.Log($"Teleported player {conn.connectionId} to spawn {i}.");
+        //        }
+
+        //        i++;
+        //    }
+        //    else
+        //    {
+        //        Debug.LogWarning("Not enough match spawn points for all players!");
+        //    }
+        //}
+
+        foreach (NetworkPlayer networkPlayer in FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None))
         {
-            if (conn.identity != null && i < shuffledSpawns.Count)
+            if (i >= shuffledSpawns.Count) break;
+
+            NetworkConnectionToClient conn = networkPlayer.connectionToClient;
+            if (conn != null)
             {
-                //GameObject playerObject = conn.identity.gameObject;
-                //NetworkPlayer networkPlayer = playerObject.GetComponent<NetworkPlayer>();
-                //Transform spawn = _matchSpawns[i];
-
-                //networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
-                //Debug.Log($"Teleported player {conn.connectionId} to match spawn {i}.");
-
-                // Find the NetworkPlayer manually (not from conn.identity!)
-                NetworkPlayer networkPlayer = FindNetworkPlayerForConnection(conn);
-
-                if (networkPlayer != null)
-                {
-                    Transform spawn = shuffledSpawns[i];
-                    networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
-                    Debug.Log($"Teleported player {conn.connectionId} to spawn {i}.");
-                }
-
+                Transform spawn = shuffledSpawns[i];
+                networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
+                Debug.Log($"Teleporting player with conn {conn.connectionId} to spawn {i}");
                 i++;
-            }
-            else
-            {
-                Debug.LogWarning("Not enough match spawn points for all players!");
             }
         }
     }
+
+    /// <summary>
+    /// Return the character associated with the target connection.
+    /// </summary>
 
     private NetworkPlayer FindNetworkPlayerForConnection(NetworkConnectionToClient conn)
     {
