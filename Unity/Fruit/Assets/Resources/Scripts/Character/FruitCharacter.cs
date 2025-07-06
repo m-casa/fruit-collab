@@ -693,7 +693,7 @@ namespace EasyCharacterMovement
         [Command]
         private void CmdToggleReadyStatus()
         {
-            GameManager.Instance.ToggleReadyStatus();
+            GameManager.Instance.ToggleReadyStatus(connectionToClient);
         }
 
         /// <summary>

@@ -15,6 +15,8 @@ public class NetworkPlayer : NetworkBehaviour
 
     [SerializeField] private TextMeshProUGUI _playerName;
 
+    private GameObject _playerCharacter;
+
     #endregion
 
     #region MONOBEHAVIOR
@@ -44,6 +46,24 @@ public class NetworkPlayer : NetworkBehaviour
     }
 
     /// <summary>
+    /// Sets the character for this client.
+    /// </summary>
+
+    public void SetCharacter(GameObject character)
+    {
+        _playerCharacter = character;
+    }
+
+    /// <summary>
+    /// Return the character for this client.
+    /// </summary>
+
+    public GameObject GetCharacter()
+    {
+        return _playerCharacter;
+    }
+
+    /// <summary>
     /// Moves the target client's camera to the character selection area.
     /// Then sends a request to the server to start the character selection process.
     /// </summary>
@@ -56,6 +76,17 @@ public class NetworkPlayer : NetworkBehaviour
         UIManager.Instance.SetMainMenuStatus(false);
 
         CmdRequestSelectionStart();
+    }
+
+    /// <summary>
+    /// Teleports the target client's character into the match.
+    /// </summary>
+
+    [TargetRpc]
+    public void RpcTeleportCharacter(NetworkConnection conn, Vector3 pos, Quaternion rot)
+    {
+        if (_playerCharacter != null)
+            _playerCharacter.transform.SetPositionAndRotation(pos, rot);
     }
 
     /// <summary>

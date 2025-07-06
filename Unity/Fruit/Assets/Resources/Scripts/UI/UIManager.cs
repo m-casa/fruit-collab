@@ -303,7 +303,7 @@ public class UIManager : MonoBehaviour
     {
         int minutes = Mathf.FloorToInt(timeRemaining / 60f);
         int seconds = Mathf.FloorToInt(timeRemaining % 60f);
-        _timerText.text = $"{minutes:00}:{seconds:00}";
+        //_timerText.text = $"{minutes:00}:{seconds:00}";
     }
 
     /// <summary>

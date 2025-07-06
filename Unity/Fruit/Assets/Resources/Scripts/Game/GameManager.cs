@@ -158,14 +158,12 @@ public class GameManager : NetworkBehaviour
     /// If not all client are ready and the countdown is active, stop it.
     /// </summary>
 
-    public void ToggleReadyStatus()
+    public void ToggleReadyStatus(NetworkConnectionToClient target)
     {
-        NetworkConnectionToClient conn = connectionToClient;
-
-        if (_readyPlayers.Contains(conn))
+        if (_readyPlayers.Contains(target))
         {
-            _readyPlayers.Remove(conn);
-            Debug.Log($"Player {conn.connectionId} is now UNREADY");
+            _readyPlayers.Remove(target);
+            Debug.Log($"Player {target.connectionId} is now UNREADY");
 
             if (_startCountdownCoroutine != null)
             {
@@ -177,13 +175,13 @@ public class GameManager : NetworkBehaviour
         }
         else
         {
-            _readyPlayers.Add(conn);
-            Debug.Log($"Player {conn.connectionId} is now READY");
+            _readyPlayers.Add(target);
+            Debug.Log($"Player {target.connectionId} is now READY");
 
             CheckAllPlayersReady();
         }
 
-        RpcUpdateReadyStatus(conn.connectionId, _readyPlayers.Contains(conn));
+        RpcUpdateReadyStatus(target.connectionId, _readyPlayers.Contains(target));
     }
 
     /// <summary>
@@ -330,6 +328,9 @@ public class GameManager : NetworkBehaviour
 
             // Spawn the character on the network for the other clients
             NetworkServer.Spawn(spawnedCharacter, target);
+
+            // Set character reference on NetworkPlayer before it's replaced
+            target.identity.GetComponent<NetworkPlayer>().SetCharacter(spawnedCharacter);
 
             // Assign the spawned character to the client that requested it
             NetworkServer.ReplacePlayerForConnection(target, spawnedCharacter, ReplacePlayerOptions.KeepAuthority);
@@ -521,12 +522,52 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Logic for the match timer.
+    /// Moves players to random spawn points in the map.
     /// </summary>
 
     private void MovePlayersToMatch()
     {
+        List<Transform> shuffledSpawns = _matchSpawns.OrderBy(x => Random.value).ToList();
+        int i = 0;
 
+        foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
+        {
+            if (conn.identity != null && i < shuffledSpawns.Count)
+            {
+                //GameObject playerObject = conn.identity.gameObject;
+                //NetworkPlayer networkPlayer = playerObject.GetComponent<NetworkPlayer>();
+                //Transform spawn = _matchSpawns[i];
+
+                //networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
+                //Debug.Log($"Teleported player {conn.connectionId} to match spawn {i}.");
+
+                // Find the NetworkPlayer manually (not from conn.identity!)
+                NetworkPlayer networkPlayer = FindNetworkPlayerForConnection(conn);
+
+                if (networkPlayer != null)
+                {
+                    Transform spawn = shuffledSpawns[i];
+                    networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
+                    Debug.Log($"Teleported player {conn.connectionId} to spawn {i}.");
+                }
+
+                i++;
+            }
+            else
+            {
+                Debug.LogWarning("Not enough match spawn points for all players!");
+            }
+        }
+    }
+
+    private NetworkPlayer FindNetworkPlayerForConnection(NetworkConnectionToClient conn)
+    {
+        foreach (var player in FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None))
+        {
+            if (player.connectionToClient == conn)
+                return player;
+        }
+        return null;
     }
 
     /// <summary>
