@@ -322,21 +322,21 @@ public class GameManager : NetworkBehaviour
         // Check if the prefab exists and spawn the character
         if (characterIndex < _characterPrefabs.Length && _characterPrefabs[characterIndex] != null)
         {
-            // Spawn the character on the server and store it in the array
+            // Spawn the character on the server and store it in an array
             GameObject spawnedCharacter = Instantiate(_characterPrefabs[characterIndex]);
             _spawnedCharacters[characterIndex] = spawnedCharacter;
 
             // Spawn the character on the network for the other clients
             NetworkServer.Spawn(spawnedCharacter, target);
 
-            // Set a reference to the client's character on NetworkPlayer before it's replaced
-            target.identity.GetComponent<NetworkPlayer>().SetCharacter(spawnedCharacter);
+            // Reference to the spawned character's network identity
+            NetworkIdentity characterIdentity = spawnedCharacter.GetComponent<NetworkIdentity>();
+
+            // Set a reference to the client's character in a syncvar
+            target.identity.GetComponent<NetworkPlayer>().SetCharacter(characterIdentity);
 
             // Assign the spawned character to the client that requested it
             NetworkServer.ReplacePlayerForConnection(target, spawnedCharacter, ReplacePlayerOptions.KeepAuthority);
-
-            // Reference to the spawned character's network identity
-            NetworkIdentity characterIdentity = spawnedCharacter.GetComponent<NetworkIdentity>();
 
             // Send a reference of the newly spawned character to each client's camera
             RpcAddNewCharacterToCamera(characterIdentity);
@@ -527,65 +527,24 @@ public class GameManager : NetworkBehaviour
 
     private void MovePlayersToMatch()
     {
-        List<Transform> shuffledSpawns = _matchSpawns.OrderBy(x => Random.value).ToList();
         int i = 0;
-
-        //foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
-        //{
-        //    if (conn.identity != null && i < shuffledSpawns.Count)
-        //    {
-        //        //GameObject playerObject = conn.identity.gameObject;
-        //        //NetworkPlayer networkPlayer = playerObject.GetComponent<NetworkPlayer>();
-        //        //Transform spawn = _matchSpawns[i];
-
-        //        //networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
-        //        //Debug.Log($"Teleported player {conn.connectionId} to match spawn {i}.");
-
-        //        // Find the NetworkPlayer manually (not from conn.identity!)
-        //        NetworkPlayer networkPlayer = FindNetworkPlayerForConnection(conn);
-
-        //        if (networkPlayer != null)
-        //        {
-        //            Transform spawn = shuffledSpawns[i];
-        //            networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
-        //            Debug.Log($"Teleported player {conn.connectionId} to spawn {i}.");
-        //        }
-
-        //        i++;
-        //    }
-        //    else
-        //    {
-        //        Debug.LogWarning("Not enough match spawn points for all players!");
-        //    }
-        //}
+        List<Transform> shuffledSpawns = _matchSpawns.OrderBy(x => Random.value).ToList();
 
         foreach (NetworkPlayer networkPlayer in FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None))
         {
             if (i >= shuffledSpawns.Count) break;
 
             NetworkConnectionToClient conn = networkPlayer.connectionToClient;
+
             if (conn != null)
             {
                 Transform spawn = shuffledSpawns[i];
                 networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
+
                 Debug.Log($"Teleporting player with conn {conn.connectionId} to spawn {i}");
                 i++;
             }
         }
-    }
-
-    /// <summary>
-    /// Return the character associated with the target connection.
-    /// </summary>
-
-    private NetworkPlayer FindNetworkPlayerForConnection(NetworkConnectionToClient conn)
-    {
-        foreach (var player in FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None))
-        {
-            if (player.connectionToClient == conn)
-                return player;
-        }
-        return null;
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using EasyCharacterMovement;
 using Mirror;
 using Steamworks;
 using TMPro;
@@ -18,8 +19,6 @@ public class NetworkPlayer : NetworkBehaviour
     private NetworkIdentity _characterIdentity;
 
     [SerializeField] private TextMeshProUGUI _playerName;
-
-    //private GameObject _playerCharacter;
 
     #endregion
 
@@ -53,10 +52,9 @@ public class NetworkPlayer : NetworkBehaviour
     /// Sets the character for this client.
     /// </summary>
 
-    public void SetCharacter(GameObject character)
+    public void SetCharacter(NetworkIdentity characterIdentity)
     {
-        //_playerCharacter = character;
-        _characterIdentity = character.GetComponent<NetworkIdentity>();
+        _characterIdentity = characterIdentity;
     }
 
     /// <summary>
@@ -76,21 +74,22 @@ public class NetworkPlayer : NetworkBehaviour
 
     /// <summary>
     /// Teleports the target client's character into the match.
+    /// NOTE: Modify CharacterMovement instead of modifying the transform directly,
+    /// otherwise the host (where physics and movement are active) might not teleport;
+    /// Basically, CharacterMovement makes the final changes to position/rotation
     /// </summary>
 
     [TargetRpc]
     public void RpcTeleportCharacter(NetworkConnection conn, Vector3 pos, Quaternion rot)
     {
-        //if (_playerCharacter != null)
-        //    _playerCharacter.transform.SetPositionAndRotation(pos, rot);
-
         if (_characterIdentity != null)
         {
-            _characterIdentity.transform.SetPositionAndRotation(pos, rot);
+            CharacterMovement characterMovement = _characterIdentity.GetComponent<CharacterMovement>();
+            characterMovement.SetPositionAndRotation(pos, rot);
         }
         else
         {
-            Debug.LogWarning("No character identity assigned on client.");
+            Debug.LogWarning("No character identity assigned to client.");
         }
     }
 
