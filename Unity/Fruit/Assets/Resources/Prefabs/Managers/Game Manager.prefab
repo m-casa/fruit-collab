@@ -53,17 +53,7 @@ MonoBehaviour:
   - Grape
   - Lemon
   - Peach
-  _lobbySpawns:
-  - {fileID: 4461581118195929633, guid: 45650c9fb85fc074d8bbb093d24dc765, type: 3}
-  - {fileID: 2206853459215583626, guid: 7bf327c8d604e9848aa41101160bb025, type: 3}
-  - {fileID: 5248434875585050280, guid: 00e1ee0ce2e3ec64296baa750c156ee9, type: 3}
-  - {fileID: 5604230748066148254, guid: dede8f0bf15d3784190dd3633fcfa706, type: 3}
-  _matchSpawns:
-  - {fileID: 2387974735750661328, guid: c64712883d616c046bc7d578bed1e85e, type: 3}
-  - {fileID: 5577655112685818159, guid: 85a0a0f6113203647af78b4ba519fae7, type: 3}
-  - {fileID: 2225175154615458444, guid: 1b6ad01afb070934595e5a4aecb4e2eb, type: 3}
-  - {fileID: 7767756516427157735, guid: 824ddcb4039749047b0bfa506adec2ff, type: 3}
-  _matchDuration: 150
+  _matchDuration: 3
   _characterPrefabs:
   - {fileID: 2770216168605465205, guid: 385e80b150cc5334592e60686f3c3650, type: 3}
   - {fileID: 7032070106759402331, guid: a7723472d56ee0f4cbcc0708360c49f2, type: 3}

@@ -23,7 +23,7 @@ public class GameManager : NetworkBehaviour
 
     [Header("Timers")]
     private Coroutine _startCountdownCoroutine;
-    [SerializeField] private float _matchDuration = 150f; // 2:30 minutes in seconds
+    [SerializeField] private float _matchDuration = 150f; // 150 seconds is 2:30 minutes
     private float _remainingTime;
 
     [Header("Character Prefabs")]
@@ -497,9 +497,9 @@ public class GameManager : NetworkBehaviour
     {
         while (timer > 0)
         {
+            Debug.Log("Game starts in " + timer);
             yield return new WaitForSeconds(1f);
             timer--;
-            Debug.Log("Game starts in " + timer);
         }
 
         StartMatch();
@@ -513,12 +513,13 @@ public class GameManager : NetworkBehaviour
     {
         _inLobby = false;
         _startCountdownCoroutine = null;
+        _readyPlayers.Clear();
 
         MovePlayersToMatch();
 
-        StartCoroutine(MatchTimer());
-
         Debug.Log("Match Started!");
+
+        StartCoroutine(MatchTimer());
     }
 
     /// <summary>
@@ -557,9 +558,16 @@ public class GameManager : NetworkBehaviour
 
         while (_remainingTime > 0)
         {
-            yield return new WaitForSeconds(1f);
-            _remainingTime--;
+            if (_remainingTime <= 3f)
+            {
+                Debug.Log("Game ends in " + _remainingTime);
+            }
+
             UIManager.Instance.UpdateTimer(_remainingTime); // Implement this to update the timer display
+
+            yield return new WaitForSeconds(1f);
+
+            _remainingTime--;
         }
 
         EndMatch();
@@ -571,13 +579,42 @@ public class GameManager : NetworkBehaviour
 
     private void EndMatch()
     {
-        _inLobby = true;
         Debug.Log("Match Ended!");
 
         // Determine winner and transition back to the lobby
-        int highestScore = Mathf.Max(_playerScores);
-        int winnerIndex = System.Array.IndexOf(_playerScores, highestScore);
-        ShowWinner(winnerIndex);
+        //int highestScore = Mathf.Max(_playerScores);
+        //int winnerIndex = System.Array.IndexOf(_playerScores, highestScore);
+
+        MovePlayersToLobby();
+        //ShowWinner(winnerIndex);
+
+        _inLobby = true;
+    }
+
+    /// <summary>
+    /// Moves players to random spawn points in the lobby.
+    /// </summary>
+
+    private void MovePlayersToLobby()
+    {
+        int i = 0;
+        List<Transform> shuffledSpawns = _lobbySpawns.OrderBy(x => Random.value).ToList();
+
+        foreach (NetworkPlayer networkPlayer in FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None))
+        {
+            if (i >= shuffledSpawns.Count) break;
+
+            NetworkConnectionToClient conn = networkPlayer.connectionToClient;
+
+            if (conn != null)
+            {
+                Transform spawn = shuffledSpawns[i];
+                networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
+
+                Debug.Log($"Teleporting player with conn {conn.connectionId} to spawn {i}");
+                i++;
+            }
+        }
     }
 
     /// <summary>
