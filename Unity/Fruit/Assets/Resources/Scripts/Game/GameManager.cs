@@ -10,13 +10,15 @@ public class GameManager : NetworkBehaviour
 
     public static GameManager Instance { get; private set; }
 
+    [SyncVar]
+    private bool _inLobby;
+
     [Header("Game States")]
     [SerializeField] private List<string> _allCharacters = new List<string> { "Apple", "Grape", "Lemon", "Peach" };
     private List<Transform> _lobbySpawns, _matchSpawns;
     private HashSet<string> _claimedCharacters = new HashSet<string>(); // Tracks taken characters
     private HashSet<NetworkConnectionToClient> _readyPlayers = new HashSet<NetworkConnectionToClient>();
     private int[] _playerScores; // Scores for each player
-    private bool _inLobby = true;
 
     [SyncVar(hook = nameof(OnClaimedCharactersSyncUpdated))]
     private string _claimedCharactersSync = ""; // Sync'd string for character selection (CSV format)
@@ -26,13 +28,13 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private float _matchDuration = 150f; // 150 seconds is 2:30 minutes
     private float _remainingTime;
 
-    [Header("Character Prefabs")]
-    [SerializeField] private GameObject[] _characterPrefabs; // Reference to the character prefabs
-    private GameObject[] _spawnedCharacters; // Reference to the spawned characters
-
     [Header("Fruit Prefabs")]
     [SerializeField] private GameObject[] _fruitPrefabs; // Reference to the fruit prefabs
     private GameObject[] _spawnedFruits; // Reference to the spawned fruits
+
+    [Header("Character Prefabs")]
+    [SerializeField] private GameObject[] _characterPrefabs; // Reference to the character prefabs
+    private GameObject[] _spawnedCharacters; // Reference to the spawned characters
 
     [Header("Arrow Prefab")]
     [SerializeField] private GameObject _arrowPrefab; // Reference to the arrow prefab
@@ -60,6 +62,8 @@ public class GameManager : NetworkBehaviour
 
         // When our new scene loads, don't delete the game manager
         DontDestroyOnLoad(gameObject);
+
+        _inLobby = true;
 
         // Set the array lengths early on to avoid null references
         _spawnedFruits = new GameObject[_fruitPrefabs.Length];
