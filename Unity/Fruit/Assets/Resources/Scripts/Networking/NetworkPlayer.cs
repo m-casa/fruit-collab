@@ -3,7 +3,6 @@ using Mirror;
 using Steamworks;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 /// <summary>Represents the player’s networked state and actions.</summary>
 public class NetworkPlayer : NetworkBehaviour

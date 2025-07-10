@@ -582,30 +582,6 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Disables the player's character.
-        /// </summary>
-
-        private void DisableCharacter()
-        {
-            movementInputAction.Disable();
-            jumpInputAction.Disable();
-            punchInputAction.Disable();
-            blockInputAction.Disable();
-        }
-
-        /// <summary>
-        /// Enables the player's character.
-        /// </summary>
-
-        private void EnableCharacter()
-        {
-            movementInputAction.Enable();
-            jumpInputAction.Enable();
-            punchInputAction.Enable();
-            blockInputAction.Enable();
-        }
-
-        /// <summary>
         /// Captures any punches the player initiates.
         /// </summary>
 
@@ -1228,6 +1204,30 @@ namespace EasyCharacterMovement
             {
                 EnableCharacter();
             }
+        }
+
+        /// <summary>
+        /// Disables the player's character.
+        /// </summary>
+
+        public void DisableCharacter()
+        {
+            movementInputAction.Disable();
+            jumpInputAction.Disable();
+            punchInputAction.Disable();
+            blockInputAction.Disable();
+        }
+
+        /// <summary>
+        /// Enables the player's character.
+        /// </summary>
+
+        public void EnableCharacter()
+        {
+            movementInputAction.Enable();
+            jumpInputAction.Enable();
+            punchInputAction.Enable();
+            blockInputAction.Enable();
         }
 
         /// <summary>
