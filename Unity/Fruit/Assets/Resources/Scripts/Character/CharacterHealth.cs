@@ -5,11 +5,11 @@ using UnityEngine;
 
 public class CharacterHealth : NetworkHealth
 {
-    private FruitCharacter _fruitCharacter;
+    private FruitCharacter _character;
 
     private void Awake()
     {
-        _fruitCharacter = GetComponent<FruitCharacter>();
+        _character = GetComponent<FruitCharacter>();
         _currentHealth = maxHealth;
     }
 
@@ -26,7 +26,7 @@ public class CharacterHealth : NetworkHealth
 
     private IEnumerator HandleRespawnRoutine()
     {
-        _fruitCharacter.DisableCharacter();
+        _character.DisableCharacter();
         RpcSetVisibility(false);
 
         yield return new WaitForSeconds(1f);
@@ -37,7 +37,7 @@ public class CharacterHealth : NetworkHealth
         _currentHealth = maxHealth;
 
         RpcSetVisibility(true);
-        _fruitCharacter.EnableCharacter();
+        _character.EnableCharacter();
     }
 
     [ClientRpc]

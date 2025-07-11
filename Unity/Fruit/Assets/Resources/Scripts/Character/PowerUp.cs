@@ -34,7 +34,7 @@ public class PowerUp : MonoBehaviour
                 player.QueueLaunch();
                 break;
             case PowerUpType.Damage:
-                player.TakeDamage(0.2f, direction); // Example value
+                player.combat.StartKnockback(0.2f, direction); // Example value
                 break;
         }
     }

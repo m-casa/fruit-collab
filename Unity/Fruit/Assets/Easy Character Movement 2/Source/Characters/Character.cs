@@ -1021,25 +1021,25 @@ namespace EasyCharacterMovement
         /// Movement InputAction.
         /// </summary>
 
-        protected InputAction movementInputAction { get; set; }
+        public InputAction movementInputAction { get; set; }
 
         /// <summary>
         /// Sprint InputAction.
         /// </summary>
 
-        protected InputAction sprintInputAction { get; set; }
+        public InputAction sprintInputAction { get; set; }
 
         /// <summary>
         /// Crouch InputAction.
         /// </summary>
 
-        protected InputAction crouchInputAction { get; set; }
+        public InputAction crouchInputAction { get; set; }
 
         /// <summary>
         /// Jump InputAction.
         /// </summary>
 
-        protected InputAction jumpInputAction { get; set; }
+        public InputAction jumpInputAction { get; set; }
 
         #endregion
 
