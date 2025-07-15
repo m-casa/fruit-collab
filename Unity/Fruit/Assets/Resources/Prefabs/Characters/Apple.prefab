@@ -40,6 +40,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4082612328373140204}
+  - component: {fileID: 4112783665839396595}
+  - component: {fileID: 1076046575424187649}
   m_Layer: 0
   m_Name: LowerArm.L_end
   m_TagString: Untagged
@@ -62,6 +64,39 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5320809698487366701}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &4112783665839396595
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 457073410196735379}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Size: {x: 0.35, y: 1, z: 0.35}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1076046575424187649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 457073410196735379}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0d627d22047f5d4b82077a631f32b1e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &735929317517426244
 GameObject:
   m_ObjectHideFlags: 0
@@ -554,7 +589,6 @@ MonoBehaviour:
   _chestTransform: {fileID: 8303410903216220320}
   _leanAmount: 12.5
   _leanSpeed: 8
-  _cooldownDuration: 0
 --- !u!95 &7104296100037563239
 Animator:
   serializedVersion: 7
@@ -691,6 +725,10 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   _cooldownDuration: 0.15
+  _punchHitbox: {fileID: 0}
+  _enemyMask:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!114 &4159460650062202877
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -706,6 +744,7 @@ MonoBehaviour:
   syncDirection: 1
   syncMode: 0
   syncInterval: 0
+  _maxHealth: 9
 --- !u!1 &2897429832833513327
 GameObject:
   m_ObjectHideFlags: 0
@@ -1427,6 +1466,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3780205159379796070}
+  - component: {fileID: 1956943387134655491}
+  - component: {fileID: 3754265937113245438}
   m_Layer: 0
   m_Name: LowerArm.R_end
   m_TagString: Untagged
@@ -1449,6 +1490,39 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2062509469401873243}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &1956943387134655491
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5837127587675085702}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Size: {x: 0.35, y: 1, z: 0.35}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &3754265937113245438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5837127587675085702}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0d627d22047f5d4b82077a631f32b1e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5886140624267378757
 GameObject:
   m_ObjectHideFlags: 0

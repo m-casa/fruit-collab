@@ -6,7 +6,9 @@ public abstract class NetworkHealth : NetworkBehaviour
     [SyncVar(hook = nameof(OnHealthChanged))]
     protected int _currentHealth;
 
-    public int maxHealth { get; protected set; } = 9;
+    [SerializeField] private int _maxHealth = 9;
+
+    public int maxHealth => _maxHealth;
 
     public int currentHealth => _currentHealth;
 

@@ -7,9 +7,22 @@ public class CharacterHealth : NetworkHealth
 {
     private FruitCharacter _character;
 
+    // NEW CODE -------------------------------------------------------------------------------
+    private Combat _combat;
+    private bool _invulnerable;
+    private float _invulnTimer;
+
+    public bool isInvulnerable => _invulnerable;
+    // NEW CODE -------------------------------------------------------------------------------
+
     private void Awake()
     {
         _character = GetComponent<FruitCharacter>();
+
+        // NEW CODE -------------------------------------------------------------------------------
+        _combat = GetComponent<Combat>();
+        // NEW CODE -------------------------------------------------------------------------------
+
         _currentHealth = maxHealth;
     }
 
@@ -18,6 +31,21 @@ public class CharacterHealth : NetworkHealth
         base.OnHealthChanged(oldHealth, newHealth);
         // TODO: Update UI (health bar, damage effect)
     }
+
+    // NEW CODE -------------------------------------------------------------------------------
+    public void ApplyTemporaryInvulnerability(float duration)
+    {
+        _invulnerable = true;
+        _invulnTimer = duration;
+        StartCoroutine(InvulnerabilityTimer());
+    }
+
+    private IEnumerator InvulnerabilityTimer()
+    {
+        yield return new WaitForSeconds(_invulnTimer);
+        _invulnerable = false;
+    }
+    // NEW CODE -------------------------------------------------------------------------------
 
     protected override void OnHealthDepleted()
     {

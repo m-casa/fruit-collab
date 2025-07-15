@@ -8,6 +8,8 @@ using UnityEngine.InputSystem;
 
 public class Combat : NetworkBehaviour
 {
+    #region FIELDS
+
     [SerializeField] private float _cooldownDuration = 0.15f; // Cooldown duration after combo ends or fails
 
     private FruitCharacter _character;
@@ -17,6 +19,22 @@ public class Combat : NetworkBehaviour
     private int _currentComboStep, _nextComboStep;
     private float _cooldownTimer;
     private string[] _comboAnimations = { "_Punch.1", "_Punch.2", "_Punch.3" };
+
+    // NEW CODE -------------------------------------------------------------------------------
+    [SerializeField] private Collider _punchHitbox; // assign in inspector (hand child)
+    [SerializeField] private LayerMask _enemyMask;
+
+    private CharacterHealth _currentTarget;
+    private float _blockRechargeTimer;
+    private int _blockPoints = 6;
+    private bool _blockCooldown;
+    private Combat _currentAttacker;
+    private float _attackerResetDelay = 0.5f;
+    // NEW CODE -------------------------------------------------------------------------------
+
+    #endregion
+
+    #region PROPERTIES
 
     public bool isBlocking => _isBlocking;
 
@@ -30,6 +48,10 @@ public class Combat : NetworkBehaviour
         set => _takingDamage = value;
     }
 
+    #endregion
+
+    #region INPUT ACTIONS
+
     /// <summary>
     /// Punch InputAction.
     /// </summary>
@@ -41,6 +63,10 @@ public class Combat : NetworkBehaviour
     /// </summary>
 
     public InputAction blockInputAction { get; set; }
+
+    #endregion
+
+    #region INPUT ACTION HANDLERS
 
     /// <summary>
     /// Punch input action handler.
@@ -66,6 +92,10 @@ public class Combat : NetworkBehaviour
             StopBlocking();
     }
 
+    #endregion
+
+    #region MONOBEHAVIOR
+
     /// <summary>
     /// Called when the script instance is being loaded (Awake).
     /// </summary>
@@ -85,6 +115,10 @@ public class Combat : NetworkBehaviour
         _nextComboStep = 0;
         _cooldownTimer = 0f;
     }
+
+    #endregion
+
+    #region METHODS
 
     /// <summary>
     /// Captures any punches the player initiates.
@@ -208,6 +242,18 @@ public class Combat : NetworkBehaviour
                 }
             }
         }
+
+        // NEW CODE -------------------------------------------------------------------------------
+        if (!_blockButtonPressed && !_blockCooldown && _blockPoints < 6)
+        {
+            _blockRechargeTimer += Time.deltaTime;
+            if (_blockRechargeTimer >= 3f)
+            {
+                _blockPoints++;
+                _blockRechargeTimer = 0f;
+            }
+        }
+        // NEW CODE -------------------------------------------------------------------------------
     }
 
     /// <summary>
@@ -230,6 +276,11 @@ public class Combat : NetworkBehaviour
 
         // Get the next punch index from the queue
         _currentComboStep = _punchQueue.Dequeue();
+
+        // NEW CODE -------------------------------------------------------------------------------
+        FaceClosestTarget();
+        EnablePunchHitbox();
+        // NEW CODE -------------------------------------------------------------------------------
 
         // Play and adjust the animation state
         if (_character.animancer.States.TryGet(_comboAnimations[_currentComboStep], out var state))
@@ -266,6 +317,54 @@ public class Combat : NetworkBehaviour
             }
         };
     }
+
+    // NEW CODE -------------------------------------------------------------------------------
+    private void FaceClosestTarget()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, 8f, _enemyMask);
+        if (hits.Length == 0) return;
+
+        Vector3 preferredDir = _character.GetMovementDirection();
+        if (preferredDir == Vector3.zero)
+            preferredDir = transform.forward;
+
+        float bestDot = -1f;
+        Transform bestTarget = null;
+
+        foreach (var hit in hits)
+        {
+            if (hit.transform == transform) continue;
+            Vector3 toTarget = (hit.transform.position - transform.position).normalized;
+            float dot = Vector3.Dot(preferredDir, toTarget);
+
+            if (dot > bestDot)
+            {
+                bestDot = dot;
+                bestTarget = hit.transform;
+            }
+        }
+
+        if (bestTarget != null)
+        {
+            Vector3 lookDir = (bestTarget.position - transform.position).normalized;
+            lookDir.y = 0f;
+            if (lookDir != Vector3.zero)
+                transform.forward = lookDir;
+        }
+    }
+
+    private void EnablePunchHitbox()
+    {
+        if (_punchHitbox != null)
+            _punchHitbox.enabled = true;
+    }
+
+    private void DisablePunchHitbox()
+    {
+        if (_punchHitbox != null)
+            _punchHitbox.enabled = false;
+    }
+    // NEW CODE -------------------------------------------------------------------------------
 
     /// <summary>
     /// Hold the last frame of the punch to give time for a combo.
@@ -307,6 +406,18 @@ public class Combat : NetworkBehaviour
         // Transition back to idle animation
         if (_character.IsGrounded())
             _character.PlayIdleAnimation();
+
+        // NEW CODE -------------------------------------------------------------------------------
+        DisablePunchHitbox();
+        if (_currentTarget != null)
+        {
+            int punchesLanded = _currentComboStep + 1;
+            float stunDuration = punchesLanded == 1 ? 1f : punchesLanded == 2 ? 2f : 2.5f;
+            _currentTarget.GetComponent<Combat>()?.StartKnockback(stunDuration, transform.forward);
+            _currentTarget.ApplyTemporaryInvulnerability(stunDuration);
+            _currentTarget = null;
+        }
+        // NEW CODE -------------------------------------------------------------------------------
 
         // Reset combo state
         _isGroundPunching = false;
@@ -463,6 +574,68 @@ public class Combat : NetworkBehaviour
         HandleBlocking();
     }
 
+    // NEW CODE -------------------------------------------------------------------------------
+    public void TryHitTarget(CharacterHealth target)
+    {
+        if (_currentTarget != null || target == null || target == _character.GetComponent<CharacterHealth>()) return;
+        if (target.isInvulnerable) return;
+
+        Combat targetCombat = target.GetComponent<Combat>();
+        if (targetCombat == null) return;
+
+        // Blocking
+        if (targetCombat.isBlocking)
+        {
+            if (targetCombat._currentAttacker == null || targetCombat._currentAttacker == this)
+            {
+                if (targetCombat._blockPoints > 0 && !targetCombat._blockCooldown)
+                {
+                    targetCombat.FaceTarget(transform);
+                    targetCombat._blockPoints--;
+                    targetCombat._currentAttacker = this;
+                    targetCombat._blockRechargeTimer = 0f;
+
+                    if (targetCombat._blockPoints == 0)
+                    {
+                        targetCombat.StartCoroutine(targetCombat.BlockCooldownRoutine());
+                    }
+                }
+            }
+            return;
+        }
+
+        // Damage
+        target.TakeDamage(1);
+        targetCombat._currentAttacker = this;
+        _currentTarget = target;
+    }
+
+    public void FaceTarget(Transform target)
+    {
+        Vector3 lookDir = (target.position - transform.position).normalized;
+        lookDir.y = 0f;
+        if (lookDir != Vector3.zero)
+            transform.forward = lookDir;
+    }
+
+    private IEnumerator BlockCooldownRoutine()
+    {
+        _blockCooldown = true;
+        yield return new WaitForSeconds(3f);
+        _blockPoints = 0;
+        _blockRechargeTimer = 0f;
+
+        while (_blockPoints < 6)
+        {
+            yield return new WaitForSeconds(1f);
+            _blockPoints++;
+        }
+
+        _blockCooldown = false;
+        _currentAttacker = null;
+    }
+    // NEW CODE -------------------------------------------------------------------------------
+
     /// <summary>
     /// Damage the character and push them back.
     /// </summary>
@@ -515,4 +688,6 @@ public class Combat : NetworkBehaviour
             _character.EnableCharacter();
         }
     }
+
+    #endregion
 }
