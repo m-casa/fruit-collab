@@ -223,7 +223,7 @@ public class Combat : NetworkBehaviour
 
     private void HandleBlocking()
     {
-        if (_character.IsGrounded() && _blockButtonPressed)
+        if (_character.IsGrounded() && _blockButtonPressed && !_blockCooldown)
         {
             if (!isPunching)
             {
@@ -247,10 +247,11 @@ public class Combat : NetworkBehaviour
         if (!_blockButtonPressed && !_blockCooldown && _blockPoints < 6)
         {
             _blockRechargeTimer += Time.deltaTime;
-            if (_blockRechargeTimer >= 3f)
+
+            if (_blockRechargeTimer >= 3f && _blockPoints < 6f)
             {
                 _blockPoints++;
-                _blockRechargeTimer = 0f;
+                //_blockRechargeTimer = 0f;
             }
         }
         // NEW CODE -------------------------------------------------------------------------------
@@ -278,7 +279,7 @@ public class Combat : NetworkBehaviour
         _currentComboStep = _punchQueue.Dequeue();
 
         // NEW CODE -------------------------------------------------------------------------------
-        FaceClosestTarget();
+        //FaceClosestTarget();
         EnablePunchHitbox();
         // NEW CODE -------------------------------------------------------------------------------
 
@@ -305,6 +306,8 @@ public class Combat : NetworkBehaviour
         // Schedule the transition back to idle after the animation
         state.Events.OnEnd = () =>
         {
+            DisablePunchHitbox();
+
             if (_punchQueue.Count > 0)
             {
                 // Execute the next combo step immediately
@@ -408,13 +411,21 @@ public class Combat : NetworkBehaviour
             _character.PlayIdleAnimation();
 
         // NEW CODE -------------------------------------------------------------------------------
-        DisablePunchHitbox();
+        //DisablePunchHitbox();
+
         if (_currentTarget != null)
         {
             int punchesLanded = _currentComboStep + 1;
             float stunDuration = punchesLanded == 1 ? 1f : punchesLanded == 2 ? 2f : 2.5f;
-            _currentTarget.GetComponent<Combat>()?.StartKnockback(stunDuration, transform.forward);
+            _currentTarget.GetComponent<Combat>()?.StartKnockback(0.2f, transform.forward);
             _currentTarget.ApplyTemporaryInvulnerability(stunDuration);
+
+            Combat targetCombat = _currentTarget.GetComponent<Combat>();
+            if (targetCombat._currentAttacker != null) 
+            {
+                targetCombat._currentAttacker = null;
+            }
+
             _currentTarget = null;
         }
         // NEW CODE -------------------------------------------------------------------------------
@@ -578,9 +589,11 @@ public class Combat : NetworkBehaviour
     public void TryHitTarget(CharacterHealth target)
     {
         if (_currentTarget != null || target == null || target == _character.GetComponent<CharacterHealth>()) return;
+
         if (target.isInvulnerable) return;
 
         Combat targetCombat = target.GetComponent<Combat>();
+
         if (targetCombat == null) return;
 
         // Blocking
@@ -590,7 +603,7 @@ public class Combat : NetworkBehaviour
             {
                 if (targetCombat._blockPoints > 0 && !targetCombat._blockCooldown)
                 {
-                    targetCombat.FaceTarget(transform);
+                    targetCombat.FaceAttacker(transform);
                     targetCombat._blockPoints--;
                     targetCombat._currentAttacker = this;
                     targetCombat._blockRechargeTimer = 0f;
@@ -610,9 +623,9 @@ public class Combat : NetworkBehaviour
         _currentTarget = target;
     }
 
-    public void FaceTarget(Transform target)
+    public void FaceAttacker(Transform attacker)
     {
-        Vector3 lookDir = (target.position - transform.position).normalized;
+        Vector3 lookDir = (attacker.position - transform.position).normalized;
         lookDir.y = 0f;
         if (lookDir != Vector3.zero)
             transform.forward = lookDir;
@@ -632,7 +645,7 @@ public class Combat : NetworkBehaviour
         }
 
         _blockCooldown = false;
-        _currentAttacker = null;
+        //_currentAttacker = null;
     }
     // NEW CODE -------------------------------------------------------------------------------
 

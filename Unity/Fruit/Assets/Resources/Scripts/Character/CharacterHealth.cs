@@ -26,6 +26,11 @@ public class CharacterHealth : NetworkHealth
         _currentHealth = maxHealth;
     }
 
+    public override void TakeDamage(int amount)
+    {
+        base.TakeDamage(amount);
+    }
+
     protected override void OnHealthChanged(int oldHealth, int newHealth)
     {
         base.OnHealthChanged(oldHealth, newHealth);
