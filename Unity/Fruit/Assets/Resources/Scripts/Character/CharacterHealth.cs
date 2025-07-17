@@ -5,31 +5,50 @@ using UnityEngine;
 
 public class CharacterHealth : NetworkHealth
 {
-    private FruitCharacter _character;
+    #region FIELDS
 
-    // NEW CODE -------------------------------------------------------------------------------
+    private FruitCharacter _character;
     private Combat _combat;
     private bool _invulnerable;
     private float _invulnTimer;
 
+    #endregion
+
+    #region PROPERTIES
+
     public bool isInvulnerable => _invulnerable;
-    // NEW CODE -------------------------------------------------------------------------------
+
+    #endregion
+    
+    #region MONOBEHAVIOR
+
+    /// <summary>
+    /// Called when the script instance is being loaded.
+    /// </summary>
 
     private void Awake()
     {
         _character = GetComponent<FruitCharacter>();
-
-        // NEW CODE -------------------------------------------------------------------------------
         _combat = GetComponent<Combat>();
-        // NEW CODE -------------------------------------------------------------------------------
-
         _currentHealth = maxHealth;
     }
+
+    #endregion
+
+    #region METHODS
+
+    /// <summary>
+    /// Damage this character and check if their health depleted.
+    /// </summary>
 
     public override void TakeDamage(int amount)
     {
         base.TakeDamage(amount);
     }
+
+    /// <summary>
+    /// Update the UI to reflect the current health of this character.
+    /// </summary>
 
     protected override void OnHealthChanged(int oldHealth, int newHealth)
     {
@@ -37,7 +56,19 @@ public class CharacterHealth : NetworkHealth
         // TODO: Update UI (health bar, damage effect)
     }
 
-    // NEW CODE -------------------------------------------------------------------------------
+    /// <summary>
+    /// When character health has depleted, begin their respawn routine.
+    /// </summary>
+
+    protected override void OnHealthDepleted()
+    {
+        StartCoroutine(HandleRespawnRoutine());
+    }
+
+    /// <summary>
+    /// Setup and start the invulnerability timer.
+    /// </summary>
+
     public void ApplyTemporaryInvulnerability(float duration)
     {
         _invulnerable = true;
@@ -45,17 +76,20 @@ public class CharacterHealth : NetworkHealth
         StartCoroutine(InvulnerabilityTimer());
     }
 
+    /// <summary>
+    /// Reset the invulnerability state when the timer is up.
+    /// </summary>
+
     private IEnumerator InvulnerabilityTimer()
     {
         yield return new WaitForSeconds(_invulnTimer);
         _invulnerable = false;
     }
-    // NEW CODE -------------------------------------------------------------------------------
 
-    protected override void OnHealthDepleted()
-    {
-        StartCoroutine(HandleRespawnRoutine());
-    }
+    /// <summary>
+    /// Setup the character for a fake respawn (easier then detroying their body);
+    /// Disable and hide the character, then teleport their body and reset their health.
+    /// </summary>
 
     private IEnumerator HandleRespawnRoutine()
     {
@@ -73,10 +107,16 @@ public class CharacterHealth : NetworkHealth
         _character.EnableCharacter();
     }
 
+    /// <summary>
+    /// Hide the character for every client while they "respawn".
+    /// </summary>
+
     [ClientRpc]
     private void RpcSetVisibility(bool visible)
     {
         foreach (var renderer in GetComponentsInChildren<Renderer>())
             renderer.enabled = visible;
     }
+
+    #endregion
 }

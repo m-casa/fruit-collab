@@ -1,3 +1,4 @@
+using EasyCharacterMovement;
 using UnityEngine;
 
 public class PunchHitbox : MonoBehaviour
@@ -13,9 +14,9 @@ public class PunchHitbox : MonoBehaviour
     {
         if (!_combat || !_combat.isPunching || !_combat.isActiveAndEnabled) return;
 
-        if (other.TryGetComponent(out CharacterHealth targetHealth))
+        if (other.TryGetComponent(out FruitCharacter target))
         {
-            _combat.TryHitTarget(targetHealth);
+            _combat.TryHitTarget(target);
         }
     }
 }
