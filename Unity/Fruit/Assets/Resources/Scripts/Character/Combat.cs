@@ -268,7 +268,7 @@ public class Combat : NetworkBehaviour
         _currentComboStep = _punchQueue.Dequeue();
 
         // Attempt to punch an opponent
-        EnablePunchHitbox();
+        CmdEnablePunchHitbox();
 
         // Play and adjust the animation state
         if (_character.animancer.States.TryGet(_comboAnimations[_currentComboStep], out var state))
@@ -293,7 +293,7 @@ public class Combat : NetworkBehaviour
         // Schedule the transition back to idle after the animation
         state.Events.OnEnd = () =>
         {
-            DisablePunchHitbox();
+            CmdDisablePunchHitbox();
 
             if (_punchQueue.Count > 0)
             {
@@ -350,7 +350,8 @@ public class Combat : NetworkBehaviour
     /// Enables the punch hitbox.
     /// </summary>
 
-    private void EnablePunchHitbox()
+    [Command]
+    private void CmdEnablePunchHitbox()
     {
         if (_punchHitbox != null)
             _punchHitbox.enabled = true;
@@ -360,7 +361,8 @@ public class Combat : NetworkBehaviour
     /// Disables the punch hitbox.
     /// </summary>
 
-    private void DisablePunchHitbox()
+    [Command]
+    private void CmdDisablePunchHitbox()
     {
         if (_punchHitbox != null)
             _punchHitbox.enabled = false;
@@ -412,11 +414,12 @@ public class Combat : NetworkBehaviour
         {
             CharacterHealth targetHealth = _currentTarget.GetComponent<CharacterHealth>();
             Combat targetCombat = _currentTarget.GetComponent<Combat>();
+            NetworkIdentity targetIdentity = _currentTarget.GetComponent<NetworkIdentity>();
             int punchesLanded = _currentComboStep + 1;
             float stunDuration = punchesLanded == 1 ? 1f : punchesLanded == 2 ? 2f : 2.5f;
 
             targetHealth.ApplyTemporaryInvulnerability(stunDuration);
-            targetCombat.StartKnockback(0.2f, transform.forward);
+            targetCombat.RpcStartKnockback(targetIdentity.connectionToClient, 0.2f, transform.forward);
             
             if (targetCombat._currentAttacker != null) 
             {
@@ -663,7 +666,8 @@ public class Combat : NetworkBehaviour
     /// Damage the character and push them back.
     /// </summary>
 
-    public void StartKnockback(float effectDuration, Vector3 direction)
+    [TargetRpc]
+    public void RpcStartKnockback(NetworkConnection conn, float effectDuration, Vector3 direction)
     {
         if (!takingDamage)
         {

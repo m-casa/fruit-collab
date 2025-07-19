@@ -7,9 +7,11 @@ public class CharacterHealth : NetworkHealth
 {
     #region FIELDS
 
+    [SyncVar]
+    private bool _invulnerable;
+
     private FruitCharacter _character;
     private Combat _combat;
-    private bool _invulnerable;
     private float _invulnTimer;
 
     #endregion
@@ -93,7 +95,7 @@ public class CharacterHealth : NetworkHealth
 
     private IEnumerator HandleRespawnRoutine()
     {
-        _character.DisableCharacter();
+        _character.RpcDisableCharacter(GetComponent<NetworkIdentity>().connectionToClient);
         RpcSetVisibility(false);
 
         yield return new WaitForSeconds(1f);
@@ -104,7 +106,7 @@ public class CharacterHealth : NetworkHealth
         _currentHealth = maxHealth;
 
         RpcSetVisibility(true);
-        _character.EnableCharacter();
+        _character.RpcEnableCharacter(GetComponent<NetworkIdentity>().connectionToClient);
     }
 
     /// <summary>

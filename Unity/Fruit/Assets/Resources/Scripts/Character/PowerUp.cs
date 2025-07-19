@@ -33,9 +33,9 @@ public class PowerUp : MonoBehaviour
             case PowerUpType.Launcher:
                 player.QueueLaunch();
                 break;
-            case PowerUpType.Damage:
-                player.combat.StartKnockback(0.2f, direction); // Example value
-                break;
+            //case PowerUpType.Damage:
+            //    player.combat.RpcStartKnockback(0.2f, direction); // Example value
+            //    break;
         }
     }
 }

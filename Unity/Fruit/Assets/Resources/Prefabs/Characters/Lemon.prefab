@@ -256,7 +256,7 @@ Transform:
   m_GameObject: {fileID: 1974657863803228055}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -2.25, y: 8.8393, z: -0.49319053}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -563,11 +563,11 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  _cooldownDuration: 0.15
   _punchHitbox: {fileID: 4958483503640106968}
   _enemyMask:
     serializedVersion: 2
     m_Bits: 0
+  _cooldownDuration: 0.15
 --- !u!114 &4388227987882777247
 MonoBehaviour:
   m_ObjectHideFlags: 0

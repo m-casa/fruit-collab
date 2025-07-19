@@ -6,8 +6,7 @@ public abstract class NetworkHealth : NetworkBehaviour
     #region FIELDS
 
     [SyncVar(hook = nameof(OnHealthChanged))]
-    protected int _currentHealth;
-
+    [SerializeField] protected int _currentHealth;
     [SerializeField] private int _maxHealth = 9;
 
     #endregion
