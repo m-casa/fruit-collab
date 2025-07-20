@@ -10,12 +10,12 @@ public class Combat : NetworkBehaviour
 {
     #region FIELDS
 
+    [SerializeField] private NetworkCombat _networkCombat;
     [SerializeField] private Collider _punchHitbox;
     [SerializeField] private LayerMask _enemyMask;
     [SerializeField] private float _cooldownDuration = 0.15f; // Cooldown duration after combo ends or fails
 
     private FruitCharacter _character, _currentTarget;
-    private Combat _currentAttacker;
     private Queue<int> _punchQueue = new Queue<int>();
     private bool _blockButtonPressed, _isBlocking, _punchButtonPressed, 
         _isGroundPunching, _isAirPunching, _takingDamage, _blockCooldown;
@@ -197,6 +197,7 @@ public class Combat : NetworkBehaviour
                 }
 
                 _isAirPunching = true;
+                _networkCombat.CmdSetAirPunching(true);
 
                 state.Events.OnEnd = () =>
                 {
@@ -219,6 +220,8 @@ public class Combat : NetworkBehaviour
             if (!isPunching)
             {
                 _isBlocking = true;
+                _networkCombat.CmdSetBlocking(true);
+
                 _blockRechargeTimer = 0f;
 
                 punchInputAction?.Disable();
@@ -242,6 +245,7 @@ public class Combat : NetworkBehaviour
             if (_blockRechargeTimer >= 3f && _blockPoints < 6f)
             {
                 _blockPoints++;
+                _networkCombat.CmdSetBlockPoints(_blockPoints);
             }
         }
     }
@@ -268,7 +272,7 @@ public class Combat : NetworkBehaviour
         _currentComboStep = _punchQueue.Dequeue();
 
         // Attempt to punch an opponent
-        CmdEnablePunchHitbox();
+        EnablePunchHitbox();
 
         // Play and adjust the animation state
         if (_character.animancer.States.TryGet(_comboAnimations[_currentComboStep], out var state))
@@ -286,6 +290,7 @@ public class Combat : NetworkBehaviour
 
         // Mark as punching
         _isGroundPunching = true;
+        _networkCombat.CmdSetGroundPunching(true);
 
         // Apply a slight forward push for each punch
         _character.LaunchCharacter(transform.forward * 1.5f);
@@ -293,7 +298,8 @@ public class Combat : NetworkBehaviour
         // Schedule the transition back to idle after the animation
         state.Events.OnEnd = () =>
         {
-            CmdDisablePunchHitbox();
+            // End of the punch animation, so disable the hitbox
+            DisablePunchHitbox();
 
             if (_punchQueue.Count > 0)
             {
@@ -350,8 +356,7 @@ public class Combat : NetworkBehaviour
     /// Enables the punch hitbox.
     /// </summary>
 
-    [Command]
-    private void CmdEnablePunchHitbox()
+    private void EnablePunchHitbox()
     {
         if (_punchHitbox != null)
             _punchHitbox.enabled = true;
@@ -361,8 +366,7 @@ public class Combat : NetworkBehaviour
     /// Disables the punch hitbox.
     /// </summary>
 
-    [Command]
-    private void CmdDisablePunchHitbox()
+    private void DisablePunchHitbox()
     {
         if (_punchHitbox != null)
             _punchHitbox.enabled = false;
@@ -396,51 +400,6 @@ public class Combat : NetworkBehaviour
         else
         {
             ResetAirPunch();
-        }
-    }
-
-    /// <summary>
-    /// Reset the character's combo to a default state.
-    /// </summary>
-
-    private void ResetCombo()
-    {
-        // Transition back to idle animation
-        if (_character.IsGrounded())
-            _character.PlayIdleAnimation();
-
-        // Now that our combo has ended, apply invulnerability/knockback to the current target
-        if (_currentTarget != null)
-        {
-            CharacterHealth targetHealth = _currentTarget.GetComponent<CharacterHealth>();
-            Combat targetCombat = _currentTarget.GetComponent<Combat>();
-            NetworkIdentity targetIdentity = _currentTarget.GetComponent<NetworkIdentity>();
-            int punchesLanded = _currentComboStep + 1;
-            float stunDuration = punchesLanded == 1 ? 1f : punchesLanded == 2 ? 2f : 2.5f;
-
-            targetHealth.ApplyTemporaryInvulnerability(stunDuration);
-            targetCombat.RpcStartKnockback(targetIdentity.connectionToClient, 0.2f, transform.forward);
-            
-            if (targetCombat._currentAttacker != null) 
-            {
-                targetCombat._currentAttacker = null;
-            }
-
-            _currentTarget = null;
-        }
-
-        // Reset combo state
-        _isGroundPunching = false;
-        _currentComboStep = 0;
-
-        // Clear the queue
-        _punchQueue.Clear();
-
-        // Only re-enable movement if the player isn't paused
-        if (!UIManager.Instance.PauseMenuActive())
-        {
-            _character.movementInputAction?.Enable();
-            _character.jumpInputAction?.Enable();
         }
     }
 
@@ -510,7 +469,7 @@ public class Combat : NetworkBehaviour
     /// Start a punch initiated by the player.
     /// </summary>
 
-    public void Punch()
+    private void Punch()
     {
         if (_cooldownTimer <= 0f)
         {
@@ -523,9 +482,56 @@ public class Combat : NetworkBehaviour
     ///  to initiate another punch, possibly a combo.
     /// </summary>
 
-    public void ReleasePunch()
+    private void ReleasePunch()
     {
         _punchButtonPressed = false;
+    }
+
+    /// <summary>
+    /// Reset the character's combo to a default state.
+    /// </summary>
+
+    public void ResetCombo()
+    {
+        // Transition back to idle animation
+        if (_character.IsGrounded())
+            _character.PlayIdleAnimation();
+
+        // Now that our combo has ended, apply invulnerability/knockback to the current target
+        if (_currentTarget != null)
+        {
+            CharacterHealth targetHealth = _currentTarget.GetComponent<CharacterHealth>();
+            NetworkCombat targetCombat = _currentTarget.GetComponent<NetworkCombat>();
+            NetworkIdentity targetIdentity = _currentTarget.GetComponent<NetworkIdentity>();
+            int punchesLanded = _currentComboStep + 1;
+            float stunDuration = punchesLanded == 1 ? 1f : punchesLanded == 2 ? 2f : 2.5f;
+
+            targetHealth.CmdApplyTemporaryInvulnerability(stunDuration);
+            targetCombat.RpcStartKnockback(targetIdentity.connectionToClient, 0.2f, transform.forward);
+
+            if (targetCombat.currentAttacker != null)
+            {
+                targetCombat.currentAttacker = null;
+            }
+
+            _currentTarget = null;
+        }
+
+        // Reset combo state
+        _isGroundPunching = false;
+        _networkCombat.CmdSetGroundPunching(false);
+
+        _currentComboStep = 0;
+
+        // Clear the queue
+        _punchQueue.Clear();
+
+        // Only re-enable movement if the player isn't paused
+        if (!UIManager.Instance.PauseMenuActive())
+        {
+            _character.movementInputAction?.Enable();
+            _character.jumpInputAction?.Enable();
+        }
     }
 
     /// <summary>
@@ -537,6 +543,7 @@ public class Combat : NetworkBehaviour
         _character.PlayFallAnimation();
 
         _isAirPunching = false;
+        _networkCombat.CmdSetAirPunching(false);
 
         _character.SetRotationMode(RotationMode.OrientToMovement);
     }
@@ -562,6 +569,7 @@ public class Combat : NetworkBehaviour
         if (_isBlocking)
         {
             _isBlocking = false;
+            _networkCombat.CmdSetBlocking(false);
 
             // Only re-enable movement if the player isn't paused
             if (!UIManager.Instance.PauseMenuActive())
@@ -597,26 +605,27 @@ public class Combat : NetworkBehaviour
 
         if (targetHealth.isInvulnerable) return;
 
-        Combat targetCombat = target.GetComponent<Combat>();
+        NetworkCombat targetCombat = target.GetComponent<NetworkCombat>();
 
         // If we're in the middle of a combo, make sure we don't accidentally hit someone else
-        if (_currentTarget != null && targetCombat._currentAttacker != this) return;
+        if (_currentTarget != null && targetCombat.currentAttacker != this) return;
 
         // Blocking
         if (targetCombat.isBlocking)
         {
-            if (targetCombat._currentAttacker == null || targetCombat._currentAttacker == this)
+            if (targetCombat.currentAttacker == null || 
+                targetCombat.currentAttacker == GetComponent<NetworkIdentity>())
             {
-                if (targetCombat._blockPoints > 0 && !targetCombat._blockCooldown)
+                if (targetCombat.blockPoints > 0 && !targetCombat.blockCooldown)
                 {
-                    targetCombat.FaceAttacker(transform);
-                    targetCombat._blockPoints--;
-                    targetCombat._currentAttacker = this;
-                    targetCombat._blockRechargeTimer = 0f;
+                    targetCombat.FaceAttacker(GetComponent<NetworkIdentity>());
+                    targetCombat.CmdSetBlockPoints(targetCombat.blockPoints--);
+                    targetCombat.CmdSetCurrentAttacker(GetComponent<NetworkIdentity>());
+                    targetCombat.blockRechargeTimer = 0f;
 
-                    if (targetCombat._blockPoints <= 0)
+                    if (targetCombat.blockPoints <= 0)
                     {
-                        targetCombat.StartCoroutine(targetCombat.BlockCooldownRoutine());
+                        targetCombat.CmdStartBlockCooldownRoutine();
                     }
                 }
             }
@@ -624,96 +633,9 @@ public class Combat : NetworkBehaviour
         }
 
         // Damage
-        targetHealth.TakeDamage(1);
-        targetCombat._currentAttacker = this;
+        targetHealth.CmdTakeDamage(1);
+        targetCombat.CmdSetCurrentAttacker(GetComponent<NetworkIdentity>());
         _currentTarget = target;
-    }
-
-    /// <summary>
-    /// Face the direction of the current attacker.
-    /// </summary>
-
-    public void FaceAttacker(Transform attacker)
-    {
-        Vector3 lookDir = (attacker.position - transform.position).normalized;
-        lookDir.y = 0f;
-        if (lookDir != Vector3.zero)
-            transform.forward = lookDir;
-    }
-
-    /// <summary>
-    /// Set the character's block on cooldown until fully recharged.
-    /// </summary>
-
-    private IEnumerator BlockCooldownRoutine()
-    {
-        _blockCooldown = true;
-        _blockPoints = 0;
-
-        yield return new WaitForSeconds(3f);
-        _blockPoints++;
-
-        while (_blockPoints < 6)
-        {
-            yield return new WaitForSeconds(1f);
-            _blockPoints++;
-        }
-
-        _blockCooldown = false;
-    }
-
-    /// <summary>
-    /// Damage the character and push them back.
-    /// </summary>
-
-    [TargetRpc]
-    public void RpcStartKnockback(NetworkConnection conn, float effectDuration, Vector3 direction)
-    {
-        if (!takingDamage)
-        {
-            takingDamage = true;
-
-            ResetCombo();
-            ResetAirPunch();
-
-            _character.DisableCharacter();
-
-            _character.SetVelocity(Vector3.zero);
-
-            _character.PauseGroundConstraint();
-
-            // Push the player back
-            _character.LaunchCharacter((direction * 5f) + (_character.GetUpVector() * 2.5f), true);
-
-            if (_character.animancer.States.TryGet("_Hurt", out var state))
-            {
-                _character.animancer.Play(state);
-                state.Time = 0f;
-
-                if (_character.currentAnimationClip != "_Hurt")
-                {
-                    _character.currentAnimationClip = "_Hurt";
-                    _character.networkAnimations.CmdPlayHurtAnimation();
-                }
-            }
-
-            Invoke(nameof(StopKnockback), effectDuration);
-        }
-    }
-
-    /// <summary>
-    /// Take the character out of the damage state.
-    /// </summary>
-
-    public void StopKnockback()
-    {
-        takingDamage = false;
-
-        // Only re-enable movement if the player isn't paused
-        if (!UIManager.Instance.PauseMenuActive())
-        {
-            _character.EnableCharacter();
-        }
     }
 
     #endregion

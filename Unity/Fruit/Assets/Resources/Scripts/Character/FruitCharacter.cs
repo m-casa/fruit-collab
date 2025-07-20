@@ -525,18 +525,8 @@ namespace EasyCharacterMovement
             {
                 _readyButtonPressed = false;
 
-                CmdToggleReadyStatus();
+                NetworkPlayer.LocalInstance.CmdToggleReadyStatus();
             }
-        }
-
-        /// <summary>
-        /// Send a request to the server to ready this player.
-        /// </summary>
-
-        [Command]
-        private void CmdToggleReadyStatus()
-        {
-            GameManager.Instance.ToggleReadyStatus(connectionToClient);
         }
 
         /// <summary>
@@ -791,11 +781,11 @@ namespace EasyCharacterMovement
         /// Request from the server to disable this player's character.
         /// </summary>
 
-        [TargetRpc]
-        public void RpcDisableCharacter(NetworkConnection conn)
-        {
-            DisableCharacter();
-        }
+        //[TargetRpc]
+        //public void RpcDisableCharacter(NetworkConnection conn)
+        //{
+        //    DisableCharacter();
+        //}
 
         /// <summary>
         /// Disables the player's character.
@@ -813,11 +803,11 @@ namespace EasyCharacterMovement
         /// Request from the server to enable this player's character.
         /// </summary>
 
-        [TargetRpc]
-        public void RpcEnableCharacter(NetworkConnection conn)
-        {
-            EnableCharacter();
-        }
+        //[TargetRpc]
+        //public void RpcEnableCharacter(NetworkConnection conn)
+        //{
+        //    EnableCharacter();
+        //}
 
         /// <summary>
         /// Enables the player's character.

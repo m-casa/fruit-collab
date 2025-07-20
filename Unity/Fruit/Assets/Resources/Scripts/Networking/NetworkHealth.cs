@@ -7,6 +7,7 @@ public abstract class NetworkHealth : NetworkBehaviour
 
     [SyncVar(hook = nameof(OnHealthChanged))]
     [SerializeField] protected int _currentHealth;
+
     [SerializeField] private int _maxHealth = 9;
 
     #endregion
@@ -27,9 +28,10 @@ public abstract class NetworkHealth : NetworkBehaviour
     /// Damage this character and check if their health depleted.
     /// </summary>
 
-    public virtual void TakeDamage(int amount)
+    [Command]
+    public virtual void CmdTakeDamage(int amount)
     {
-        if (!isServer || healthDepleted) return;
+        if (healthDepleted) return;
 
         _currentHealth -= amount;
         _currentHealth = Mathf.Max(_currentHealth, 0);

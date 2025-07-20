@@ -43,9 +43,10 @@ public class CharacterHealth : NetworkHealth
     /// Damage this character and check if their health depleted.
     /// </summary>
 
-    public override void TakeDamage(int amount)
+    [Command]
+    public override void CmdTakeDamage(int amount)
     {
-        base.TakeDamage(amount);
+        base.CmdTakeDamage(amount);
     }
 
     /// <summary>
@@ -71,7 +72,8 @@ public class CharacterHealth : NetworkHealth
     /// Setup and start the invulnerability timer.
     /// </summary>
 
-    public void ApplyTemporaryInvulnerability(float duration)
+    [Command]
+    public void CmdApplyTemporaryInvulnerability(float duration)
     {
         _invulnerable = true;
         _invulnTimer = duration;
@@ -95,7 +97,7 @@ public class CharacterHealth : NetworkHealth
 
     private IEnumerator HandleRespawnRoutine()
     {
-        _character.RpcDisableCharacter(GetComponent<NetworkIdentity>().connectionToClient);
+        _character.DisableCharacter();
         RpcSetVisibility(false);
 
         yield return new WaitForSeconds(1f);
@@ -106,7 +108,7 @@ public class CharacterHealth : NetworkHealth
         _currentHealth = maxHealth;
 
         RpcSetVisibility(true);
-        _character.RpcEnableCharacter(GetComponent<NetworkIdentity>().connectionToClient);
+        _character.EnableCharacter();
     }
 
     /// <summary>

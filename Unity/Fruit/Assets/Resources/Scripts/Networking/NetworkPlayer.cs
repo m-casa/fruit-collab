@@ -93,6 +93,26 @@ public class NetworkPlayer : NetworkBehaviour
     }
 
     /// <summary>
+    /// Attempts to claim the requested character if available.
+    /// </summary>
+
+    [Command]
+    public void CmdRequestCharacter(string selectedCharacter)
+    {
+        GameManager.Instance.ClaimCharacter(selectedCharacter, connectionToClient);
+    }
+
+    /// <summary>
+    /// Send a request to the server to ready this player.
+    /// </summary>
+
+    [Command]
+    public void CmdToggleReadyStatus()
+    {
+        GameManager.Instance.ToggleReadyStatus(connectionToClient);
+    }
+
+    /// <summary>
     /// Begins the character selection process on the server 
     ///  for the client that requested it.
     /// </summary>
@@ -101,16 +121,6 @@ public class NetworkPlayer : NetworkBehaviour
     private void CmdRequestSelectionStart()
     {
         GameManager.Instance.StartSelection(connectionToClient);
-    }
-
-    /// <summary>
-    /// Attempts to claim the requested character if available.
-    /// </summary>
-
-    [Command]
-    public void CmdRequestCharacter(string selectedCharacter)
-    {
-        GameManager.Instance.ClaimCharacter(selectedCharacter, connectionToClient);
     }
 
     /// <summary>

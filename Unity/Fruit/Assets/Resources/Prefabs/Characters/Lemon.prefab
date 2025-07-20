@@ -233,13 +233,14 @@ GameObject:
   - component: {fileID: 3582164147303534362}
   - component: {fileID: 2296800650997925241}
   - component: {fileID: 7498620500554490778}
+  - component: {fileID: 951389442514474426}
   - component: {fileID: 5277129659758366948}
   - component: {fileID: 4067961646589126391}
   - component: {fileID: -1040937386208016422}
   - component: {fileID: 386329734353417001}
   - component: {fileID: 2657623946194130285}
-  - component: {fileID: 951389442514474426}
   - component: {fileID: 4388227987882777247}
+  - component: {fileID: 2278079807116363304}
   m_Layer: 0
   m_Name: Lemon
   m_TagString: Player
@@ -428,6 +429,27 @@ MonoBehaviour:
   _chestTransform: {fileID: 7615291091242187272}
   _leanAmount: 12.5
   _leanSpeed: 8
+--- !u!114 &951389442514474426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1974657863803228055}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c98050b5be816c43bb32dd9be43780a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  _networkCombat: {fileID: 2278079807116363304}
+  _punchHitbox: {fileID: 4958483503640106968}
+  _enemyMask:
+    serializedVersion: 2
+    m_Bits: 0
+  _cooldownDuration: 0.15
 --- !u!95 &5277129659758366948
 Animator:
   serializedVersion: 7
@@ -548,26 +570,6 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0.05
   _animancer: {fileID: 4067961646589126391}
---- !u!114 &951389442514474426
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1974657863803228055}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c98050b5be816c43bb32dd9be43780a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
-  _punchHitbox: {fileID: 4958483503640106968}
-  _enemyMask:
-    serializedVersion: 2
-    m_Bits: 0
-  _cooldownDuration: 0.15
 --- !u!114 &4388227987882777247
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -583,7 +585,23 @@ MonoBehaviour:
   syncDirection: 1
   syncMode: 0
   syncInterval: 0
+  _currentHealth: 0
   _maxHealth: 9
+--- !u!114 &2278079807116363304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1974657863803228055}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 431e3fbe6dd036b4cb6e20670278046b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
 --- !u!1 &2325010807929797022
 GameObject:
   m_ObjectHideFlags: 0
