@@ -33,11 +33,7 @@ public class Combat : NetworkBehaviour
 
     public bool isAirPunching => _isAirPunching;
 
-    public bool takingDamage
-    {
-        get => _takingDamage;
-        set => _takingDamage = value;
-    }
+    public bool takingDamage => _takingDamage;
 
     #endregion
 
@@ -112,6 +108,128 @@ public class Combat : NetworkBehaviour
     #region METHODS
 
     /// <summary>
+    /// Start a punch initiated by the player.
+    /// </summary>
+
+    private void Punch()
+    {
+        if (_cooldownTimer <= 0f)
+        {
+            _punchButtonPressed = true;
+        }
+    }
+
+    /// <summary>
+    /// Manually releases the punch button, allowing the player
+    ///  to initiate another punch, possibly a combo.
+    /// </summary>
+
+    private void ReleasePunch()
+    {
+        _punchButtonPressed = false;
+    }
+
+    /// <summary>
+    /// Start blocking, initiated by the player.
+    /// </summary>
+
+    public void Block()
+    {
+        _blockButtonPressed = true;
+    }
+
+    /// <summary>
+    /// Manually releases the block button,
+    ///  stopping the player from blocking.
+    /// </summary>
+
+    public void StopBlocking()
+    {
+        _blockButtonPressed = false;
+
+        if (_isBlocking)
+        {
+            _isBlocking = false;
+            _networkCombat.CmdSetBlocking(false);
+
+            // Only re-enable movement if the player isn't paused
+            if (!UIManager.Instance.PauseMenuActive())
+            {
+                punchInputAction?.Enable();
+                _character.movementInputAction?.Enable();
+                _character.jumpInputAction?.Enable();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Initialize combat InputActions.
+    /// </summary>
+
+    public void InitializeCombat()
+    {
+        // Setup Punch input action handlers
+        punchInputAction = _character.inputActions.FindAction("Punch");
+        if (punchInputAction != null)
+        {
+            punchInputAction.started += OnPunch;
+            punchInputAction.performed += OnPunch;
+            punchInputAction.canceled += OnPunch;
+
+            punchInputAction.Enable();
+        }
+
+        // Setup Block input action handlers
+        blockInputAction = _character.inputActions.FindAction("Block");
+        if (blockInputAction != null)
+        {
+            blockInputAction.started += OnBlock;
+            blockInputAction.performed += OnBlock;
+            blockInputAction.canceled += OnBlock;
+
+            blockInputAction.Enable();
+        }
+    }
+
+    /// <summary>
+    /// Unsubscribe from combat input action events and disable their actions.
+    /// </summary>
+
+    public void DeinitializeCombat()
+    {
+        if (punchInputAction != null)
+        {
+            punchInputAction.started -= OnPunch;
+            punchInputAction.performed -= OnPunch;
+            punchInputAction.canceled -= OnPunch;
+
+            punchInputAction.Disable();
+            punchInputAction = null;
+        }
+
+        if (blockInputAction != null)
+        {
+            blockInputAction.started -= OnBlock;
+            blockInputAction.performed -= OnBlock;
+            blockInputAction.canceled -= OnBlock;
+
+            blockInputAction.Disable();
+            blockInputAction = null;
+        }
+    }
+
+    /// <summary>
+    /// Captures any combat the player initiates.
+    /// </summary>
+
+    public void HandleCombat()
+    {
+        HandlePunching();
+
+        HandleBlocking();
+    }
+
+    /// <summary>
     /// Captures any punches the player initiates.
     /// </summary>
 
@@ -170,87 +288,6 @@ public class Combat : NetworkBehaviour
     }
 
     /// <summary>
-    /// Handles punch logic while the character is in the air.
-    /// </summary>
-
-    private void HandleAirPunch()
-    {
-        if (_punchButtonPressed)
-        {
-            if (!_isAirPunching)
-            {
-                string airPunchClip = _character.rightFootUp ? "_AirPunch.R" : "_AirPunch.L";
-
-                _character.SetRotationMode(RotationMode.None);
-
-                if (_character.animancer.States.TryGet(airPunchClip, out var state))
-                {
-                    _character.animancer.Play(state);
-                    state.Speed = 1.25f;
-                    state.Time = 0f;
-
-                    if (_character.currentAnimationClip != airPunchClip)
-                    {
-                        _character.currentAnimationClip = airPunchClip;
-                        _character.networkAnimations.CmdPlayAirPunchAnimation(_character.currentAnimationClip);
-                    }
-                }
-
-                _isAirPunching = true;
-                _networkCombat.CmdSetAirPunching(true);
-
-                state.Events.OnEnd = () =>
-                {
-                    StartCoroutine(HoldLastFrame(state, 0.1f));
-                };
-            }
-
-            ReleasePunch();
-        }
-    }
-
-    /// <summary>
-    /// Captures block input that the player initiates.
-    /// </summary>
-
-    private void HandleBlocking()
-    {
-        if (_character.IsGrounded() && _blockButtonPressed && !_blockCooldown)
-        {
-            if (!isPunching)
-            {
-                _isBlocking = true;
-                _networkCombat.CmdSetBlocking(true);
-
-                _blockRechargeTimer = 0f;
-
-                punchInputAction?.Disable();
-                _character.movementInputAction?.Disable();
-                _character.jumpInputAction?.Disable();
-
-                _character.animancer.TryPlay("_Block", 0.15f);
-
-                if (_character.currentAnimationClip != "_Block")
-                {
-                    _character.currentAnimationClip = "_Block";
-                    _character.networkAnimations.CmdPlayBlockAnimation();
-                }
-            }
-        }
-
-        if (!_blockButtonPressed && !_blockCooldown && _blockPoints < 6)
-        {
-            _blockRechargeTimer += Time.deltaTime;
-
-            if (_blockRechargeTimer >= 3f && _blockPoints < 6f)
-            {
-                _blockPoints++;
-                _networkCombat.CmdSetBlockPoints(_blockPoints);
-            }
-        }
-    }
-
-    /// <summary>
     /// Combo different punches according to what is currently queued.
     /// </summary>
 
@@ -290,7 +327,6 @@ public class Combat : NetworkBehaviour
 
         // Mark as punching
         _isGroundPunching = true;
-        _networkCombat.CmdSetGroundPunching(true);
 
         // Apply a slight forward push for each punch
         _character.LaunchCharacter(transform.forward * 1.5f);
@@ -404,90 +440,6 @@ public class Combat : NetworkBehaviour
     }
 
     /// <summary>
-    /// Starts a cooldown to avoid punch spamming.
-    /// </summary>
-
-    private void StartCooldown() => _cooldownTimer = _cooldownDuration;
-
-    /// <summary>
-    /// Initialize combat InputActions.
-    /// </summary>
-
-    public void InitializeCombat()
-    {
-        // Setup Punch input action handlers
-        punchInputAction = _character.inputActions.FindAction("Punch");
-        if (punchInputAction != null)
-        {
-            punchInputAction.started += OnPunch;
-            punchInputAction.performed += OnPunch;
-            punchInputAction.canceled += OnPunch;
-
-            punchInputAction.Enable();
-        }
-
-        // Setup Block input action handlers
-        blockInputAction = _character.inputActions.FindAction("Block");
-        if (blockInputAction != null)
-        {
-            blockInputAction.started += OnBlock;
-            blockInputAction.performed += OnBlock;
-            blockInputAction.canceled += OnBlock;
-
-            blockInputAction.Enable();
-        }
-    }
-
-    /// <summary>
-    /// Unsubscribe from combat input action events and disable their actions.
-    /// </summary>
-
-    public void DeinitializeCombat()
-    {
-        if (punchInputAction != null)
-        {
-            punchInputAction.started -= OnPunch;
-            punchInputAction.performed -= OnPunch;
-            punchInputAction.canceled -= OnPunch;
-
-            punchInputAction.Disable();
-            punchInputAction = null;
-        }
-
-        if (blockInputAction != null)
-        {
-            blockInputAction.started -= OnBlock;
-            blockInputAction.performed -= OnBlock;
-            blockInputAction.canceled -= OnBlock;
-
-            blockInputAction.Disable();
-            blockInputAction = null;
-        }
-    }
-
-    /// <summary>
-    /// Start a punch initiated by the player.
-    /// </summary>
-
-    private void Punch()
-    {
-        if (_cooldownTimer <= 0f)
-        {
-            _punchButtonPressed = true;
-        }
-    }
-
-    /// <summary>
-    /// Manually releases the punch button, allowing the player
-    ///  to initiate another punch, possibly a combo.
-    /// </summary>
-
-    private void ReleasePunch()
-    {
-        _punchButtonPressed = false;
-    }
-
-    /// <summary>
     /// Reset the character's combo to a default state.
     /// </summary>
 
@@ -497,29 +449,20 @@ public class Combat : NetworkBehaviour
         if (_character.IsGrounded())
             _character.PlayIdleAnimation();
 
-        // Now that our combo has ended, apply invulnerability/knockback to the current target
+        // If we're currently attacking a target, disengage
         if (_currentTarget != null)
         {
-            CharacterHealth targetHealth = _currentTarget.GetComponent<CharacterHealth>();
-            NetworkCombat targetCombat = _currentTarget.GetComponent<NetworkCombat>();
             NetworkIdentity targetIdentity = _currentTarget.GetComponent<NetworkIdentity>();
             int punchesLanded = _currentComboStep + 1;
             float stunDuration = punchesLanded == 1 ? 1f : punchesLanded == 2 ? 2f : 2.5f;
 
-            targetHealth.CmdApplyTemporaryInvulnerability(stunDuration);
-            targetCombat.RpcStartKnockback(targetIdentity.connectionToClient, 0.2f, transform.forward);
-
-            if (targetCombat.currentAttacker != null)
-            {
-                targetCombat.currentAttacker = null;
-            }
+            _networkCombat.CmdDisengageTarget(targetIdentity, stunDuration);
 
             _currentTarget = null;
         }
 
         // Reset combo state
         _isGroundPunching = false;
-        _networkCombat.CmdSetGroundPunching(false);
 
         _currentComboStep = 0;
 
@@ -535,6 +478,51 @@ public class Combat : NetworkBehaviour
     }
 
     /// <summary>
+    /// Starts a cooldown to avoid punch spamming.
+    /// </summary>
+
+    private void StartCooldown() => _cooldownTimer = _cooldownDuration;
+
+    /// <summary>
+    /// Handles punch logic while the character is in the air.
+    /// </summary>
+
+    private void HandleAirPunch()
+    {
+        if (_punchButtonPressed)
+        {
+            if (!_isAirPunching)
+            {
+                string airPunchClip = _character.rightFootUp ? "_AirPunch.R" : "_AirPunch.L";
+
+                _character.SetRotationMode(RotationMode.None);
+
+                if (_character.animancer.States.TryGet(airPunchClip, out var state))
+                {
+                    _character.animancer.Play(state);
+                    state.Speed = 1.25f;
+                    state.Time = 0f;
+
+                    if (_character.currentAnimationClip != airPunchClip)
+                    {
+                        _character.currentAnimationClip = airPunchClip;
+                        _character.networkAnimations.CmdPlayAirPunchAnimation(_character.currentAnimationClip);
+                    }
+                }
+
+                _isAirPunching = true;
+
+                state.Events.OnEnd = () =>
+                {
+                    StartCoroutine(HoldLastFrame(state, 0.1f));
+                };
+            }
+
+            ReleasePunch();
+        }
+    }
+
+    /// <summary>
     /// Reset the character's air punch to a default state.
     /// </summary
 
@@ -543,53 +531,50 @@ public class Combat : NetworkBehaviour
         _character.PlayFallAnimation();
 
         _isAirPunching = false;
-        _networkCombat.CmdSetAirPunching(false);
 
         _character.SetRotationMode(RotationMode.OrientToMovement);
     }
 
     /// <summary>
-    /// Start blocking, initiated by the player.
+    /// Captures block input that the player initiates.
     /// </summary>
 
-    public void Block()
+    private void HandleBlocking()
     {
-        _blockButtonPressed = true;
-    }
-
-    /// <summary>
-    /// Manually releases the block button,
-    ///  stopping the player from blocking.
-    /// </summary>
-
-    public void StopBlocking()
-    {
-        _blockButtonPressed = false;
-
-        if (_isBlocking)
+        if (_character.IsGrounded() && _blockButtonPressed && !_blockCooldown)
         {
-            _isBlocking = false;
-            _networkCombat.CmdSetBlocking(false);
-
-            // Only re-enable movement if the player isn't paused
-            if (!UIManager.Instance.PauseMenuActive())
+            if (!isPunching)
             {
-                punchInputAction?.Enable();
-                _character.movementInputAction?.Enable();
-                _character.jumpInputAction?.Enable();
+                _isBlocking = true;
+                _networkCombat.CmdSetBlocking(true);
+
+                _blockRechargeTimer = 0f;
+
+                punchInputAction?.Disable();
+                _character.movementInputAction?.Disable();
+                _character.jumpInputAction?.Disable();
+
+                _character.animancer.TryPlay("_Block", 0.15f);
+
+                if (_character.currentAnimationClip != "_Block")
+                {
+                    _character.currentAnimationClip = "_Block";
+                    _character.networkAnimations.CmdPlayBlockAnimation();
+                }
             }
         }
-    }
 
-    /// <summary>
-    /// Captures any combat the player initiates.
-    /// </summary>
+        if (!_blockButtonPressed && !_blockCooldown && _blockPoints < 6)
+        {
+            _blockRechargeTimer += Time.deltaTime;
 
-    public void HandleCombat()
-    {
-        HandlePunching();
-
-        HandleBlocking();
+            if (_blockRechargeTimer >= 3f && _blockPoints < 6f)
+            {
+                _blockRechargeTimer = 2f;
+                _blockPoints++;
+                _networkCombat.CmdSetBlockPoints(_blockPoints);
+            }
+        }
     }
 
     /// <summary>
@@ -599,7 +584,7 @@ public class Combat : NetworkBehaviour
     public void TryHitTarget(FruitCharacter target)
     {
         // Make sure we're not hitting ourself
-        if (target == null || target == _character.GetComponent<CharacterHealth>()) return;
+        if (target == null || target == GetComponent<FruitCharacter>()) return;
 
         CharacterHealth targetHealth = target.GetComponent<CharacterHealth>();
 
@@ -608,25 +593,20 @@ public class Combat : NetworkBehaviour
         NetworkCombat targetCombat = target.GetComponent<NetworkCombat>();
 
         // If we're in the middle of a combo, make sure we don't accidentally hit someone else
-        if (_currentTarget != null && targetCombat.currentAttacker != this) return;
+        if (_currentTarget != null && targetCombat.currentAttacker != _networkCombat) return;
 
         // Blocking
         if (targetCombat.isBlocking)
         {
             if (targetCombat.currentAttacker == null || 
-                targetCombat.currentAttacker == GetComponent<NetworkIdentity>())
+                targetCombat.currentAttacker == _networkCombat)
             {
                 if (targetCombat.blockPoints > 0 && !targetCombat.blockCooldown)
                 {
-                    targetCombat.FaceAttacker(GetComponent<NetworkIdentity>());
-                    targetCombat.CmdSetBlockPoints(targetCombat.blockPoints--);
                     targetCombat.CmdSetCurrentAttacker(GetComponent<NetworkIdentity>());
-                    targetCombat.blockRechargeTimer = 0f;
-
-                    if (targetCombat.blockPoints <= 0)
-                    {
-                        targetCombat.CmdStartBlockCooldownRoutine();
-                    }
+                    targetCombat.CmdFaceAttacker(target.GetComponent<NetworkIdentity>(), 
+                        GetComponent<NetworkIdentity>());
+                    targetCombat.CmdSetBlockPoints(targetCombat.blockPoints - 1);
                 }
             }
             return;
@@ -636,6 +616,59 @@ public class Combat : NetworkBehaviour
         targetHealth.CmdTakeDamage(1);
         targetCombat.CmdSetCurrentAttacker(GetComponent<NetworkIdentity>());
         _currentTarget = target;
+    }
+
+    /// <summary>
+    /// Damage the character and push them back.
+    /// </summary>
+
+    public void StartKnockback(NetworkConnection conn, float effectDuration, Vector3 direction)
+    {
+        if (!takingDamage)
+        {
+            _takingDamage = true;
+
+            ResetCombo();
+            ResetAirPunch();
+
+            _character.DisableCharacter();
+
+            _character.SetVelocity(Vector3.zero);
+
+            _character.PauseGroundConstraint();
+
+            // Push the player back
+            _character.LaunchCharacter((direction * 5f) + (_character.GetUpVector() * 2.5f), true);
+
+            if (_character.animancer.States.TryGet("_Hurt", out var state))
+            {
+                _character.animancer.Play(state);
+                state.Time = 0f;
+
+                if (_character.currentAnimationClip != "_Hurt")
+                {
+                    _character.currentAnimationClip = "_Hurt";
+                    _character.networkAnimations.CmdPlayHurtAnimation();
+                }
+            }
+
+            Invoke(nameof(StopKnockback), effectDuration);
+        }
+    }
+
+    /// <summary>
+    /// Take the character out of the damage state.
+    /// </summary>
+
+    private void StopKnockback()
+    {
+        _takingDamage = false;
+
+        // Only re-enable movement if the player isn't paused
+        if (!UIManager.Instance.PauseMenuActive())
+        {
+            _character.EnableCharacter();
+        }
     }
 
     #endregion

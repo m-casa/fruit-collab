@@ -14,8 +14,7 @@ public class NetworkPlayer : NetworkBehaviour
     [SyncVar(hook = nameof(HandleSteamIdUpdated))]
     private ulong _steamId;
 
-    [SyncVar]
-    private NetworkIdentity _characterIdentity;
+    [SyncVar] private NetworkIdentity _characterIdentity;
 
     [SerializeField] private TextMeshProUGUI _playerName;
 

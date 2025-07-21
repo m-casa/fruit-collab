@@ -10,8 +10,7 @@ public class GameManager : NetworkBehaviour
 
     public static GameManager Instance { get; private set; }
 
-    [SyncVar]
-    private bool _inLobby;
+    [SyncVar] private bool _inLobby;
 
     [Header("Game States")]
     [SerializeField] private List<string> _allCharacters = new List<string> { "Apple", "Grape", "Lemon", "Peach" };

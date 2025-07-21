@@ -778,16 +778,6 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Request from the server to disable this player's character.
-        /// </summary>
-
-        //[TargetRpc]
-        //public void RpcDisableCharacter(NetworkConnection conn)
-        //{
-        //    DisableCharacter();
-        //}
-
-        /// <summary>
         /// Disables the player's character.
         /// </summary>
 
@@ -798,16 +788,6 @@ namespace EasyCharacterMovement
             combat.punchInputAction?.Disable();
             combat.blockInputAction?.Disable();
         }
-
-        /// <summary>
-        /// Request from the server to enable this player's character.
-        /// </summary>
-
-        //[TargetRpc]
-        //public void RpcEnableCharacter(NetworkConnection conn)
-        //{
-        //    EnableCharacter();
-        //}
 
         /// <summary>
         /// Enables the player's character.

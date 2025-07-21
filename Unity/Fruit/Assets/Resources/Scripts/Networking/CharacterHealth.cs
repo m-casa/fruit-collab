@@ -7,11 +7,9 @@ public class CharacterHealth : NetworkHealth
 {
     #region FIELDS
 
-    [SyncVar]
-    private bool _invulnerable;
+    [SyncVar] private bool _invulnerable;
 
     private FruitCharacter _character;
-    private Combat _combat;
     private float _invulnTimer;
 
     #endregion
@@ -31,7 +29,6 @@ public class CharacterHealth : NetworkHealth
     private void Awake()
     {
         _character = GetComponent<FruitCharacter>();
-        _combat = GetComponent<Combat>();
         _currentHealth = maxHealth;
     }
 
@@ -72,8 +69,7 @@ public class CharacterHealth : NetworkHealth
     /// Setup and start the invulnerability timer.
     /// </summary>
 
-    [Command]
-    public void CmdApplyTemporaryInvulnerability(float duration)
+    public void ApplyTemporaryInvulnerability(float duration)
     {
         _invulnerable = true;
         _invulnTimer = duration;

@@ -16,8 +16,6 @@ public abstract class NetworkHealth : NetworkBehaviour
 
     public int maxHealth => _maxHealth;
 
-    public int currentHealth => _currentHealth;
-
     public bool healthDepleted => _currentHealth <= 0;
 
     #endregion
@@ -25,7 +23,8 @@ public abstract class NetworkHealth : NetworkBehaviour
     #region METHODS
 
     /// <summary>
-    /// Damage this character and check if their health depleted.
+    /// Sends a command to the server, telling it
+    ///  to damage this character and check if their health depleted.
     /// </summary>
 
     [Command]
