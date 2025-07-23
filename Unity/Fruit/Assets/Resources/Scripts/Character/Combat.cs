@@ -640,14 +640,14 @@ public class Combat : NetworkBehaviour
             // Push the player back
             _character.LaunchCharacter((direction * 5f) + (_character.GetUpVector() * 2.5f), true);
 
-            if (_character.animancer.States.TryGet("_Hurt", out var state))
+            if (_character.animancer.States.TryGet("_Knockback", out var state))
             {
                 _character.animancer.Play(state);
                 state.Time = 0f;
 
-                if (_character.currentAnimationClip != "_Hurt")
+                if (_character.currentAnimationClip != "_Knockback")
                 {
-                    _character.currentAnimationClip = "_Hurt";
+                    _character.currentAnimationClip = "_Knockback";
                     _character.networkAnimations.CmdPlayHurtAnimation();
                 }
             }
