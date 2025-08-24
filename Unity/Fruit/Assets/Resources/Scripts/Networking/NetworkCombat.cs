@@ -31,24 +31,33 @@ public class NetworkCombat : NetworkBehaviour
     
     /// <summary>
     /// Sends a command to the server, telling it
-    ///  to set the current attacker for this player's Character.
+    ///  to set the current attacker for the opponent.
     /// </summary>
 
     [Command]
-    public void CmdSetCurrentAttacker(NetworkIdentity attackerIdentity)
+    public void CmdSetAttackerForOponnent(NetworkIdentity opponentIdentity, NetworkIdentity attackerIdentity)
+    {
+        opponentIdentity.GetComponent<NetworkCombat>().SetAttacker(attackerIdentity);
+    }
+
+    /// <summary>
+    /// Set the current attacker for this player's Character.
+    /// </summary>
+
+    public void SetAttacker(NetworkIdentity attackerIdentity)
     {
         _currentAttacker = attackerIdentity.GetComponent<NetworkCombat>();
     }
 
     /// <summary>
     /// Sends a command to the server, telling it
-    ///  to Face the direction of the current attacker.
+    ///  to face the opponent in the direction of the attacker.
     /// </summary>
 
     [Command]
-    public void CmdFaceAttacker(NetworkIdentity targetIdentity, NetworkIdentity attackerIdentity)
+    public void CmdFaceOpponentTowardsAttacker(NetworkIdentity opponentIdentity, NetworkIdentity attackerIdentity)
     {
-        RpcFaceAttacker(targetIdentity.connectionToClient, attackerIdentity);
+        RpcFaceAttacker(opponentIdentity.connectionToClient, attackerIdentity);
     }
 
     /// <summary>
@@ -69,12 +78,10 @@ public class NetworkCombat : NetworkBehaviour
     }
 
     /// <summary>
-    /// Sends a command to the server, telling it
-    ///  to reset the current attacker for this player's Character.
+    /// Reset the current attacker for this player's Character.
     /// </summary>
 
-    [Command]
-    public void CmdResetCurrentAttacker()
+    public void ResetCurrentAttacker()
     {
         _currentAttacker = null;
     }
@@ -96,7 +103,16 @@ public class NetworkCombat : NetworkBehaviour
     /// </summary>
 
     [Command]
-    public void CmdSetBlockPoints(int blockPoints)
+    public void CmdSetBlockPoints(NetworkIdentity opponentIdentity, int blockPoints)
+    {
+        opponentIdentity.GetComponent<NetworkCombat>().SetBlockPoints(blockPoints);
+    }
+
+    /// <summary>
+    /// Set the block points left for this player's Character.
+    /// </summary>
+
+    public void SetBlockPoints(int blockPoints)
     {
         _blockPoints = blockPoints;
 
@@ -143,7 +159,7 @@ public class NetworkCombat : NetworkBehaviour
 
         if (targetCombat.currentAttacker != null)
         {
-            targetCombat.CmdResetCurrentAttacker();
+            targetCombat.ResetCurrentAttacker();
         }
     }
 

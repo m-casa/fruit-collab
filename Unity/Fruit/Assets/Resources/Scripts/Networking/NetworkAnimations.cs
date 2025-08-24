@@ -218,9 +218,9 @@ public class NetworkAnimations : NetworkBehaviour
     /// </summary>
 
     [Command]
-    public void CmdPlayHurtAnimation()
+    public void CmdPlayKnockbackAnimation()
     {
-        RpcPlayHurtAnimation();
+        RpcPlayKnockbackAnimation();
     }
 
     /// <summary>
@@ -229,9 +229,9 @@ public class NetworkAnimations : NetworkBehaviour
     /// </summary>
 
     [ClientRpc(includeOwner = false)]
-    private void RpcPlayHurtAnimation()
+    private void RpcPlayKnockbackAnimation()
     {
-        var state = _animancer.TryPlay("_Hurt");
+        var state = _animancer.TryPlay("_Knockback");
         state.Time = 0f;
     }
 

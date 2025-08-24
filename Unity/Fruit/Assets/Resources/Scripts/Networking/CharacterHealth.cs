@@ -37,13 +37,23 @@ public class CharacterHealth : NetworkHealth
     #region METHODS
 
     /// <summary>
-    /// Damage this character and check if their health depleted.
+    /// Sends a command to the server, telling it
+    ///  to damage this character and check if their health depleted.
     /// </summary>
 
     [Command]
-    public override void CmdTakeDamage(int amount)
+    public void CmdDamageOpponent(NetworkIdentity opponentIdentity, int amount)
     {
-        base.CmdTakeDamage(amount);
+        opponentIdentity.GetComponent<CharacterHealth>().TakeDamage(amount);
+    }
+
+    /// <summary>
+    /// Damage this character and check if their health depleted.
+    /// </summary>
+
+    public override void TakeDamage(int amount)
+    {
+        base.TakeDamage(amount);
     }
 
     /// <summary>
@@ -52,7 +62,6 @@ public class CharacterHealth : NetworkHealth
 
     protected override void OnHealthChanged(int oldHealth, int newHealth)
     {
-        base.OnHealthChanged(oldHealth, newHealth);
         // TODO: Update UI (health bar, damage effect)
     }
 

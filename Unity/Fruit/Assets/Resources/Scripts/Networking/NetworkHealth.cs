@@ -23,12 +23,10 @@ public abstract class NetworkHealth : NetworkBehaviour
     #region METHODS
 
     /// <summary>
-    /// Sends a command to the server, telling it
-    ///  to damage this character and check if their health depleted.
+    /// Damage this character and check if their health depleted.
     /// </summary>
 
-    [Command]
-    public virtual void CmdTakeDamage(int amount)
+    public virtual void TakeDamage(int amount)
     {
         if (healthDepleted) return;
 

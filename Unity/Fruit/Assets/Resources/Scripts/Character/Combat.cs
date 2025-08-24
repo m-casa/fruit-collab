@@ -11,6 +11,7 @@ public class Combat : NetworkBehaviour
     #region FIELDS
 
     [SerializeField] private NetworkCombat _networkCombat;
+    [SerializeField] private CharacterHealth _characterHealth;
     [SerializeField] private Collider _punchHitbox;
     [SerializeField] private LayerMask _enemyMask;
     [SerializeField] private float _cooldownDuration = 0.15f; // Cooldown duration after combo ends or fails
@@ -572,7 +573,7 @@ public class Combat : NetworkBehaviour
             {
                 _blockRechargeTimer = 2f;
                 _blockPoints++;
-                _networkCombat.CmdSetBlockPoints(_blockPoints);
+                _networkCombat.SetBlockPoints(_blockPoints);
             }
         }
     }
@@ -598,24 +599,35 @@ public class Combat : NetworkBehaviour
         // Blocking
         if (targetCombat.isBlocking)
         {
+            // Check if we can harm their block shield
             if (targetCombat.currentAttacker == null || 
                 targetCombat.currentAttacker == _networkCombat)
             {
                 if (targetCombat.blockPoints > 0 && !targetCombat.blockCooldown)
                 {
-                    targetCombat.CmdSetCurrentAttacker(GetComponent<NetworkIdentity>());
-                    targetCombat.CmdFaceAttacker(target.GetComponent<NetworkIdentity>(), 
+                    _networkCombat.CmdSetAttackerForOponnent(target.GetComponent<NetworkIdentity>(),
                         GetComponent<NetworkIdentity>());
-                    targetCombat.CmdSetBlockPoints(targetCombat.blockPoints - 1);
+
+                    _networkCombat.CmdFaceOpponentTowardsAttacker(target.GetComponent<NetworkIdentity>(),
+                        GetComponent<NetworkIdentity>());
+
+                    _networkCombat.CmdSetBlockPoints(target.GetComponent<NetworkIdentity>(),
+                        targetCombat.blockPoints - 1);
                 }
             }
             return;
         }
 
         // Damage
-        targetHealth.CmdTakeDamage(1);
-        targetCombat.CmdSetCurrentAttacker(GetComponent<NetworkIdentity>());
         _currentTarget = target;
+
+        _networkCombat.CmdSetAttackerForOponnent(target.GetComponent<NetworkIdentity>(),
+            GetComponent<NetworkIdentity>());
+
+        _networkCombat.CmdFaceOpponentTowardsAttacker(target.GetComponent<NetworkIdentity>(),
+            GetComponent<NetworkIdentity>());
+
+        _characterHealth.CmdDamageOpponent(target.GetComponent<NetworkIdentity>(), 1);
     }
 
     /// <summary>
@@ -648,7 +660,7 @@ public class Combat : NetworkBehaviour
                 if (_character.currentAnimationClip != "_Knockback")
                 {
                     _character.currentAnimationClip = "_Knockback";
-                    _character.networkAnimations.CmdPlayHurtAnimation();
+                    _character.networkAnimations.CmdPlayKnockbackAnimation();
                 }
             }
 

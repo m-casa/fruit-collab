@@ -662,11 +662,15 @@ PlayerSettings:
   scriptingDefineSymbols:
     Android: 
     EmbeddedLinux: 
+    GameCoreScarlett: 
     GameCoreXboxOne: 
+    Kepler: 
+    LinuxHeadlessSimulation: 
     Nintendo Switch: 
     PS4: 
     PS5: 
     QNX: 
+    ReservedCFE: 
     Stadia: 
     Standalone: MIRROR;MIRROR_79_OR_NEWER;MIRROR_81_OR_NEWER;MIRROR_82_OR_NEWER;MIRROR_83_OR_NEWER;MIRROR_84_OR_NEWER;MIRROR_85_OR_NEWER;MIRROR_86_OR_NEWER;MIRROR_89_OR_NEWER;STEAMWORKS_NET;MIRROR_90_OR_NEWER;MIRROR_93_OR_NEWER;EDGEGAP_PLUGIN_SERVERS
     VisionOS: 

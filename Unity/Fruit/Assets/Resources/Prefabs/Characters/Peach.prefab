@@ -522,13 +522,13 @@ GameObject:
   - component: {fileID: 3702270312258201845}
   - component: {fileID: 5116728401642926800}
   - component: {fileID: 1375651957225080573}
-  - component: {fileID: 4647953403796533262}
   - component: {fileID: 8180022915292359122}
   - component: {fileID: 5895507634475034396}
+  - component: {fileID: -4341405161139843939}
   - component: {fileID: 3342176222406481639}
   - component: {fileID: -2156554060568411090}
-  - component: {fileID: -4341405161139843939}
   - component: {fileID: 937349040416087713}
+  - component: {fileID: 4647953403796533262}
   - component: {fileID: 2989749063993892193}
   m_Layer: 0
   m_Name: Peach
@@ -566,10 +566,10 @@ Rigidbody:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2606219565802472321}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0
+  m_LinearDamping: 0
+  m_AngularDamping: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -718,27 +718,6 @@ MonoBehaviour:
   _chestTransform: {fileID: 2284284205523213089}
   _leanAmount: 12.5
   _leanSpeed: 8
---- !u!114 &4647953403796533262
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2606219565802472321}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c98050b5be816c43bb32dd9be43780a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
-  _networkCombat: {fileID: 2989749063993892193}
-  _punchHitbox: {fileID: 4909380219332461232}
-  _enemyMask:
-    serializedVersion: 2
-    m_Bits: 0
-  _cooldownDuration: 0.15
 --- !u!95 &8180022915292359122
 Animator:
   serializedVersion: 7
@@ -795,6 +774,22 @@ MonoBehaviour:
   - {fileID: 7400000, guid: 2330b1a12e46f5b4886533bd1cc1a1fc, type: 2}
   - {fileID: 7400000, guid: ed0815c636719fc43ad65df07eb172f0, type: 2}
   - {fileID: 7400000, guid: 6255e4d75b591d643b349b9e4cf720fc, type: 2}
+--- !u!114 &-4341405161139843939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2606219565802472321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 227f0c8abd69baa499cb988227bc0896, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0.05
+  _animancer: {fileID: 5895507634475034396}
 --- !u!114 &3342176222406481639
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -845,22 +840,6 @@ MonoBehaviour:
   rotationSensitivity: 0.01
   positionPrecision: 0.01
   scalePrecision: 0.01
---- !u!114 &-4341405161139843939
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2606219565802472321}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 227f0c8abd69baa499cb988227bc0896, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0.05
-  _animancer: {fileID: 5895507634475034396}
 --- !u!114 &937349040416087713
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -878,6 +857,28 @@ MonoBehaviour:
   syncInterval: 0
   _currentHealth: 0
   _maxHealth: 9
+--- !u!114 &4647953403796533262
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2606219565802472321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c98050b5be816c43bb32dd9be43780a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  _networkCombat: {fileID: 2989749063993892193}
+  _characterHealth: {fileID: 937349040416087713}
+  _punchHitbox: {fileID: 4909380219332461232}
+  _enemyMask:
+    serializedVersion: 2
+    m_Bits: 0
+  _cooldownDuration: 0.15
 --- !u!114 &2989749063993892193
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -893,7 +894,7 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  _combat: {fileID: 0}
+  _combat: {fileID: 4647953403796533262}
 --- !u!1 &2653771818352750789
 GameObject:
   m_ObjectHideFlags: 0

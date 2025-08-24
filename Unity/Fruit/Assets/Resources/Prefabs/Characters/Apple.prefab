@@ -360,13 +360,13 @@ GameObject:
   - component: {fileID: 135886457466127066}
   - component: {fileID: 6728017250559147570}
   - component: {fileID: 7030750300313085983}
-  - component: {fileID: 296127116422234823}
   - component: {fileID: 7104296100037563239}
   - component: {fileID: 6772837597104904537}
+  - component: {fileID: 2243606611860745446}
   - component: {fileID: 8638801432728212291}
   - component: {fileID: 910159796586076118}
-  - component: {fileID: 2243606611860745446}
   - component: {fileID: 4159460650062202877}
+  - component: {fileID: 296127116422234823}
   - component: {fileID: 1973020847931412122}
   m_Layer: 0
   m_Name: Apple
@@ -404,10 +404,10 @@ Rigidbody:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2770216168605465205}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0
+  m_LinearDamping: 0
+  m_AngularDamping: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -556,27 +556,6 @@ MonoBehaviour:
   _chestTransform: {fileID: 8303410903216220320}
   _leanAmount: 12.5
   _leanSpeed: 8
---- !u!114 &296127116422234823
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2770216168605465205}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c98050b5be816c43bb32dd9be43780a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
-  _networkCombat: {fileID: 1973020847931412122}
-  _punchHitbox: {fileID: 3334988667284989812}
-  _enemyMask:
-    serializedVersion: 2
-    m_Bits: 0
-  _cooldownDuration: 0.15
 --- !u!95 &7104296100037563239
 Animator:
   serializedVersion: 7
@@ -633,6 +612,22 @@ MonoBehaviour:
   - {fileID: 7400000, guid: 2330b1a12e46f5b4886533bd1cc1a1fc, type: 2}
   - {fileID: 7400000, guid: ed0815c636719fc43ad65df07eb172f0, type: 2}
   - {fileID: 7400000, guid: 6255e4d75b591d643b349b9e4cf720fc, type: 2}
+--- !u!114 &2243606611860745446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2770216168605465205}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 227f0c8abd69baa499cb988227bc0896, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0.05
+  _animancer: {fileID: 6772837597104904537}
 --- !u!114 &8638801432728212291
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -683,22 +678,6 @@ MonoBehaviour:
   rotationSensitivity: 0.01
   positionPrecision: 0.01
   scalePrecision: 0.01
---- !u!114 &2243606611860745446
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2770216168605465205}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 227f0c8abd69baa499cb988227bc0896, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0.05
-  _animancer: {fileID: 6772837597104904537}
 --- !u!114 &4159460650062202877
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -716,6 +695,28 @@ MonoBehaviour:
   syncInterval: 0
   _currentHealth: 0
   _maxHealth: 9
+--- !u!114 &296127116422234823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2770216168605465205}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c98050b5be816c43bb32dd9be43780a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  _networkCombat: {fileID: 1973020847931412122}
+  _characterHealth: {fileID: 4159460650062202877}
+  _punchHitbox: {fileID: 3334988667284989812}
+  _enemyMask:
+    serializedVersion: 2
+    m_Bits: 0
+  _cooldownDuration: 0.15
 --- !u!114 &1973020847931412122
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -731,7 +732,7 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  _combat: {fileID: 0}
+  _combat: {fileID: 296127116422234823}
 --- !u!1 &2897429832833513327
 GameObject:
   m_ObjectHideFlags: 0
