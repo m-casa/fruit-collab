@@ -23,6 +23,7 @@ namespace EasyCharacterMovement
         [SerializeField] private float _leanAmount = 12.5f; // Maximum degrees to lean
         [SerializeField] private float _leanSpeed = 8f; // Speed at which the lean is applied
 
+        private Vector3 _previousMovementDirection = Vector3.zero;
         private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
         private Quaternion _chestTargetRotation; // Target rotation for the lean
         private string _currentAnimationClip;
@@ -39,6 +40,12 @@ namespace EasyCharacterMovement
         public NetworkAnimations networkAnimations => _networkAnimations;
 
         public Combat combat => _combat;
+
+        public Vector3 previousMovementDirection
+        {
+            get => _previousMovementDirection;
+            set => _previousMovementDirection = value;
+        }
 
         public bool rightFootUp => _rightFootUp;
 
@@ -293,6 +300,12 @@ namespace EasyCharacterMovement
         {
             base.HandleInput();
 
+            // Don't allow Vector3.zero to be set, which stops our rotation
+            if (GetMovementDirection() != Vector3.zero)
+            {
+                _previousMovementDirection = GetMovementDirection();
+            }
+
             combat.HandleCombat();
 
             HandlePausing();
@@ -306,8 +319,56 @@ namespace EasyCharacterMovement
 
         protected override void UpdateRotation()
         {
-            // Call base method (eg: rotate towards movement direction)
-            base.UpdateRotation();
+            // If Character movement is disabled, return
+
+            if (IsDisabled())
+                return;
+
+            // Should update Character's rotation ?
+
+            RotationMode rotationMode = GetRotationMode();
+
+            switch (rotationMode)
+            {
+                case RotationMode.None:
+                    return;
+
+                case RotationMode.OrientToMovement:
+                    {
+                        // Orient towards current movement direction vector
+
+                        RotateTowardsWithSlerp(_previousMovementDirection);
+
+                        break;
+                    }
+
+                case RotationMode.OrientToCameraViewDirection:
+                    {
+                        // Orient towards camera view direction
+
+                        if (camera)
+                            RotateTowards(cameraTransform.forward);
+
+                        break;
+                    }
+
+                case RotationMode.OrientWithRootMotion:
+                    {
+                        // Rotate using root motion
+
+                        RotateWithRootMotion();
+
+                        break;
+                    }
+
+                case RotationMode.Custom:
+                    {
+                        // Custom rotation mode
+
+                        CustomRotationMode();
+                        break;
+                    }
+            }
 
             // Update's gravity direction and orient character's Up to -gravity direction
             RaycastHit hit;

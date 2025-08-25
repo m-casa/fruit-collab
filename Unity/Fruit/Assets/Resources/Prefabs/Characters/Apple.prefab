@@ -473,7 +473,7 @@ MonoBehaviour:
   _useFlatBaseForGroundChecks: 0
   _collisionLayers:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 65
   _triggerInteraction: 1
   _advanced:
     minMoveDistance: 0
@@ -713,9 +713,9 @@ MonoBehaviour:
   _networkCombat: {fileID: 1973020847931412122}
   _characterHealth: {fileID: 4159460650062202877}
   _punchHitbox: {fileID: 3334988667284989812}
-  _enemyMask:
+  _attackable:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   _cooldownDuration: 0.15
 --- !u!114 &1973020847931412122
 MonoBehaviour:

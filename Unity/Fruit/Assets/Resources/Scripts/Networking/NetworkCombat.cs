@@ -1,3 +1,4 @@
+using EasyCharacterMovement;
 using Mirror;
 using System.Collections;
 using UnityEngine;
@@ -57,7 +58,7 @@ public class NetworkCombat : NetworkBehaviour
     [Command]
     public void CmdFaceOpponentTowardsAttacker(NetworkIdentity opponentIdentity, NetworkIdentity attackerIdentity)
     {
-        RpcFaceAttacker(opponentIdentity.connectionToClient, attackerIdentity);
+        opponentIdentity.GetComponent<NetworkCombat>().RpcFaceAttacker(opponentIdentity.connectionToClient, attackerIdentity);
     }
 
     /// <summary>
@@ -74,7 +75,7 @@ public class NetworkCombat : NetworkBehaviour
         Vector3 lookDir = (attacker.position - transform.position).normalized;
         lookDir.y = 0f;
         if (lookDir != Vector3.zero)
-            transform.forward = lookDir;
+            GetComponent<FruitCharacter>().SetRotation(Quaternion.LookRotation(lookDir));
     }
 
     /// <summary>

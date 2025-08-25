@@ -13,7 +13,6 @@ public class Combat : NetworkBehaviour
     [SerializeField] private NetworkCombat _networkCombat;
     [SerializeField] private CharacterHealth _characterHealth;
     [SerializeField] private Collider _punchHitbox;
-    [SerializeField] private LayerMask _enemyMask;
     [SerializeField] private float _cooldownDuration = 0.15f; // Cooldown duration after combo ends or fails
 
     private FruitCharacter _character, _currentTarget;
@@ -309,15 +308,21 @@ public class Combat : NetworkBehaviour
         // Get the next punch index from the queue
         _currentComboStep = _punchQueue.Dequeue();
 
-        // Attempt to punch an opponent
-        EnablePunchHitbox();
-
         // Play and adjust the animation state
         if (_character.animancer.States.TryGet(_comboAnimations[_currentComboStep], out var state))
         {
             _character.animancer.Play(state);
             state.Speed = 1.25f;
             state.Time = 0f;
+
+            // Clear previous events first
+            state.Events.Clear();
+
+            // Add event to enable hitbox at 50% of animation
+            state.Events.Add(0.5f, EnablePunchHitbox);
+
+            // Add event to disable hitbox at 90% of animation (or adjust as needed)
+            state.Events.Add(0.9f, DisablePunchHitbox);
 
             if (_character.currentAnimationClip != _comboAnimations[_currentComboStep])
             {
@@ -329,15 +334,14 @@ public class Combat : NetworkBehaviour
         // Mark as punching
         _isGroundPunching = true;
 
+        FaceClosestTarget();
+
         // Apply a slight forward push for each punch
         _character.LaunchCharacter(transform.forward * 1.5f);
 
         // Schedule the transition back to idle after the animation
         state.Events.OnEnd = () =>
         {
-            // End of the punch animation, so disable the hitbox
-            DisablePunchHitbox();
-
             if (_punchQueue.Count > 0)
             {
                 // Execute the next combo step immediately
@@ -357,7 +361,7 @@ public class Combat : NetworkBehaviour
 
     private void FaceClosestTarget()
     {
-        Collider[] hits = Physics.OverlapSphere(transform.position, 8f, _enemyMask);
+        Collider[] hits = Physics.OverlapSphere(transform.position, 0.7f, Physics.AllLayers);
         if (hits.Length == 0) return;
 
         Vector3 preferredDir = _character.GetMovementDirection();
@@ -367,11 +371,19 @@ public class Combat : NetworkBehaviour
         float bestDot = -1f;
         Transform bestTarget = null;
 
+        // Cosine of 45 degrees (0.7071) - targets must be within 45° cone
+        float fovThreshold = Mathf.Cos(45f * Mathf.Deg2Rad);
+
         foreach (var hit in hits)
         {
-            if (hit.transform == transform) continue;
+            // Skip if it's not a Player or if it's ourselves
+            if (!hit.CompareTag("Player") || hit.transform == transform) continue;
+
             Vector3 toTarget = (hit.transform.position - transform.position).normalized;
             float dot = Vector3.Dot(preferredDir, toTarget);
+
+            // Only consider targets in front (within the 45° FOV)
+            if (dot < fovThreshold) continue;
 
             if (dot > bestDot)
             {
@@ -385,7 +397,10 @@ public class Combat : NetworkBehaviour
             Vector3 lookDir = (bestTarget.position - transform.position).normalized;
             lookDir.y = 0f;
             if (lookDir != Vector3.zero)
+            {
+                _character.previousMovementDirection = lookDir;
                 transform.forward = lookDir;
+            }
         }
     }
 
@@ -605,6 +620,8 @@ public class Combat : NetworkBehaviour
             {
                 if (targetCombat.blockPoints > 0 && !targetCombat.blockCooldown)
                 {
+                    _currentTarget = target;
+
                     _networkCombat.CmdSetAttackerForOponnent(target.GetComponent<NetworkIdentity>(),
                         GetComponent<NetworkIdentity>());
 
@@ -617,8 +634,7 @@ public class Combat : NetworkBehaviour
             }
             return;
         }
-
-        // Damage
+        
         _currentTarget = target;
 
         _networkCombat.CmdSetAttackerForOponnent(target.GetComponent<NetworkIdentity>(),
