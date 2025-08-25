@@ -2,6 +2,7 @@ using EasyCharacterMovement;
 using Mirror;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 
 public class NetworkCombat : NetworkBehaviour
 {
@@ -75,7 +76,10 @@ public class NetworkCombat : NetworkBehaviour
         Vector3 lookDir = (attacker.position - transform.position).normalized;
         lookDir.y = 0f;
         if (lookDir != Vector3.zero)
-            GetComponent<FruitCharacter>().SetRotation(Quaternion.LookRotation(lookDir));
+        {
+            GetComponent<FruitCharacter>().previousMovementDirection = lookDir;
+            transform.forward = lookDir;
+        }
     }
 
     /// <summary>
