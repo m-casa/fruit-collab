@@ -361,7 +361,7 @@ public class Combat : NetworkBehaviour
 
     private void FaceClosestTarget()
     {
-        Collider[] hits = Physics.OverlapSphere(transform.position, 0.7f, Physics.AllLayers);
+        Collider[] hits = Physics.OverlapSphere(transform.position, 0.95f, Physics.AllLayers);
         if (hits.Length == 0) return;
 
         Vector3 preferredDir = _character.GetMovementDirection();

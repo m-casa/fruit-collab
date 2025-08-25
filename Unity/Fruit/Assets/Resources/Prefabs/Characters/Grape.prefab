@@ -1824,10 +1824,10 @@ MonoBehaviour:
   _networkCombat: {fileID: 4112503059498351644}
   _characterHealth: {fileID: 5499814924163150139}
   _punchHitbox: {fileID: 2992395091240981847}
-  _attackable:
-    serializedVersion: 2
-    m_Bits: 64
   _cooldownDuration: 0.15
+  viewRadius: 0.95
+  viewAngle: 45
+  rayCount: 20
 --- !u!114 &4112503059498351644
 MonoBehaviour:
   m_ObjectHideFlags: 0
