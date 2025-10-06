@@ -17,7 +17,7 @@ public class MaterialMinMaxDrawer : MaterialPropertyDrawer {
     }
 
     private static bool IsPropertyTypeSuitable(MaterialProperty prop) {
-        return prop.type == MaterialProperty.PropType.Vector;
+        return prop.propertyType == UnityEngine.Rendering.ShaderPropertyType.Vector;
     }
 
     public override void OnGUI(Rect position, MaterialProperty prop, string label, MaterialEditor editor) {

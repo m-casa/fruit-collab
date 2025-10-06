@@ -26,7 +26,7 @@ public class MaterialGradientDrawer : MaterialPropertyDrawer {
     }
 
     public override void OnGUI(Rect position, MaterialProperty prop, GUIContent label, MaterialEditor editor) {
-        if (prop.type != MaterialProperty.PropType.Texture) {
+        if (prop.propertyType != UnityEngine.Rendering.ShaderPropertyType.Texture) {
             EditorGUI.HelpBox(position, $"[Gradient] used on non-texture property \"{prop.name}\"", MessageType.Error);
             return;
         }

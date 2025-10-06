@@ -10,7 +10,7 @@ public class CustomDrawersShaderEditor : ShaderGUI {
 
     public override void OnGUI(MaterialEditor editor, MaterialProperty[] properties) {
         foreach (var property in properties) {
-            bool hideInInspector = (property.flags & MaterialProperty.PropFlags.HideInInspector) != 0;
+            bool hideInInspector = (property.propertyFlags & ShaderPropertyFlags.HideInInspector) != 0;
             if (hideInInspector) {
                 continue;
             }
@@ -39,10 +39,10 @@ public class CustomDrawersShaderEditor : ShaderGUI {
             displayName = HandleTabs(displayName);
             displayName = RemoveEverythingInBrackets(displayName);
 
-            if (property.type == MaterialProperty.PropType.Texture && property.name.Contains("GradientTexture")) {
+            if (property.propertyType == ShaderPropertyType.Texture && property.name.Contains("GradientTexture")) {
                 EditorGUILayout.Space(18);
                 _gradientDrawer.OnGUI(Rect.zero, property, property.displayName, editor, tooltip);
-            } else if (property.type == MaterialProperty.PropType.Vector &&
+            } else if (property.propertyType == ShaderPropertyType.Vector &&
                        property.displayName.Contains("[Vector2]")) {
                 EditorGUILayout.Space(18);
                 _vectorDrawer.OnGUI(Rect.zero, property, displayName, editor, tooltip);

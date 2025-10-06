@@ -26,7 +26,7 @@ public class QuibliEditor : BaseShaderGUI {
         var tooltip = Tooltips.Get(editor, displayName);
         var guiContent = new GUIContent(displayName, tooltip);
 
-        if (property.type == MaterialProperty.PropType.Texture && !property.displayName.Contains("Gradient") &&
+        if (property.propertyType == ShaderPropertyType.Texture && !property.displayName.Contains("Gradient") &&
             !property.name.Contains("Ramp")) {
             if (!property.name.Contains("_BaseMap") && !property.name.Contains("_EmissionMap")) {
                 EditorGUILayout.Space(15);
@@ -209,7 +209,7 @@ public class QuibliEditor : BaseShaderGUI {
                 --foldoutRemainingItems;
             }
 
-            bool hideInInspector = (property.flags & MaterialProperty.PropFlags.HideInInspector) != 0;
+            bool hideInInspector = (property.propertyFlags & ShaderPropertyFlags.HideInInspector) != 0;
             if (!hideInInspector && !skipProperty) {
                 EditorGUI.BeginChangeCheck();
                 DrawStandard(editor, property);

@@ -637,6 +637,8 @@ public class Combat : NetworkBehaviour
         
         _currentTarget = target;
 
+        int punchesLanded = _currentComboStep + 1;
+
         _networkCombat.CmdSetAttackerForOponnent(target.GetComponent<NetworkIdentity>(),
             GetComponent<NetworkIdentity>());
 
@@ -644,6 +646,15 @@ public class Combat : NetworkBehaviour
             GetComponent<NetworkIdentity>());
 
         _characterHealth.CmdDamageOpponent(target.GetComponent<NetworkIdentity>(), 1);
+    }
+
+    /// <summary>
+    /// Make the character flinch, depending on which punch was thrown.
+    /// </summary>
+
+    public void Flinch()
+    {
+
     }
 
     /// <summary>
