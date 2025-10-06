@@ -637,8 +637,6 @@ public class Combat : NetworkBehaviour
         
         _currentTarget = target;
 
-        int punchesLanded = _currentComboStep + 1;
-
         _networkCombat.CmdSetAttackerForOponnent(target.GetComponent<NetworkIdentity>(),
             GetComponent<NetworkIdentity>());
 
@@ -646,53 +644,83 @@ public class Combat : NetworkBehaviour
             GetComponent<NetworkIdentity>());
 
         _characterHealth.CmdDamageOpponent(target.GetComponent<NetworkIdentity>(), 1);
+
+        int punchesLanded = _currentComboStep + 1;
+
+        if (punchesLanded < 3)
+        {
+            string flinchClip = punchesLanded == 1 ? "_Flinch.1" : "_Flinch.2";
+
+            _networkCombat.CmdFlinchTarget(target.GetComponent<NetworkIdentity>(), flinchClip);
+        }
+        else if (punchesLanded == 3)
+        {
+            _networkCombat.CmdKnockbackTarget(target.GetComponent<NetworkIdentity>());
+
+            NetworkIdentity targetIdentity = _currentTarget.GetComponent<NetworkIdentity>();
+            
+            float stunDuration = punchesLanded == 1 ? 1f : punchesLanded == 2 ? 2f : 2.5f;
+
+            _networkCombat.CmdDisengageTarget(targetIdentity, stunDuration);
+
+            _currentTarget = null;
+        }
     }
 
     /// <summary>
     /// Make the character flinch, depending on which punch was thrown.
     /// </summary>
 
-    public void Flinch()
+    public void Flinch(string flinchClip)
     {
+        _takingDamage = true;
 
+        if (_character.animancer.States.TryGet(flinchClip, out var state))
+        {
+            _character.animancer.Play(state, 0.15f);
+            state.Time = 0f;
+
+            if (_character.currentAnimationClip != flinchClip)
+            {
+                _character.currentAnimationClip = flinchClip;
+                _character.networkAnimations.CmdPlayFlinchAnimation(flinchClip);
+            }
+        }
     }
 
     /// <summary>
     /// Damage the character and push them back.
     /// </summary>
 
-    public void StartKnockback(NetworkConnection conn, float effectDuration, Vector3 direction)
+    public void StartKnockback(float effectDuration, Vector3 direction)
     {
-        if (!takingDamage)
+        _takingDamage = true;
+
+        ResetCombo();
+        ResetAirPunch();
+
+        _character.DisableCharacter();
+
+        _character.SetVelocity(Vector3.zero);
+
+        _character.PauseGroundConstraint();
+
+        // Push the player back
+        _character.LaunchCharacter((direction * 5f) + (_character.GetUpVector() * 2.5f), true);
+
+        if (_character.animancer.States.TryGet("_Knockback", out var state))
         {
-            _takingDamage = true;
+            _character.animancer.Play(state);
+            state.Time = 0f;
 
-            ResetCombo();
-            ResetAirPunch();
-
-            _character.DisableCharacter();
-
-            _character.SetVelocity(Vector3.zero);
-
-            _character.PauseGroundConstraint();
-
-            // Push the player back
-            _character.LaunchCharacter((direction * 5f) + (_character.GetUpVector() * 2.5f), true);
-
-            if (_character.animancer.States.TryGet("_Knockback", out var state))
+            if (_character.currentAnimationClip != "_Knockback")
             {
-                _character.animancer.Play(state);
-                state.Time = 0f;
-
-                if (_character.currentAnimationClip != "_Knockback")
-                {
-                    _character.currentAnimationClip = "_Knockback";
-                    _character.networkAnimations.CmdPlayKnockbackAnimation();
-                }
+                _character.currentAnimationClip = "_Knockback";
+                _character.networkAnimations.CmdPlayKnockbackAnimation();
             }
-
-            Invoke(nameof(StopKnockback), effectDuration);
         }
+
+        Invoke(nameof(StopKnockback), effectDuration);
     }
 
     /// <summary>

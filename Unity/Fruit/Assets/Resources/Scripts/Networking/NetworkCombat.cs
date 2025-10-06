@@ -150,22 +150,35 @@ public class NetworkCombat : NetworkBehaviour
 
     /// <summary>
     /// Sends a command to the server, telling it
-    ///  to apply invulnerability/knockback to the current target.
+    ///  to make the current opponent flinch.
     /// </summary>
 
     [Command]
-    public void CmdDisengageTarget(NetworkIdentity targetIdentity, float stunDuration)
+    public void CmdFlinchTarget(NetworkIdentity opponentIdentity, string flinchClip)
     {
-        CharacterHealth targetHealth = targetIdentity.GetComponent<CharacterHealth>();
-        NetworkCombat targetCombat = targetIdentity.GetComponent<NetworkCombat>();
+        opponentIdentity.GetComponent<NetworkCombat>().RpcFlinch(opponentIdentity.connectionToClient, flinchClip);
+    }
 
-        targetHealth.ApplyTemporaryInvulnerability(stunDuration);
-        targetCombat.RpcStartKnockback(targetIdentity.connectionToClient, 0.2f, transform.forward);
+    /// <summary>
+    /// Make the character flinch on
+    ///  the original client's version of this Character.
+    /// </summary>
 
-        if (targetCombat.currentAttacker != null)
-        {
-            targetCombat.ResetCurrentAttacker();
-        }
+    [TargetRpc]
+    public void RpcFlinch(NetworkConnection conn, string flinchClip)
+    {
+        _combat.Flinch(flinchClip);
+    }
+
+    /// <summary>
+    /// Sends a command to the server, telling it
+    ///  to knockback the current opponent.
+    /// </summary>
+
+    [Command]
+    public void CmdKnockbackTarget(NetworkIdentity opponentIdentity)
+    {
+        opponentIdentity.GetComponent<NetworkCombat>().RpcStartKnockback(opponentIdentity.connectionToClient, 0.2f, transform.forward);
     }
 
     /// <summary>
@@ -176,7 +189,26 @@ public class NetworkCombat : NetworkBehaviour
     [TargetRpc]
     public void RpcStartKnockback(NetworkConnection conn, float effectDuration, Vector3 direction)
     {
-        _combat.StartKnockback(conn, effectDuration, direction);
+        _combat.StartKnockback(effectDuration, direction);
+    }
+
+    /// <summary>
+    /// Sends a command to the server, telling it
+    ///  to apply invulnerability to the current target.
+    /// </summary>
+
+    [Command]
+    public void CmdDisengageTarget(NetworkIdentity targetIdentity, float stunDuration)
+    {
+        CharacterHealth targetHealth = targetIdentity.GetComponent<CharacterHealth>();
+        NetworkCombat targetCombat = targetIdentity.GetComponent<NetworkCombat>();
+
+        targetHealth.ApplyTemporaryInvulnerability(stunDuration);
+
+        if (targetCombat.currentAttacker != null)
+        {
+            targetCombat.ResetCurrentAttacker();
+        }
     }
 
     #endregion

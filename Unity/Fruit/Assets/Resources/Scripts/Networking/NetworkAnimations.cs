@@ -214,6 +214,29 @@ public class NetworkAnimations : NetworkBehaviour
 
     /// <summary>
     /// Sends a command to the server, telling it
+    ///  to play the flinch animation for this player's Character.
+    /// </summary>
+
+    [Command]
+    public void CmdPlayFlinchAnimation(string flinchClip)
+    {
+        RpcPlayFlinchAnimation(flinchClip);
+    }
+
+    /// <summary>
+    /// Plays the flinch animation on
+    ///  every client's version of this player's Character.
+    /// </summary>
+
+    [ClientRpc(includeOwner = false)]
+    private void RpcPlayFlinchAnimation(string flinchClip)
+    {
+        var state = _animancer.TryPlay(flinchClip, 0.15f);
+        state.Time = 0f;
+    }
+
+    /// <summary>
+    /// Sends a command to the server, telling it
     ///  to play the hurt animation for this player's Character.
     /// </summary>
 
