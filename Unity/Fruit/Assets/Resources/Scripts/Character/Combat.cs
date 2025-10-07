@@ -470,7 +470,7 @@ public class Combat : NetworkBehaviour
         {
             NetworkIdentity targetIdentity = _currentTarget.GetComponent<NetworkIdentity>();
             int punchesLanded = _currentComboStep + 1;
-            float stunDuration = punchesLanded == 1 ? 1f : punchesLanded == 2 ? 2f : 2.5f;
+            float stunDuration = punchesLanded == 1 ? 1f : punchesLanded == 2 ? 1.5f : 2f;
 
             _networkCombat.CmdDisengageTarget(targetIdentity, stunDuration);
 
@@ -479,7 +479,6 @@ public class Combat : NetworkBehaviour
 
         // Reset combo state
         _isGroundPunching = false;
-
         _currentComboStep = 0;
 
         // Clear the queue
@@ -544,10 +543,9 @@ public class Combat : NetworkBehaviour
 
     public void ResetAirPunch()
     {
-        _character.PlayFallAnimation();
-
         _isAirPunching = false;
 
+        _character.PlayFallAnimation();
         _character.SetRotationMode(RotationMode.OrientToMovement);
     }
 
@@ -563,7 +561,6 @@ public class Combat : NetworkBehaviour
             {
                 _isBlocking = true;
                 _networkCombat.CmdSetBlocking(true);
-
                 _blockRechargeTimer = 0f;
 
                 punchInputAction?.Disable();
@@ -600,18 +597,27 @@ public class Combat : NetworkBehaviour
     public void TryHitTarget(FruitCharacter target)
     {
         // Make sure we're not hitting ourself
-        if (target == null || target == GetComponent<FruitCharacter>()) return;
-
-        CharacterHealth targetHealth = target.GetComponent<CharacterHealth>();
-
-        if (targetHealth.isInvulnerable) return;
+        if (target == null || target == _character) return;
 
         NetworkCombat targetCombat = target.GetComponent<NetworkCombat>();
 
-        // If we're in the middle of a combo, make sure we don't accidentally hit someone else
+        // If we're in the middle of a combo, make sure this isn't a new target
         if (_currentTarget != null && targetCombat.currentAttacker != _networkCombat) return;
 
-        // Blocking
+        CharacterHealth targetHealth = target.GetComponent<CharacterHealth>();
+
+        // Check if the target is invulnerable
+        if (targetHealth.isInvulnerable) return;
+        
+        _currentTarget = target;
+        NetworkIdentity targetIdentity = _currentTarget.GetComponent<NetworkIdentity>();
+        NetworkIdentity characterIdentity = _character.GetComponent<NetworkIdentity>();
+
+        // Setup the target for combat
+        _networkCombat.CmdSetAttackerForOponnent(targetIdentity, characterIdentity);
+        _networkCombat.CmdFaceOpponentTowardsAttacker(targetIdentity, characterIdentity);
+
+        // If target is blocking
         if (targetCombat.isBlocking)
         {
             // Check if we can harm their block shield
@@ -620,30 +626,14 @@ public class Combat : NetworkBehaviour
             {
                 if (targetCombat.blockPoints > 0 && !targetCombat.blockCooldown)
                 {
-                    _currentTarget = target;
-
-                    _networkCombat.CmdSetAttackerForOponnent(target.GetComponent<NetworkIdentity>(),
-                        GetComponent<NetworkIdentity>());
-
-                    _networkCombat.CmdFaceOpponentTowardsAttacker(target.GetComponent<NetworkIdentity>(),
-                        GetComponent<NetworkIdentity>());
-
-                    _networkCombat.CmdSetBlockPoints(target.GetComponent<NetworkIdentity>(),
-                        targetCombat.blockPoints - 1);
+                    _networkCombat.CmdSetBlockPoints(targetIdentity, targetCombat.blockPoints - 1);
                 }
             }
             return;
         }
         
-        _currentTarget = target;
-
-        _networkCombat.CmdSetAttackerForOponnent(target.GetComponent<NetworkIdentity>(),
-            GetComponent<NetworkIdentity>());
-
-        _networkCombat.CmdFaceOpponentTowardsAttacker(target.GetComponent<NetworkIdentity>(),
-            GetComponent<NetworkIdentity>());
-
-        _characterHealth.CmdDamageOpponent(target.GetComponent<NetworkIdentity>(), 1);
+        // If target is not blocking, damage them
+        _characterHealth.CmdDamageOpponent(targetIdentity, 1);
 
         int punchesLanded = _currentComboStep + 1;
 
@@ -651,17 +641,12 @@ public class Combat : NetworkBehaviour
         {
             string flinchClip = punchesLanded == 1 ? "_Flinch.1" : "_Flinch.2";
 
-            _networkCombat.CmdFlinchTarget(target.GetComponent<NetworkIdentity>(), flinchClip);
+            _networkCombat.CmdFlinchTarget(targetIdentity, flinchClip);
         }
-        else if (punchesLanded == 3)
+        else
         {
-            _networkCombat.CmdKnockbackTarget(target.GetComponent<NetworkIdentity>());
-
-            NetworkIdentity targetIdentity = _currentTarget.GetComponent<NetworkIdentity>();
-            
-            float stunDuration = punchesLanded == 1 ? 1f : punchesLanded == 2 ? 2f : 2.5f;
-
-            _networkCombat.CmdDisengageTarget(targetIdentity, stunDuration);
+            _networkCombat.CmdKnockbackTarget(targetIdentity);
+            _networkCombat.CmdDisengageTarget(targetIdentity, 2f);
 
             _currentTarget = null;
         }
@@ -700,9 +685,7 @@ public class Combat : NetworkBehaviour
         ResetAirPunch();
 
         _character.DisableCharacter();
-
         _character.SetVelocity(Vector3.zero);
-
         _character.PauseGroundConstraint();
 
         // Push the player back
