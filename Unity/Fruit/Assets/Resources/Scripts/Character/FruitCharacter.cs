@@ -469,7 +469,7 @@ namespace EasyCharacterMovement
         {
             if (combat.isPunching || combat.isBlocking || combat.takingDamage)
             {
-                // Override movement animations when punching/blocking
+                // Override movement animations
                 return;
             }
 
@@ -557,7 +557,7 @@ namespace EasyCharacterMovement
             else if (!combat.takingDamage)
             {
                 // We shouldn't re-enable movement if taking damage
-                //  Instead, the StopDamage method will re-enable movement
+                //  Instead, the StopKnockback/StopFlinch methods will re-enable movement
                 EnableCharacter();
             }
         }

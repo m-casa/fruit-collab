@@ -14,9 +14,9 @@ public class PunchHitbox : MonoBehaviour
     {
         if (!_combat || !_combat.isPunching || !_combat.isActiveAndEnabled) return;
 
-        if (other.TryGetComponent(out FruitCharacter target))
+        if (other.TryGetComponent(out FruitCharacter character))
         {
-            _combat.TryHitTarget(target);
+            _combat.TryHitTarget(character);
         }
     }
 }

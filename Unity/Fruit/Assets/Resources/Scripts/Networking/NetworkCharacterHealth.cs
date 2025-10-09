@@ -3,7 +3,7 @@ using Mirror;
 using System.Collections;
 using UnityEngine;
 
-public class CharacterHealth : NetworkHealth
+public class NetworkCharacterHealth : NetworkHealth
 {
     #region FIELDS
 
@@ -42,9 +42,11 @@ public class CharacterHealth : NetworkHealth
     /// </summary>
 
     [Command]
-    public void CmdDamageOpponent(NetworkIdentity opponentIdentity, int amount)
+    public void CmdDamageTarget(NetworkIdentity targetIdentity, int amount)
     {
-        opponentIdentity.GetComponent<CharacterHealth>().TakeDamage(amount);
+        NetworkCharacterHealth targetHealth = targetIdentity.GetComponent<NetworkCharacterHealth>();
+
+        targetHealth.TakeDamage(amount);
     }
 
     /// <summary>
@@ -102,7 +104,9 @@ public class CharacterHealth : NetworkHealth
 
     private IEnumerator HandleRespawnRoutine()
     {
-        _character.DisableCharacter();
+        NetworkConnectionToClient client = GetComponent<NetworkIdentity>().connectionToClient;
+
+        RpcDisableCharacter(client);
         RpcSetVisibility(false);
 
         yield return new WaitForSeconds(1f);
@@ -113,6 +117,26 @@ public class CharacterHealth : NetworkHealth
         _currentHealth = maxHealth;
 
         RpcSetVisibility(true);
+        RpcEnableCharacter(client);
+    }
+
+    /// <summary>
+    /// Disable the character on the original client's version of this Character.
+    /// </summary>
+
+    [TargetRpc]
+    public void RpcDisableCharacter(NetworkConnection conn)
+    {
+        _character.DisableCharacter();
+    }
+
+    /// <summary>
+    /// Enable the character on the original client's version of this Character.
+    /// </summary>
+
+    [TargetRpc]
+    public void RpcEnableCharacter(NetworkConnection conn)
+    {
         _character.EnableCharacter();
     }
 

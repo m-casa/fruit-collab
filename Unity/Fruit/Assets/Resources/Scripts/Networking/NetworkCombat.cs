@@ -33,13 +33,15 @@ public class NetworkCombat : NetworkBehaviour
     
     /// <summary>
     /// Sends a command to the server, telling it
-    ///  to set the current attacker for the opponent.
+    ///  to set the current attacker for the target.
     /// </summary>
 
     [Command]
-    public void CmdSetAttackerForOponnent(NetworkIdentity opponentIdentity, NetworkIdentity attackerIdentity)
+    public void CmdSetAttacker(NetworkIdentity targetIdentity, NetworkIdentity attackerIdentity)
     {
-        opponentIdentity.GetComponent<NetworkCombat>().SetAttacker(attackerIdentity);
+        NetworkCombat target = targetIdentity.GetComponent<NetworkCombat>();
+
+        target.SetAttacker(attackerIdentity);
     }
 
     /// <summary>
@@ -53,13 +55,15 @@ public class NetworkCombat : NetworkBehaviour
 
     /// <summary>
     /// Sends a command to the server, telling it
-    ///  to face the opponent in the direction of the attacker.
+    ///  to face the target in the direction of the attacker.
     /// </summary>
 
     [Command]
-    public void CmdFaceOpponentTowardsAttacker(NetworkIdentity opponentIdentity, NetworkIdentity attackerIdentity)
+    public void CmdFaceAttacker(NetworkIdentity targetIdentity, NetworkIdentity attackerIdentity)
     {
-        opponentIdentity.GetComponent<NetworkCombat>().RpcFaceAttacker(opponentIdentity.connectionToClient, attackerIdentity);
+        NetworkCombat target = targetIdentity.GetComponent<NetworkCombat>();
+
+        target.RpcFaceAttacker(targetIdentity.connectionToClient, attackerIdentity);
     }
 
     /// <summary>
@@ -75,6 +79,7 @@ public class NetworkCombat : NetworkBehaviour
         Transform attacker = attackerIdentity.transform; // Get transform server-side
         Vector3 lookDir = (attacker.position - transform.position).normalized;
         lookDir.y = 0f;
+
         if (lookDir != Vector3.zero)
         {
             GetComponent<FruitCharacter>().previousMovementDirection = lookDir;
@@ -108,9 +113,11 @@ public class NetworkCombat : NetworkBehaviour
     /// </summary>
 
     [Command]
-    public void CmdSetBlockPoints(NetworkIdentity opponentIdentity, int blockPoints)
+    public void CmdSetBlockPoints(NetworkIdentity targetIdentity, int blockPoints)
     {
-        opponentIdentity.GetComponent<NetworkCombat>().SetBlockPoints(blockPoints);
+        NetworkCombat target = targetIdentity.GetComponent<NetworkCombat>();
+
+        target.SetBlockPoints(blockPoints);
     }
 
     /// <summary>
@@ -150,13 +157,15 @@ public class NetworkCombat : NetworkBehaviour
 
     /// <summary>
     /// Sends a command to the server, telling it
-    ///  to make the current opponent flinch.
+    ///  to make the current target flinch.
     /// </summary>
 
     [Command]
-    public void CmdFlinchTarget(NetworkIdentity opponentIdentity, string flinchClip)
+    public void CmdFlinchTarget(NetworkIdentity targetIdentity, string flinchClip)
     {
-        opponentIdentity.GetComponent<NetworkCombat>().RpcFlinch(opponentIdentity.connectionToClient, flinchClip);
+        NetworkCombat target = targetIdentity.GetComponent<NetworkCombat>();
+
+        target.RpcFlinch(targetIdentity.connectionToClient, flinchClip);
     }
 
     /// <summary>
@@ -172,13 +181,21 @@ public class NetworkCombat : NetworkBehaviour
 
     /// <summary>
     /// Sends a command to the server, telling it
-    ///  to knockback the current opponent.
+    ///  to knockback the current target.
     /// </summary>
 
     [Command]
-    public void CmdKnockbackTarget(NetworkIdentity opponentIdentity)
+    public void CmdKnockbackTarget(NetworkIdentity targetIdentity)
     {
-        opponentIdentity.GetComponent<NetworkCombat>().RpcStartKnockback(opponentIdentity.connectionToClient, 0.2f, transform.forward);
+        NetworkCharacterHealth targetHealth = targetIdentity.GetComponent<NetworkCharacterHealth>();
+
+        // Only knockback if they are alive
+        if (!targetHealth.healthDepleted)
+        {
+            NetworkCombat target = targetIdentity.GetComponent<NetworkCombat>();
+
+            target.RpcStartKnockback(targetIdentity.connectionToClient, 0.2f, transform.forward);
+        }
     }
 
     /// <summary>
@@ -200,15 +217,27 @@ public class NetworkCombat : NetworkBehaviour
     [Command]
     public void CmdDisengageTarget(NetworkIdentity targetIdentity, float stunDuration)
     {
-        CharacterHealth targetHealth = targetIdentity.GetComponent<CharacterHealth>();
-        NetworkCombat targetCombat = targetIdentity.GetComponent<NetworkCombat>();
+        NetworkCombat target = targetIdentity.GetComponent<NetworkCombat>();
+        NetworkCharacterHealth targetHealth = targetIdentity.GetComponent<NetworkCharacterHealth>();
 
-        targetHealth.ApplyTemporaryInvulnerability(stunDuration);
+        target.RpcStopFlinch(targetIdentity.connectionToClient);
 
-        if (targetCombat.currentAttacker != null)
-        {
-            targetCombat.ResetCurrentAttacker();
-        }
+        if (target.currentAttacker != null)
+            target.ResetCurrentAttacker();
+
+        if (!targetHealth.healthDepleted)
+            targetHealth.ApplyTemporaryInvulnerability(stunDuration);
+    }
+
+    /// <summary>
+    /// Stop the character from flinching on
+    ///  the original client's version of this Character.
+    /// </summary>
+
+    [TargetRpc]
+    public void RpcStopFlinch(NetworkConnection conn)
+    {
+        _combat.StopFlinch();
     }
 
     #endregion

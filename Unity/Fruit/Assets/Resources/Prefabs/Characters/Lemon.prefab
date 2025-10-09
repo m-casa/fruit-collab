@@ -235,11 +235,11 @@ GameObject:
   - component: {fileID: 7498620500554490778}
   - component: {fileID: 5277129659758366948}
   - component: {fileID: 4067961646589126391}
-  - component: {fileID: 2657623946194130285}
+  - component: {fileID: 951389442514474426}
   - component: {fileID: -1040937386208016422}
   - component: {fileID: 386329734353417001}
+  - component: {fileID: 2657623946194130285}
   - component: {fileID: 4388227987882777247}
-  - component: {fileID: 951389442514474426}
   - component: {fileID: 2278079807116363304}
   m_Layer: 0
   m_Name: Lemon
@@ -485,7 +485,7 @@ MonoBehaviour:
   - {fileID: 7400000, guid: 2330b1a12e46f5b4886533bd1cc1a1fc, type: 2}
   - {fileID: 7400000, guid: ed0815c636719fc43ad65df07eb172f0, type: 2}
   - {fileID: 7400000, guid: 6255e4d75b591d643b349b9e4cf720fc, type: 2}
---- !u!114 &2657623946194130285
+--- !u!114 &951389442514474426
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -494,13 +494,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 1974657863803228055}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 227f0c8abd69baa499cb988227bc0896, type: 3}
+  m_Script: {fileID: 11500000, guid: 4c98050b5be816c43bb32dd9be43780a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   syncDirection: 0
   syncMode: 0
-  syncInterval: 0.05
-  _animancer: {fileID: 4067961646589126391}
+  syncInterval: 0
+  _networkCombat: {fileID: 2278079807116363304}
+  _networkHealth: {fileID: 4388227987882777247}
+  _punchHitbox: {fileID: 4958483503640106968}
+  _cooldownDuration: 0.15
 --- !u!114 &-1040937386208016422
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -551,6 +554,22 @@ MonoBehaviour:
   rotationSensitivity: 0.01
   positionPrecision: 0.01
   scalePrecision: 0.01
+--- !u!114 &2657623946194130285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1974657863803228055}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 227f0c8abd69baa499cb988227bc0896, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0.05
+  _animancer: {fileID: 4067961646589126391}
 --- !u!114 &4388227987882777247
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -568,25 +587,6 @@ MonoBehaviour:
   syncInterval: 0
   _currentHealth: 0
   _maxHealth: 9
---- !u!114 &951389442514474426
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1974657863803228055}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c98050b5be816c43bb32dd9be43780a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
-  _networkCombat: {fileID: 2278079807116363304}
-  _characterHealth: {fileID: 4388227987882777247}
-  _punchHitbox: {fileID: 4958483503640106968}
-  _cooldownDuration: 0.15
 --- !u!114 &2278079807116363304
 MonoBehaviour:
   m_ObjectHideFlags: 0
