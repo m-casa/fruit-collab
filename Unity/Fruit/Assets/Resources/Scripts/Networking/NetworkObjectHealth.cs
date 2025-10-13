@@ -1,7 +1,7 @@
 using Mirror;
 using UnityEngine;
 
-public class ObjectHealth : NetworkHealth
+public class NetworkObjectHealth : NetworkHealth
 {
     [SerializeField] private GameObject destructionEffectPrefab;
 

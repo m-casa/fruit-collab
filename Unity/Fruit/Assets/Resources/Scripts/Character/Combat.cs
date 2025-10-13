@@ -362,25 +362,31 @@ public class Combat : NetworkBehaviour
     private void FaceClosestTarget()
     {
         Collider[] hits = Physics.OverlapSphere(transform.position, 0.95f, Physics.AllLayers);
-        if (hits.Length == 0) return;
 
-        Vector3 preferredDir = _character.GetMovementDirection();
-        if (preferredDir == Vector3.zero)
-            preferredDir = transform.forward;
+        if (hits.Length == 0) return;
 
         float bestDot = -1f;
         Transform bestTarget = null;
 
-        // Cosine of 45 degrees (0.7071) - targets must be within 45° cone
-        float fovThreshold = Mathf.Cos(45f * Mathf.Deg2Rad);
-
         foreach (var hit in hits)
         {
-            // Skip if it's not a Player or if it's ourselves
+            // Skip if it's not a Player or if it's ourself
             if (!hit.CompareTag("Player") || hit.transform == transform) continue;
+
+            NetworkCharacterHealth targetHealth = hit.gameObject.GetComponent<NetworkCharacterHealth>();
+
+            // Skip if the Player is invulnerable or dead
+            if (targetHealth.isInvulnerable || targetHealth.healthDepleted) continue;
+
+            Vector3 preferredDir = _character.GetMovementDirection();
+            if (preferredDir == Vector3.zero)
+                preferredDir = transform.forward;
 
             Vector3 toTarget = (hit.transform.position - transform.position).normalized;
             float dot = Vector3.Dot(preferredDir, toTarget);
+
+            // Cosine of 45 degrees (0.7071) - targets must be within 45° cone
+            float fovThreshold = Mathf.Cos(45f * Mathf.Deg2Rad);
 
             // Only consider targets in front (within the 45° FOV)
             if (dot < fovThreshold) continue;
