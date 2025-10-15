@@ -524,6 +524,15 @@ public class Combat : NetworkBehaviour
                     state.Speed = 1.25f;
                     state.Time = 0f;
 
+                    // Clear previous events first
+                    state.Events.Clear();
+
+                    // Add event to enable hitbox at 50% of animation
+                    state.Events.Add(0.5f, EnablePunchHitbox);
+
+                    // Add event to disable hitbox at 90% of animation (or adjust as needed)
+                    state.Events.Add(0.9f, DisablePunchHitbox);
+
                     if (_character.currentAnimationClip != airPunchClip)
                     {
                         _character.currentAnimationClip = airPunchClip;
@@ -532,6 +541,8 @@ public class Combat : NetworkBehaviour
                 }
 
                 _isAirPunching = true;
+
+                FaceClosestTarget();
 
                 state.Events.OnEnd = () =>
                 {
@@ -549,9 +560,21 @@ public class Combat : NetworkBehaviour
 
     public void ResetAirPunch()
     {
+        // Disengage the target
+        if (_currentTarget != null)
+        {
+            NetworkIdentity targetIdentity = _currentTarget.GetComponent<NetworkIdentity>(); ;
+
+            _currentTarget = null;
+
+            _networkCombat.CmdDisengageTarget(targetIdentity, 1f);
+        }
+
         _isAirPunching = false;
 
-        _character.PlayFallAnimation();
+        if (!_character.IsGrounded())
+            _character.PlayFallAnimation();
+
         _character.SetRotationMode(RotationMode.OrientToMovement);
     }
 
@@ -641,10 +664,27 @@ public class Combat : NetworkBehaviour
         // If target is not blocking, damage them
         _networkHealth.CmdDamageTarget(targetIdentity, 1);
 
+        // Check if we're in air combat
+        if (_isAirPunching)
+        {
+            FruitCharacter targetCharacter = targetIdentity.GetComponent<FruitCharacter>();
+
+            if (targetCharacter.IsGrounded())
+            {
+                _networkCombat.CmdFlinchTarget(targetIdentity, "_Flinch.1");
+            }
+            else
+            {
+                _networkCombat.CmdKnockbackTarget(targetIdentity);
+            }
+
+            return;
+        }
+
+        // If not in air combat, check how many punches we've landed on ground
         int punchesLanded = _currentComboStep + 1;
 
-        // Check if this is the final punch of the combo
-        if (punchesLanded != 3)
+        if (punchesLanded is >= 1 and < 3) // Check if this is the final punch of the combo
         {
             string flinchClip = punchesLanded == 1 ? "_Flinch.1" : "_Flinch.2";
 

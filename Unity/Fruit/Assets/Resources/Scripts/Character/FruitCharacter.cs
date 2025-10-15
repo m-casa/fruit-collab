@@ -638,6 +638,9 @@ namespace EasyCharacterMovement
             {
                 _queueLaunch = false;
 
+                if (combat.isPunching)
+                    combat.ResetCombo();
+
                 if (combat.isAirPunching)
                     combat.ResetAirPunch();
 
