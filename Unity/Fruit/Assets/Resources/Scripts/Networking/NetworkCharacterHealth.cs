@@ -62,20 +62,10 @@ public class NetworkCharacterHealth : NetworkHealth
 
         if (healthDepleted)
         {
-            RpcUpdatePlayerScore(attackerIdentity.connectionToClient);
+            GameManager.Instance.UpdatePlayerScore(attackerIdentity.connectionToClient, 1);
 
             OnHealthDepleted();
         }
-    }
-
-    /// <summary>
-    /// Update the specified player's score.
-    /// </summary>
-
-    [TargetRpc]
-    private void RpcUpdatePlayerScore(NetworkConnection conn)
-    {
-
     }
 
     /// <summary>

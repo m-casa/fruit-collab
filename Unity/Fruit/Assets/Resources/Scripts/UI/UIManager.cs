@@ -2,6 +2,7 @@ using HeathenEngineering.SteamworksIntegration;
 using Mirror;
 using Steamworks;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -310,19 +311,19 @@ public class UIManager : MonoBehaviour
     /// Updates UI with new player scores.
     /// </summary>
 
-    public void UpdatePlayerScore(int playerIndex, int score)
+    public void UpdateScoreDisplay(Dictionary<int, int> playerScores)
     {
-        if (playerIndex < _playerScoreTexts.Length)
-        {
-            _playerScoreTexts[playerIndex].text = $"P{playerIndex + 1}: {score}";
-        }
+        //if (playerIndex < _playerScoreTexts.Length)
+        //{
+        //    _playerScoreTexts[playerIndex].text = $"P{playerIndex + 1}: {score}";
+        //}
     }
 
     /// <summary>
     /// Updates UI with each player's health.
     /// </summary>
 
-    public void UpdatePlayerHealth(int playerIndex, float health)
+    public void UpdateHealthDisplay(int playerIndex, float health)
     {
         if (playerIndex < _playerHealthBars.Length)
         {

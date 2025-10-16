@@ -14,10 +14,10 @@ public class GameManager : NetworkBehaviour
 
     [Header("Game States")]
     [SerializeField] private List<string> _allCharacters = new List<string> { "Apple", "Grape", "Lemon", "Peach" };
+    [SerializeField] private SyncDictionary<int, int> _playerScores = new SyncDictionary<int, int>(); // Scores for each player
     private List<Transform> _lobbySpawns, _matchSpawns;
     private HashSet<string> _claimedCharacters = new HashSet<string>(); // Tracks taken characters
     private HashSet<NetworkConnectionToClient> _readyPlayers = new HashSet<NetworkConnectionToClient>();
-    private int[] _playerScores; // Scores for each player
 
     [SyncVar(hook = nameof(OnClaimedCharactersSyncUpdated))]
     private string _claimedCharactersSync = ""; // Sync'd string for character selection (CSV format)
@@ -82,6 +82,19 @@ public class GameManager : NetworkBehaviour
     #endregion
 
     #region METHODS
+
+    /// <summary>
+    /// Initialize score tracking when a player joins.
+    /// </summary>
+   
+    public void RegisterPlayer(NetworkConnectionToClient target)
+    {
+        if (!_playerScores.ContainsKey(target.connectionId))
+        {
+            _playerScores[target.connectionId] = 0;
+            Debug.Log($"Registered player {target.connectionId} with score 0");
+        }
+    }
 
     /// <summary>
     /// Spawns the necessary game objects in charge of character selection logic.
@@ -198,12 +211,42 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Returns the scores for each player.
+    /// Update the specified player's score.
     /// </summary>
 
-    public void GetPlayerScores()
+    public void UpdatePlayerScore(NetworkConnectionToClient target, int amount)
     {
-        // Return each player's score
+        if (_playerScores.ContainsKey(target.connectionId))
+        {
+            _playerScores[target.connectionId] += amount;
+            Debug.Log($"Player {target.connectionId} score updated to {_playerScores[target.connectionId]}");
+
+            // Update all clients with the new score
+            RpcUpdateScoreDisplay();
+        }
+    }
+
+    /// <summary>
+    /// Get a player's current score
+    /// </summary>
+
+    public int GetPlayerScore(NetworkConnectionToClient target)
+    {
+        return _playerScores.ContainsKey(target.connectionId) ? _playerScores[target.connectionId] : 0;
+    }
+
+    /// <summary>
+    /// Get all player scores for display
+    /// </summary>
+    
+    public Dictionary<int, int> GetAllPlayerScores()
+    {
+        var scores = new Dictionary<int, int>();
+        foreach (var kvp in _playerScores)
+        {
+            scores[kvp.Key] = kvp.Value;
+        }
+        return scores;
     }
 
     /// <summary>
@@ -520,9 +563,9 @@ public class GameManager : NetworkBehaviour
 
         MovePlayersToMatch();
 
-        Debug.Log("Match Started!");
-
         StartCoroutine(MatchTimer());
+
+        Debug.Log("Match Started!");
     }
 
     /// <summary>
@@ -577,6 +620,17 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
+    /// Update all clients with current scores
+    /// </summary>
+
+    [ClientRpc]
+    private void RpcUpdateScoreDisplay()
+    {
+        // Update UI with current scores
+        UIManager.Instance.UpdateScoreDisplay(GetAllPlayerScores());
+    }
+
+    /// <summary>
     /// Sets the lobby back up and awards the highest scoring player.
     /// </summary>
 
@@ -584,14 +638,61 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("Match Ended!");
 
-        // Determine winner and transition back to the lobby
-        //int highestScore = Mathf.Max(_playerScores);
-        //int winnerIndex = System.Array.IndexOf(_playerScores, highestScore);
+        NetworkConnectionToClient winner = DetermineWinner();
 
+        if (winner != null)
+            ShowWinner(winner);
+
+        ResetAllScores(); // Reset scores between matches
         MovePlayersToLobby();
-        //ShowWinner(winnerIndex);
 
         _inLobby = true;
+    }
+
+    /// <summary>
+    /// Determine the winner based on highest score
+    /// </summary>
+    
+    private NetworkConnectionToClient DetermineWinner()
+    {
+        NetworkConnectionToClient winner = null;
+        int highestScore = -1;
+
+        foreach (var kvp in _playerScores)
+        {
+            if (kvp.Value > highestScore)
+            {
+                highestScore = kvp.Value;
+                winner = NetworkServer.connections.Values
+                .FirstOrDefault(conn => conn.connectionId == kvp.Key);
+            }
+        }
+
+        return winner;
+    }
+
+    /// <summary>
+    /// The highest scoring player is marked as the winner.
+    /// </summary>
+
+    private void ShowWinner(NetworkConnectionToClient target)
+    {
+        // Display crown on the winning player
+        Debug.Log($"Player {target.connectionId + 1} wins!");
+    }
+
+    /// <summary>
+    /// Reset all scores for a new match
+    /// </summary>
+
+    private void ResetAllScores()
+    {
+        var keys = _playerScores.Keys.ToList();
+        foreach (var conn in keys)
+        {
+            _playerScores[conn] = 0;
+        }
+        RpcUpdateScoreDisplay();
     }
 
     /// <summary>
@@ -618,16 +719,6 @@ public class GameManager : NetworkBehaviour
                 i++;
             }
         }
-    }
-
-    /// <summary>
-    /// The highest scoring player is marked as the winner.
-    /// </summary>
-
-    private void ShowWinner(int playerIndex)
-    {
-        // Display crown on the winning player
-        Debug.Log($"Player {playerIndex + 1} wins!");
     }
 
     /// <summary>
