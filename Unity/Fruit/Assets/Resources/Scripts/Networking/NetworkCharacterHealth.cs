@@ -42,20 +42,40 @@ public class NetworkCharacterHealth : NetworkHealth
     /// </summary>
 
     [Command]
-    public void CmdDamageTarget(NetworkIdentity targetIdentity, int amount)
+    public void CmdDamageTarget(NetworkIdentity targetIdentity, NetworkIdentity attackerIdentity, int amount)
     {
         NetworkCharacterHealth targetHealth = targetIdentity.GetComponent<NetworkCharacterHealth>();
 
-        targetHealth.TakeDamage(amount);
+        targetHealth.TakeDamage(attackerIdentity, amount);
     }
 
     /// <summary>
     /// Damage this character and check if their health depleted.
     /// </summary>
 
-    public override void TakeDamage(int amount)
+    public override void TakeDamage(NetworkIdentity attackerIdentity, int amount)
     {
-        base.TakeDamage(amount);
+        if (healthDepleted) return;
+
+        _currentHealth -= amount;
+        _currentHealth = Mathf.Max(_currentHealth, 0);
+
+        if (healthDepleted)
+        {
+            RpcUpdatePlayerScore(attackerIdentity.connectionToClient);
+
+            OnHealthDepleted();
+        }
+    }
+
+    /// <summary>
+    /// Update the specified player's score.
+    /// </summary>
+
+    [TargetRpc]
+    private void RpcUpdatePlayerScore(NetworkConnection conn)
+    {
+
     }
 
     /// <summary>
@@ -65,15 +85,6 @@ public class NetworkCharacterHealth : NetworkHealth
     protected override void OnHealthChanged(int oldHealth, int newHealth)
     {
         // TODO: Update UI (health bar, damage effect)
-    }
-
-    /// <summary>
-    /// When character health has depleted, begin their respawn routine.
-    /// </summary>
-
-    protected override void OnHealthDepleted()
-    {
-        StartCoroutine(HandleRespawnRoutine());
     }
 
     /// <summary>
@@ -95,6 +106,15 @@ public class NetworkCharacterHealth : NetworkHealth
     {
         yield return new WaitForSeconds(_invulnTimer);
         _invulnerable = false;
+    }
+
+    /// <summary>
+    /// When character health has depleted, begin their respawn routine.
+    /// </summary>
+
+    protected override void OnHealthDepleted()
+    {
+        StartCoroutine(HandleRespawnRoutine());
     }
 
     /// <summary>

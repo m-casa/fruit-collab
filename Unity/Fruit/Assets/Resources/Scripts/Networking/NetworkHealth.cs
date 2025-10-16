@@ -26,7 +26,7 @@ public abstract class NetworkHealth : NetworkBehaviour
     /// Damage this character and check if their health depleted.
     /// </summary>
 
-    public virtual void TakeDamage(int amount)
+    public virtual void TakeDamage(NetworkIdentity attackerIdentity, int amount)
     {
         if (healthDepleted) return;
 
