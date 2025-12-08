@@ -26,6 +26,9 @@ public class FruitNetworkManager : NetworkManager
         player.name = $"{playerPrefab.name} [connId={conn.connectionId}]";
         NetworkServer.AddPlayerForConnection(conn, player);
 
+        // Register player to the scoreboard
+        GameManager.Instance.RegisterPlayer(conn);
+
         // Don't use LocalInstance here since the newly added player isn't always the local player
         NetworkPlayer networkPlayer = conn.identity.GetComponent<NetworkPlayer>();
 

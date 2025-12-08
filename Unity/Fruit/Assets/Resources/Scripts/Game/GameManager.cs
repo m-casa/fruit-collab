@@ -10,14 +10,14 @@ public class GameManager : NetworkBehaviour
 
     public static GameManager Instance { get; private set; }
 
-    [SyncVar] private bool _inLobby;
+    [SyncVar] private bool _matchActive;
 
     [Header("Game States")]
     [SerializeField] private List<string> _allCharacters = new List<string> { "Apple", "Grape", "Lemon", "Peach" };
     [SerializeField] private SyncDictionary<int, int> _playerScores = new SyncDictionary<int, int>(); // Scores for each player
-    private List<Transform> _lobbySpawns, _matchSpawns;
     private HashSet<string> _claimedCharacters = new HashSet<string>(); // Tracks taken characters
     private HashSet<NetworkConnectionToClient> _readyPlayers = new HashSet<NetworkConnectionToClient>();
+    private List<Transform> _lobbySpawns, _matchSpawns;
 
     [SyncVar(hook = nameof(OnClaimedCharactersSyncUpdated))]
     private string _claimedCharactersSync = ""; // Sync'd string for character selection (CSV format)
@@ -62,7 +62,7 @@ public class GameManager : NetworkBehaviour
         // When our new scene loads, don't delete the game manager
         DontDestroyOnLoad(gameObject);
 
-        _inLobby = true;
+        _matchActive = false;
 
         // Set the array lengths early on to avoid null references
         _spawnedFruits = new GameObject[_fruitPrefabs.Length];
@@ -160,12 +160,12 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Check if the state of the game is in the lobby.
+    /// Check if a match is currently active.
     /// </summary>
 
-    public bool InLobby()
+    public bool MatchActive()
     {
-        return _inLobby;
+        return _matchActive;
     }
 
     /// <summary>
@@ -557,40 +557,47 @@ public class GameManager : NetworkBehaviour
 
     private void StartMatch()
     {
-        _inLobby = false;
+        _matchActive = true;
         _startCountdownCoroutine = null;
         _readyPlayers.Clear();
 
-        MovePlayersToMatch();
+        NetworkPlayer[] networkPlayers = GetAllNetworkedPlayers();
 
+        MovePlayersToMatch(networkPlayers);
         StartCoroutine(MatchTimer());
 
         Debug.Log("Match Started!");
     }
 
     /// <summary>
+    /// Returns each networked player.
+    /// </summary>
+
+    private NetworkPlayer[] GetAllNetworkedPlayers()
+    {
+        return FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None);
+    }
+
+    /// <summary>
     /// Moves players to random spawn points in the map.
     /// </summary>
 
-    private void MovePlayersToMatch()
+    private void MovePlayersToMatch(NetworkPlayer[] networkPlayers)
     {
         int i = 0;
         List<Transform> shuffledSpawns = _matchSpawns.OrderBy(x => Random.value).ToList();
 
-        foreach (NetworkPlayer networkPlayer in FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None))
+        foreach (NetworkPlayer networkPlayer in networkPlayers)
         {
             if (i >= shuffledSpawns.Count) break;
 
+            Transform spawn = shuffledSpawns[i];
             NetworkConnectionToClient conn = networkPlayer.connectionToClient;
 
-            if (conn != null)
-            {
-                Transform spawn = shuffledSpawns[i];
-                networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
+            networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
 
-                Debug.Log($"Teleporting player with conn {conn.connectionId} to spawn {i}");
-                i++;
-            }
+            Debug.Log($"Teleporting player with conn {conn.connectionId} to spawn {i}");
+            i++;
         }
     }
 
@@ -643,10 +650,13 @@ public class GameManager : NetworkBehaviour
         if (winner != null)
             ShowWinner(winner);
 
-        ResetAllScores(); // Reset scores between matches
-        MovePlayersToLobby();
+        NetworkPlayer[] networkPlayers = GetAllNetworkedPlayers();
 
-        _inLobby = true;
+        ResetAllScores(); // Reset scores between matches
+        ResetHealthForAllPlayers(networkPlayers);
+        MovePlayersToLobby(networkPlayers);
+
+        _matchActive = false;
     }
 
     /// <summary>
@@ -682,7 +692,30 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Reset all scores for a new match
+    /// Reset each player's health to default.
+    /// </summary>
+
+    private void ResetHealthForAllPlayers(NetworkPlayer[] networkPlayers)
+    {
+        foreach (NetworkPlayer networkPlayer in networkPlayers)
+        {
+            if (networkPlayer != null)
+            {
+                var character = networkPlayer.GetCharacter();
+                if (character != null)
+                {
+                    var health = character.GetComponent<NetworkCharacterHealth>();
+                    if (health != null)
+                    {
+                        health.ResetHealth();
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reset all scores for a new match.
     /// </summary>
 
     private void ResetAllScores()
@@ -699,25 +732,22 @@ public class GameManager : NetworkBehaviour
     /// Moves players to random spawn points in the lobby.
     /// </summary>
 
-    private void MovePlayersToLobby()
+    private void MovePlayersToLobby(NetworkPlayer[] networkPlayers)
     {
         int i = 0;
         List<Transform> shuffledSpawns = _lobbySpawns.OrderBy(x => Random.value).ToList();
 
-        foreach (NetworkPlayer networkPlayer in FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None))
+        foreach (NetworkPlayer networkPlayer in networkPlayers)
         {
             if (i >= shuffledSpawns.Count) break;
 
+            Transform spawn = shuffledSpawns[i];
             NetworkConnectionToClient conn = networkPlayer.connectionToClient;
 
-            if (conn != null)
-            {
-                Transform spawn = shuffledSpawns[i];
-                networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
+            networkPlayer.RpcTeleportCharacter(conn, spawn.position, spawn.rotation);
 
-                Debug.Log($"Teleporting player with conn {conn.connectionId} to spawn {i}");
-                i++;
-            }
+            Debug.Log($"Teleporting player with conn {conn.connectionId} to spawn {i}");
+            i++;
         }
     }
 

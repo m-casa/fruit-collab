@@ -124,7 +124,7 @@ public class NetworkCharacterHealth : NetworkHealth
         //Transform spawn = GameManager.Instance.GetRandomSpawn(); // Implement this in GameManager
         //transform.SetPositionAndRotation(spawn.position, spawn.rotation);
 
-        _currentHealth = maxHealth;
+        ResetHealth();
 
         RpcSetVisibility(true);
         RpcEnableCharacter(client);
@@ -138,6 +138,15 @@ public class NetworkCharacterHealth : NetworkHealth
     public void RpcDisableCharacter(NetworkConnection conn)
     {
         _character.DisableCharacter();
+    }
+
+    /// <summary>
+    /// Reset the current health back to default.
+    /// </summary>
+
+    public void ResetHealth()
+    {
+        _currentHealth = maxHealth;
     }
 
     /// <summary>

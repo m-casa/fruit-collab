@@ -661,8 +661,9 @@ public class Combat : NetworkBehaviour
             return;
         }
         
-        // If target is not blocking, damage them
-        _networkHealth.CmdDamageTarget(targetIdentity, characterIdentity, 1);
+        // If target is not blocking and match active, damage them
+        if (GameManager.Instance.MatchActive())
+            _networkHealth.CmdDamageTarget(targetIdentity, characterIdentity, 1);
 
         // Check if we're in air combat
         if (_isAirPunching)

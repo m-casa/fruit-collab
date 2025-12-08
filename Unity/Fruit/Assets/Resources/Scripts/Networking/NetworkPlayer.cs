@@ -56,6 +56,15 @@ public class NetworkPlayer : NetworkBehaviour
     }
 
     /// <summary>
+    /// Gets the character for this client.
+    /// </summary>
+
+    public NetworkIdentity GetCharacter()
+    {
+        return _characterIdentity;
+    }
+
+    /// <summary>
     /// Moves the target client's camera to the character selection area.
     /// Then sends a request to the server to start the character selection process.
     /// </summary>

@@ -582,7 +582,7 @@ namespace EasyCharacterMovement
 
         private void HandleReadyUp()
         {
-            if (GameManager.Instance.InLobby() && _readyButtonPressed)
+            if (!GameManager.Instance.MatchActive() && _readyButtonPressed)
             {
                 _readyButtonPressed = false;
 
