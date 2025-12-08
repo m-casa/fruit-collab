@@ -645,14 +645,11 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("Match Ended!");
 
-        NetworkConnectionToClient winner = DetermineWinner();
-
-        if (winner != null)
-            ShowWinner(winner);
-
+        string winner = DetermineWinner();
         NetworkPlayer[] networkPlayers = GetAllNetworkedPlayers();
 
         ResetAllScores(); // Reset scores between matches
+        ShowWinner(winner);
         ResetHealthForAllPlayers(networkPlayers);
         MovePlayersToLobby(networkPlayers);
 
@@ -660,21 +657,24 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Determine the winner based on highest score
+    /// Determine the winner based on highest score.
     /// </summary>
     
-    private NetworkConnectionToClient DetermineWinner()
+    private string DetermineWinner()
     {
-        NetworkConnectionToClient winner = null;
+        string winner = null;
         int highestScore = -1;
 
         foreach (var kvp in _playerScores)
         {
-            if (kvp.Value > highestScore)
+            if (kvp.Value == highestScore)
+            {
+                winner = "tie";
+            }
+            else if (kvp.Value > highestScore)
             {
                 highestScore = kvp.Value;
-                winner = NetworkServer.connections.Values
-                .FirstOrDefault(conn => conn.connectionId == kvp.Key);
+                winner = kvp.Key.ToString();
             }
         }
 
@@ -685,10 +685,25 @@ public class GameManager : NetworkBehaviour
     /// The highest scoring player is marked as the winner.
     /// </summary>
 
-    private void ShowWinner(NetworkConnectionToClient target)
+    private void ShowWinner(string winner)
     {
-        // Display crown on the winning player
-        Debug.Log($"Player {target.connectionId + 1} wins!");
+        if (winner != null)
+        {
+            if (winner == "tie")
+            {
+                Debug.Log("Tie!");
+            }
+            else
+            {
+                int winnerConnectionId = int.Parse(winner);
+
+                if (NetworkServer.connections.TryGetValue(winnerConnectionId, out NetworkConnectionToClient winnerConn))
+                {
+                    // Display crown on the winning player
+                    Debug.Log($"Player {winnerConn.connectionId + 1} wins!");
+                }
+            }
+        }
     }
 
     /// <summary>
