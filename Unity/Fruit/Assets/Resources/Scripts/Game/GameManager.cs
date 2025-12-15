@@ -39,6 +39,13 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject _arrowPrefab; // Reference to the arrow prefab
     private GameObject _spawnedArrow; // Reference to the spawned arrow
 
+    [Header("Arena Areas")]
+    [SerializeField] private ArenaArea _counterArena;
+    [SerializeField] private ArenaArea _sinkArena;
+    [SerializeField] private ArenaArea _ovenArena;
+    [SerializeField] private ArenaArea _transitionArena;
+    private ArenaArea _currentArena;
+
     #endregion
 
     #region MONOBEHAVIOR
@@ -208,6 +215,15 @@ public class GameManager : NetworkBehaviour
     public void RpcUpdateReadyStatus(int connectionId, bool state)
     {
         // TODO: Just use the new state to update the UI for the specified player.
+    }
+
+    /// <summary>
+    /// Returns the current arena area.
+    /// </summary>
+
+    public ArenaArea GetCurrentArena()
+    {
+        return _currentArena;
     }
 
     /// <summary>
@@ -558,6 +574,7 @@ public class GameManager : NetworkBehaviour
     private void StartMatch()
     {
         _matchActive = true;
+        _currentArena = _counterArena;
         _startCountdownCoroutine = null;
         _readyPlayers.Clear();
 
@@ -645,6 +662,7 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("Match Ended!");
 
+        _currentArena = null;
         string winner = DetermineWinner();
         NetworkPlayer[] networkPlayers = GetAllNetworkedPlayers();
 

@@ -22,6 +22,7 @@ namespace EasyCharacterMovement
         [SerializeField] private Transform _chestTransform; // Reference to the chest bone
         [SerializeField] private float _leanAmount = 12.5f; // Maximum degrees to lean
         [SerializeField] private float _leanSpeed = 8f; // Speed at which the lean is applied
+        [SerializeField] private float _arenaForceMultiplier = 1f;
 
         private Vector3 _previousMovementDirection = Vector3.zero;
         private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
@@ -457,6 +458,9 @@ namespace EasyCharacterMovement
             // Handle launching state
             Launching();
 
+            // Applies the current arena constraint AFTER movement logic but BEFORE final move
+            ApplyArenaConstraint();
+
             // Move the character (perform collision constrained movement) with velocity updated by movement mode
             characterMovement.Move(deltaTime);
         }
@@ -682,6 +686,61 @@ namespace EasyCharacterMovement
         {
             if (IsGrounded())
                 _rightFootUp = false;
+        }
+
+        /// <summary>
+        /// Applies the current arena constraint to the character.
+        /// </summary>
+
+        private void ApplyArenaConstraint()
+        {
+            // Only constrain during an active match
+            if (!GameManager.Instance.MatchActive())
+                return;
+
+            ArenaArea arena = GameManager.Instance.GetCurrentArena();
+            if (arena == null)
+                return;
+
+            Vector3 worldPos = transform.position;
+
+            // Convert to arena local space
+            Vector3 localPos = arena.transform.InverseTransformPoint(worldPos);
+
+            float softX = arena.halfExtents.x - arena.softPadding;
+            float softZ = arena.halfExtents.y - arena.softPadding;
+
+            float dx = Mathf.Max(Mathf.Abs(localPos.x) - softX, 0f);
+            float dz = Mathf.Max(Mathf.Abs(localPos.z) - softZ, 0f);
+
+            float distanceOutside = Mathf.Sqrt(dx * dx + dz * dz);
+
+            if (distanceOutside <= 0f)
+                return;
+
+            // Closest point inside the arena
+            Vector3 closestLocalPoint = new Vector3(
+                Mathf.Clamp(localPos.x, -arena.halfExtents.x, arena.halfExtents.x),
+                localPos.y,
+                Mathf.Clamp(localPos.z, -arena.halfExtents.y, arena.halfExtents.y)
+            );
+
+            Vector3 closestWorldPoint = arena.transform.TransformPoint(closestLocalPoint);
+            Vector3 pullDirection = (closestWorldPoint - worldPos).normalized;
+
+            float t = Mathf.Clamp01(distanceOutside / arena.softPadding);
+
+            float force = Mathf.Lerp(
+                arena.pullStrength,
+                arena.maxPullStrength,
+                t
+            ) * _arenaForceMultiplier;
+
+            // ECM-friendly force application
+            characterMovement.AddForce(
+                pullDirection * force,
+                ForceMode.Acceleration
+            );
         }
 
         /// <summary>

@@ -65,6 +65,10 @@ MonoBehaviour:
   - {fileID: 1974657863803228055, guid: 822ae2edd16d82b46857ca9a4893676b, type: 3}
   - {fileID: 2606219565802472321, guid: b2caf19a434097841ae6e9bc4e3bd89d, type: 3}
   _arrowPrefab: {fileID: 5716227855454253439, guid: 4d07af6445bb81e41bb7369c76c21a41, type: 3}
+  _counterArena: {fileID: 3150929072981202753, guid: 97aa36618eae1f34b9bb11f83c5cec09, type: 3}
+  _sinkArena: {fileID: 7664075569868102560, guid: 43883374be12cf649b3e33dd9a47e397, type: 3}
+  _ovenArena: {fileID: 1220351563547257057, guid: 2258c1e6c4102974b87f7a4f50e4f944, type: 3}
+  _transitionArena: {fileID: 8087861610801905165, guid: 8ea1fcf4f5109cb40a1b42f56f2e8e9b, type: 3}
 --- !u!114 &9193478911337098211
 MonoBehaviour:
   m_ObjectHideFlags: 0
