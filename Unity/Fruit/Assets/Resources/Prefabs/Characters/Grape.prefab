@@ -1644,6 +1644,8 @@ MonoBehaviour:
   _chestTransform: {fileID: 1543733855303578017}
   _leanAmount: 12.5
   _leanSpeed: 8
+  _arenaForceMultiplier: 0.8
+  _groundedIntentMultiplier: 3.5
 --- !u!95 &8873601851974618172
 Animator:
   serializedVersion: 7

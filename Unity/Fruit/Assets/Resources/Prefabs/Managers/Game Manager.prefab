@@ -53,7 +53,7 @@ MonoBehaviour:
   - Grape
   - Lemon
   - Peach
-  _matchDuration: 20
+  _matchDuration: 120
   _fruitPrefabs:
   - {fileID: 1364519068984425627, guid: d8c8d0a2924731a4cb67aa272d910316, type: 3}
   - {fileID: 1205390737718345367, guid: 5285860d86abc5347942d5bea0b81390, type: 3}

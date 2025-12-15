@@ -22,13 +22,15 @@ namespace EasyCharacterMovement
         [SerializeField] private Transform _chestTransform; // Reference to the chest bone
         [SerializeField] private float _leanAmount = 12.5f; // Maximum degrees to lean
         [SerializeField] private float _leanSpeed = 8f; // Speed at which the lean is applied
-        [SerializeField] private float _arenaForceMultiplier = 1f;
+        [SerializeField] private float _arenaForceMultiplier = 0.8f;
+        [SerializeField] private float _groundedIntentMultiplier = 3.5f;
 
         private Vector3 _previousMovementDirection = Vector3.zero;
         private Quaternion _chestOverrideTransform; // The dummy transform used to update the real one
         private Quaternion _chestTargetRotation; // Target rotation for the lean
         private string _currentAnimationClip;
         private float currentRunMagnitude; // Keeps track of the current run magnitude input
+        private float _timeOutsideArena = 0f;
         private bool _rightFootUp, _isSpeeding, _queueLaunch, 
             _pauseButtonPressed, _readyButtonPressed;
 
@@ -694,53 +696,64 @@ namespace EasyCharacterMovement
 
         private void ApplyArenaConstraint()
         {
-            // Only constrain during an active match
-            if (!GameManager.Instance.MatchActive())
-                return;
+            if (!GameManager.Instance.MatchActive()) return;
 
             ArenaArea arena = GameManager.Instance.GetCurrentArena();
-            if (arena == null)
+            if (arena == null) return;
+
+            // Check if outside arena
+            Vector3 localPos = arena.transform.InverseTransformPoint(transform.position);
+            bool isOutside = Mathf.Abs(localPos.x) > arena.mainBoundary.x ||
+                             Mathf.Abs(localPos.z) > arena.mainBoundary.y;
+
+            if (!isOutside)
+            {
+                _timeOutsideArena = 0f;
                 return;
+            }
 
-            Vector3 worldPos = transform.position;
+            // Track time outside (makes pull stronger over time)
+            _timeOutsideArena += Time.fixedDeltaTime;
+            float timeRatio = Mathf.Clamp01(_timeOutsideArena / 1.5f);
 
-            // Convert to arena local space
-            Vector3 localPos = arena.transform.InverseTransformPoint(worldPos);
+            // Find pull direction (toward nearest point inside)
+            float targetX = Mathf.Clamp(localPos.x, -arena.mainBoundary.x, arena.mainBoundary.x);
+            float targetZ = Mathf.Clamp(localPos.z, -arena.mainBoundary.y, arena.mainBoundary.y);
+            Vector3 targetWorld = arena.transform.TransformPoint(new Vector3(targetX, localPos.y, targetZ));
+            Vector3 pullDir = (targetWorld - transform.position).normalized;
 
-            float softX = arena.halfExtents.x - arena.softPadding;
-            float softZ = arena.halfExtents.y - arena.softPadding;
+            // Calculate pull force (increases with time)
+            float intensity = timeRatio * timeRatio;
+            float pullForce = arena.pullForceStrength * (1f + intensity * 3f);
 
-            float dx = Mathf.Max(Mathf.Abs(localPos.x) - softX, 0f);
-            float dz = Mathf.Max(Mathf.Abs(localPos.z) - softZ, 0f);
+            // Boost force if player is trying to go outward
+            Vector3 velocity = characterMovement.velocity;
+            float outwardSpeed = Mathf.Max(0f, Vector3.Dot(velocity, -pullDir));
 
-            float distanceOutside = Mathf.Sqrt(dx * dx + dz * dz);
+            if (characterMovement.isGrounded)
+            {
+                // For running, check input direction too
+                Vector3 inputDir = GetMovementDirection();
+                if (inputDir != Vector3.zero)
+                {
+                    float inputOutward = Mathf.Max(0f, Vector3.Dot(inputDir.normalized, -pullDir));
+                    outwardSpeed = Mathf.Max(outwardSpeed, inputOutward * _groundedIntentMultiplier);
+                }
+            }
 
-            if (distanceOutside <= 0f)
-                return;
+            if (outwardSpeed > 0.1f)
+            {
+                pullForce += outwardSpeed * arena.velocityDamping;
+            }
 
-            // Closest point inside the arena
-            Vector3 closestLocalPoint = new Vector3(
-                Mathf.Clamp(localPos.x, -arena.halfExtents.x, arena.halfExtents.x),
-                localPos.y,
-                Mathf.Clamp(localPos.z, -arena.halfExtents.y, arena.halfExtents.y)
-            );
+            // Apply stronger "slingshot" when pull is intense
+            if (intensity > 0.6f)
+            {
+                pullForce *= 1.5f;
+            }
 
-            Vector3 closestWorldPoint = arena.transform.TransformPoint(closestLocalPoint);
-            Vector3 pullDirection = (closestWorldPoint - worldPos).normalized;
-
-            float t = Mathf.Clamp01(distanceOutside / arena.softPadding);
-
-            float force = Mathf.Lerp(
-                arena.pullStrength,
-                arena.maxPullStrength,
-                t
-            ) * _arenaForceMultiplier;
-
-            // ECM-friendly force application
-            characterMovement.AddForce(
-                pullDirection * force,
-                ForceMode.Acceleration
-            );
+            // Apply the force
+            characterMovement.AddForce(pullDir * pullForce * _arenaForceMultiplier, ForceMode.Acceleration);
         }
 
         /// <summary>

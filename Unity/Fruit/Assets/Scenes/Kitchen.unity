@@ -353,6 +353,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Transition Arena
       objectReference: {fileID: 0}
+    - target: {fileID: 531065873128489737, guid: 8ea1fcf4f5109cb40a1b42f56f2e8e9b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6840228313661520107, guid: 8ea1fcf4f5109cb40a1b42f56f2e8e9b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -3
@@ -967,6 +971,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Oven Arena
       objectReference: {fileID: 0}
+    - target: {fileID: 7059164053231847339, guid: 2258c1e6c4102974b87f7a4f50e4f944, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1250,6 +1258,10 @@ PrefabInstance:
     - target: {fileID: 9110225550000460173, guid: 43883374be12cf649b3e33dd9a47e397, type: 3}
       propertyPath: m_Name
       value: Sink Arena
+      objectReference: {fileID: 0}
+    - target: {fileID: 9110225550000460173, guid: 43883374be12cf649b3e33dd9a47e397, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

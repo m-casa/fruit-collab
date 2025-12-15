@@ -45,6 +45,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArenaArea
   _halfExtents: {x: 4.5, y: 3.75}
-  _softPadding: 0.75
-  _pullStrength: 18
-  _maxPullStrength: 35
+  _softBoundaryDepth: 1.5
+  _jelloStiffness: 25
+  _jelloDamping: 8

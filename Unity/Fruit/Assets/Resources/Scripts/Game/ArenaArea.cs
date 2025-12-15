@@ -2,23 +2,22 @@ using UnityEngine;
 
 public class ArenaArea : MonoBehaviour
 {
-    [Header("Shape")]
-    [SerializeField] private Vector2 _halfExtents = new Vector2(4f, 3f);
-    [SerializeField] private float _softPadding = 0.75f;
+    [Header("Boundary")]
+    [SerializeField] private Vector2 _mainBoundary = new Vector2(4f, 3f);
 
-    [Header("Pull Force")]
-    [SerializeField] private float _pullStrength = 18f;
-    [SerializeField] private float _maxPullStrength = 35f;
+    [Header("Boundary Settings")]
+    [SerializeField] private float _softBoundary = 1.5f; // How far outside you can go
+    [SerializeField] private float _pullForceStrength = 25f; // How strong the pullback is
+    [SerializeField] private float _velocityDamping = 8f; // Prevents oscillation
 
     #region PROPERTIES
 
-    public Vector2 halfExtents => _halfExtents;
-    public float softPadding => _softPadding;
-    public float pullStrength => _pullStrength;
-    public float maxPullStrength => _maxPullStrength;
+    public Vector2 mainBoundary => _mainBoundary;
+    public float softBoundary => _softBoundary;
+    public float pullForceStrength => _pullForceStrength;
+    public float velocityDamping => _velocityDamping;
 
     #endregion
-
 
 #if UNITY_EDITOR
     private void OnDrawGizmos()
@@ -26,19 +25,20 @@ public class ArenaArea : MonoBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.matrix = transform.localToWorldMatrix;
 
+        // Main arena boundary
         Gizmos.DrawWireCube(
             Vector3.zero,
-            new Vector3(_halfExtents.x * 2f, 0.1f, _halfExtents.y * 2f)
+            new Vector3(_mainBoundary.x * 2f, 0.1f, _mainBoundary.y * 2f)
         );
 
-        // Soft boundary
-        Gizmos.color = new Color(1f, 1f, 0f, 0.4f);
+        // Soft boundary (how far outside you can go)
+        Gizmos.color = new Color(1f, 0.5f, 0f, 0.3f); // Orange
         Gizmos.DrawWireCube(
             Vector3.zero,
             new Vector3(
-                (_halfExtents.x - _softPadding) * 2f,
+                (_mainBoundary.x + _softBoundary) * 2f,
                 0.1f,
-                (_halfExtents.y - _softPadding) * 2f
+                (_mainBoundary.y + _softBoundary) * 2f
             )
         );
     }
