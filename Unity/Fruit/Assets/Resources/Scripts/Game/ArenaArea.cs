@@ -10,12 +10,17 @@ public class ArenaArea : MonoBehaviour
     [SerializeField] private float _pullForceStrength = 25f; // How strong the pullback is
     [SerializeField] private float _velocityDamping = 8f; // Prevents oscillation
 
+    [SerializeField] private bool _isTransitionArena;
+    [SerializeField] private int _arenaIndex;
+
     #region PROPERTIES
 
     public Vector2 mainBoundary => _mainBoundary;
     public float softBoundary => _softBoundary;
     public float pullForceStrength => _pullForceStrength;
     public float velocityDamping => _velocityDamping;
+    public bool isTransitionArena => _isTransitionArena;
+    public int arenaIndex => _arenaIndex;
 
     #endregion
 

@@ -1,7 +1,7 @@
 using System.Collections;
+using System.Linq;
 using Unity.Cinemachine;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
 
 public class CameraManager : MonoBehaviour
 {
@@ -16,12 +16,9 @@ public class CameraManager : MonoBehaviour
     [SerializeField] private CinemachineCamera _playerFollowCamera;
     [SerializeField] private CinemachineCamera _arenaTransitionCamera;
     [SerializeField] private CinemachineTargetGroup _playerTargetGroup;
-
-    [Header("Arena Camera Targets")]
-    [SerializeField] private Transform[] _arenaTransitionTargets;
-
-    [Header("Camera Anchor")]
     [SerializeField] private Transform _cameraAnchor;
+
+    private Transform[] _arenaTransitionTargets;
 
     #endregion
 
@@ -52,12 +49,17 @@ public class CameraManager : MonoBehaviour
     #region METHODS
 
     /// <summary>
-    /// Show the start screen initially.
+    /// Show the start screen initially. Also grabs the transition targets in the map.
     /// </summary>
 
     public void EnableCamera()
     {
         GetComponentInChildren<Camera>().enabled = true;
+
+        _arenaTransitionTargets = FindObjectsByType<TransitionTarget>(FindObjectsSortMode.None)
+                        .OrderBy(t => t.transitionIndex)
+                        .Select(t => t.transform)
+                        .ToArray();
     }
 
     /// <summary>
@@ -118,6 +120,7 @@ public class CameraManager : MonoBehaviour
     {
         Vector3 startPos = _arenaTransitionTargets[fromIndex].position;
         Vector3 endPos = _arenaTransitionTargets[toIndex].position;
+        Vector3 arenaOffset = transitionArena.transform.position - _cameraAnchor.position;
         float elapsed = 0f;
 
         while (elapsed < duration)
@@ -128,17 +131,13 @@ public class CameraManager : MonoBehaviour
 
             Vector3 pos = Vector3.Lerp(startPos, endPos, t);
             _cameraAnchor.position = pos;
-
-            if (transitionArena != null)
-                transitionArena.transform.position = pos;
+            transitionArena.transform.position = pos + arenaOffset;
 
             yield return null;
         }
 
         _cameraAnchor.position = endPos;
-
-        if (transitionArena != null)
-            transitionArena.transform.position = endPos;
+        transitionArena.transform.position = endPos + arenaOffset;
 
         MoveCameraToPlayerFollow();
     }

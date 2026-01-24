@@ -347,13 +347,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3180231538019527435}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.12940954, y: -0.8365163, z: 0.22414392, w: 0.48296285}
-  m_LocalPosition: {x: 3.7499995, y: 2.5000007, z: 2.1650636}
+  m_LocalRotation: {x: -0, y: -0.9659258, z: 0.2588191, w: 0}
+  m_LocalPosition: {x: 0.00000047683716, y: 2.5000007, z: 4.330127}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4676143572354852641}
-  m_LocalEulerAnglesHint: {x: 30, y: -120, z: 0}
+  m_LocalEulerAnglesHint: {x: 30, y: -180, z: 0}
 --- !u!114 &6587572951930767207
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -474,7 +474,7 @@ Transform:
   m_GameObject: {fileID: 5126664461508580811}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3, y: 12.75, z: -6.75}
+  m_LocalPosition: {x: -3, y: 11.5, z: -6.75}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -538,10 +538,6 @@ MonoBehaviour:
   _playerFollowCamera: {fileID: 6587572951930767207}
   _arenaTransitionCamera: {fileID: 1883174017733063360}
   _playerTargetGroup: {fileID: 8189357236766673952}
-  _arenaTransitionTargets:
-  - {fileID: 3543205760293594549, guid: 719d4db6c4a02c14d9ff1926dd2f8459, type: 3}
-  - {fileID: 5887319616350654223, guid: bc5310a74dc2933449bb936914442eb2, type: 3}
-  - {fileID: 360217269187587729, guid: 9647b07fea2613f409a89e51f9f7c21f, type: 3}
   _cameraAnchor: {fileID: 6335637690226261286}
 --- !u!1 &5978962533986537831
 GameObject:
@@ -553,6 +549,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6275769763751833237}
   - component: {fileID: 1883174017733063360}
+  - component: {fileID: 2451490192386950486}
   m_Layer: 0
   m_Name: Arena Transition VC
   m_TagString: Untagged
@@ -568,13 +565,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5978962533986537831}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.0019104434, y: -0.9504029, z: 0.3109609, w: 0.005838969}
-  m_LocalPosition: {x: -1.8143623, y: 11.094383, z: 2.8713288}
+  m_LocalRotation: {x: 0, y: -0.9659258, z: 0.2588191, w: 0}
+  m_LocalPosition: {x: -3, y: 11.5, z: -6.75}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4676143572354852641}
-  m_LocalEulerAnglesHint: {x: 36.235, y: -179.296, z: 0}
+  m_LocalEulerAnglesHint: {x: 30, y: -180, z: 0}
 --- !u!114 &1883174017733063360
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -595,7 +592,7 @@ MonoBehaviour:
   m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
-    TrackingTarget: {fileID: 0}
+    TrackingTarget: {fileID: 6335637690226261286}
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
@@ -618,6 +615,25 @@ MonoBehaviour:
       BarrelClipping: 0.25
       Anamorphism: 0
   BlendHint: 0
+--- !u!114 &2451490192386950486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5978962533986537831}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b617507da6d07e749b7efdb34e1173e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineFollow
+  TrackerSettings:
+    BindingMode: 4
+    PositionDamping: {x: 0.2, y: 0.2, z: 0.2}
+    AngularDampingMode: 0
+    RotationDamping: {x: 1, y: 1, z: 1}
+    QuaternionDamping: 1
+  FollowOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &6718730079568398173
 GameObject:
   m_ObjectHideFlags: 0

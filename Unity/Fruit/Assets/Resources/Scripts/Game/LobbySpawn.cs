@@ -2,5 +2,7 @@ using UnityEngine;
 
 public class LobbySpawn : MonoBehaviour
 {
-    public int index; // Optional: useful for ordering
+    [SerializeField] private int _lobbySpawnIndex; // For ordering
+
+    public int lobbySpawnIndex => _lobbySpawnIndex;
 }

@@ -45,18 +45,15 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject _arrowPrefab; // Reference to the arrow prefab
     private GameObject _spawnedArrow; // Reference to the spawned arrow
 
-    [Header("Arena Areas")]
-    [SerializeField] private ArenaArea[] _staticArenas;
-    [SerializeField] private ArenaArea _transitionArena;
-
     [Header("Arena Timing")]
     [SerializeField] private float _timeBeforeArenaMove = 30f;
     [SerializeField] private float _arenaMoveDuration = 15f;
 
-    [Header("Arena State")]
     private ArenaState _arenaState = ArenaState.Static;
-    private int _currentArenaIndex = 0;
+    private ArenaArea[] _staticArenas;
+    private ArenaArea _transitionArena;
     private Coroutine _arenaRoutine;
+    private int _currentArenaIndex = 0;
 
     #endregion
 
@@ -88,14 +85,22 @@ public class GameManager : NetworkBehaviour
         _spawnedCharacters = new GameObject[_characterPrefabs.Length];
 
         _lobbySpawns = FindObjectsByType<LobbySpawn>(FindObjectsSortMode.None)
-                        .OrderBy(sp => sp.index)
+                        .OrderBy(sp => sp.lobbySpawnIndex)
                         .Select(sp => sp.transform)
                         .ToList();
 
         _matchSpawns = FindObjectsByType<MatchSpawn>(FindObjectsSortMode.None)
-                        .OrderBy(sp => sp.index)
+                        .OrderBy(sp => sp.matchSpawnIndex)
                         .Select(sp => sp.transform)
                         .ToList();
+
+        _staticArenas = FindObjectsByType<ArenaArea>(FindObjectsSortMode.None)
+                        .Where(a => !a.isTransitionArena)
+                        .OrderBy(a => a.arenaIndex)
+                        .ToArray();
+
+        _transitionArena = FindObjectsByType<ArenaArea>(FindObjectsSortMode.None)
+                        .FirstOrDefault(a => a.isTransitionArena);
     }
 
     #endregion

@@ -2,5 +2,7 @@ using UnityEngine;
 
 public class MatchSpawn : MonoBehaviour
 {
-    public int index; // Optional: useful for ordering
+    [SerializeField] private int _matchSpawnIndex; // For ordering
+
+    public int matchSpawnIndex => _matchSpawnIndex;
 }

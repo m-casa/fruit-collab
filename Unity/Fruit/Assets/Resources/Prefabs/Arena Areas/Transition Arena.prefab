@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 531065873128489737}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.25, y: 12.75, z: -5.25}
+  m_LocalPosition: {x: -4.626061, y: 12.75, z: -5.9995103}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -48,3 +48,5 @@ MonoBehaviour:
   _softBoundary: 1.5
   _pullForceStrength: 25
   _velocityDamping: 8
+  _isTransitionArena: 1
+  _arenaIndex: 3
