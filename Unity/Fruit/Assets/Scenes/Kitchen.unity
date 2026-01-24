@@ -655,7 +655,7 @@ GameObject:
   m_Component:
   - component: {fileID: 813373994}
   m_Layer: 0
-  m_Name: Arenas
+  m_Name: Arenas Areas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -675,9 +675,9 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1423353453461894600}
+  - {fileID: 6840228313929440424}
   - {fileID: 6425096941973927405}
   - {fileID: 4997321279429782089}
-  - {fileID: 6840228313929440424}
   m_Father: {fileID: 1872152543}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &862378971
@@ -836,7 +836,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1059033247}
   m_Layer: 0
-  m_Name: Camera Targets
+  m_Name: Transition Targets
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1405,12 +1405,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75a9b87a59122a34a8770747e9754f67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArenaArea
-  _mainBoundary: {x: 4, y: 3}
+  _mainBoundary: {x: 3.5, y: 3}
   _softBoundary: 1.5
   _pullForceStrength: 25
   _velocityDamping: 8
   _isTransitionArena: 0
-  _arenaIndex: 2
+  _arenaIndex: 3
 --- !u!4 &1423353453461894600
 Transform:
   m_ObjectHideFlags: 0
@@ -1420,7 +1420,7 @@ Transform:
   m_GameObject: {fileID: 3823873114216319509}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3, y: 9.75, z: -11}
+  m_LocalPosition: {x: -3, y: 9.75, z: -10.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1465,7 +1465,7 @@ Transform:
   m_GameObject: {fileID: 6673852699875087237}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3, y: 11.5, z: -6.75}
+  m_LocalPosition: {x: -3, y: 11.5, z: -5.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1498,7 +1498,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75a9b87a59122a34a8770747e9754f67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArenaArea
-  _mainBoundary: {x: 4, y: 3}
+  _mainBoundary: {x: 4, y: 3.5}
   _softBoundary: 1.5
   _pullForceStrength: 25
   _velocityDamping: 8
@@ -1562,7 +1562,7 @@ GameObject:
   - component: {fileID: 224780896640214167}
   - component: {fileID: 5858588070032857421}
   m_Layer: 0
-  m_Name: Oven Cam Target
+  m_Name: Oven Target
   m_TagString: Untagged
   m_Icon: {fileID: 7148428337604731935, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -1687,7 +1687,7 @@ Transform:
   m_GameObject: {fileID: 7551190667606088949}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.25, y: 11.5, z: -5.25}
+  m_LocalPosition: {x: -9.25, y: 11.5, z: -5.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1702,7 +1702,7 @@ Transform:
   m_GameObject: {fileID: 7059164054316408492}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -13.5, y: 9.75, z: -0.5}
+  m_LocalPosition: {x: -13, y: 9.75, z: -0.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1953,7 +1953,7 @@ GameObject:
   - component: {fileID: 2103482980664442049}
   - component: {fileID: 7027495803309585196}
   m_Layer: 0
-  m_Name: Counter Cam Target
+  m_Name: Counter Target
   m_TagString: Untagged
   m_Icon: {fileID: 7148428337604731935, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -1968,7 +1968,7 @@ Transform:
   m_GameObject: {fileID: 531065872859555658}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3, y: 9.75, z: -11}
+  m_LocalPosition: {x: -3, y: 9.75, z: -10.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2015,7 +2015,7 @@ GameObject:
   - component: {fileID: 4658612095525892901}
   - component: {fileID: 8208832116355769078}
   m_Layer: 0
-  m_Name: Sink Cam Target
+  m_Name: Sink Target
   m_TagString: Untagged
   m_Icon: {fileID: 7148428337604731935, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -2033,12 +2033,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75a9b87a59122a34a8770747e9754f67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArenaArea
-  _mainBoundary: {x: 4, y: 3}
+  _mainBoundary: {x: 4.5, y: 4.5}
   _softBoundary: 1.5
   _pullForceStrength: 25
   _velocityDamping: 8
   _isTransitionArena: 0
-  _arenaIndex: 1
+  _arenaIndex: 2
 --- !u!114 &8087861611069823566
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2051,12 +2051,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75a9b87a59122a34a8770747e9754f67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArenaArea
-  _mainBoundary: {x: 4, y: 3}
+  _mainBoundary: {x: 4, y: 3.5}
   _softBoundary: 1.5
   _pullForceStrength: 25
   _velocityDamping: 8
   _isTransitionArena: 1
-  _arenaIndex: 3
+  _arenaIndex: 1
 --- !u!114 &8208832116355769078
 MonoBehaviour:
   m_ObjectHideFlags: 0
