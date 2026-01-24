@@ -12,6 +12,12 @@ public class GameManager : NetworkBehaviour
 
     [SyncVar] private bool _matchActive;
 
+    private enum ArenaState
+    {
+        Static,
+        Transition
+    }
+
     [Header("Game States")]
     [SerializeField] private List<string> _allCharacters = new List<string> { "Apple", "Grape", "Lemon", "Peach" };
     [SerializeField] private SyncDictionary<int, int> _playerScores = new SyncDictionary<int, int>(); // Scores for each player
@@ -23,7 +29,7 @@ public class GameManager : NetworkBehaviour
     private string _claimedCharactersSync = ""; // Sync'd string for character selection (CSV format)
 
     [Header("Timers")]
-    private Coroutine _startCountdownCoroutine;
+    private Coroutine _startCountdownRoutine;
     [SerializeField] private float _matchDuration = 150f; // 150 seconds is 2:30 minutes
     private float _remainingTime;
 
@@ -40,11 +46,17 @@ public class GameManager : NetworkBehaviour
     private GameObject _spawnedArrow; // Reference to the spawned arrow
 
     [Header("Arena Areas")]
-    [SerializeField] private ArenaArea _counterArena;
-    [SerializeField] private ArenaArea _sinkArena;
-    [SerializeField] private ArenaArea _ovenArena;
+    [SerializeField] private ArenaArea[] _staticArenas;
     [SerializeField] private ArenaArea _transitionArena;
-    private ArenaArea _currentArena;
+
+    [Header("Arena Timing")]
+    [SerializeField] private float _timeBeforeArenaMove = 30f;
+    [SerializeField] private float _arenaMoveDuration = 15f;
+
+    [Header("Arena State")]
+    private ArenaState _arenaState = ArenaState.Static;
+    private int _currentArenaIndex = 0;
+    private Coroutine _arenaRoutine;
 
     #endregion
 
@@ -188,10 +200,10 @@ public class GameManager : NetworkBehaviour
             _readyPlayers.Remove(target);
             Debug.Log($"Player {target.connectionId} is now UNREADY");
 
-            if (_startCountdownCoroutine != null)
+            if (_startCountdownRoutine != null)
             {
-                StopCoroutine(_startCountdownCoroutine);
-                _startCountdownCoroutine = null;
+                StopCoroutine(_startCountdownRoutine);
+                _startCountdownRoutine = null;
 
                 Debug.Log("Countdown canceled, someone unreadied.");
             }
@@ -218,12 +230,15 @@ public class GameManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Returns the current arena area.
+    /// Returns the current arena.
     /// </summary>
 
     public ArenaArea GetCurrentArena()
     {
-        return _currentArena;
+        if (_arenaState == ArenaState.Transition)
+            return _transitionArena;
+
+        return _staticArenas[_currentArenaIndex];
     }
 
     /// <summary>
@@ -457,7 +472,7 @@ public class GameManager : NetworkBehaviour
     [TargetRpc]
     private void RpcMoveCameraToLobby(NetworkConnection conn)
     {
-        CameraManager.Instance.MoveCameraToLobby();
+        CameraManager.Instance.MoveCameraToPlayerFollow();
     }
 
     /// <summary>
@@ -543,10 +558,10 @@ public class GameManager : NetworkBehaviour
     {
         if (_readyPlayers.Count == NetworkServer.connections.Count)
         {
-            if (_startCountdownCoroutine == null)
+            if (_startCountdownRoutine == null)
             {
                 Debug.Log("All players ready. Starting countdown...");
-                _startCountdownCoroutine = StartCoroutine(CountdownTimer(3f));
+                _startCountdownRoutine = StartCoroutine(CountdownTimer(3f));
             }
         }
     }
@@ -573,12 +588,19 @@ public class GameManager : NetworkBehaviour
 
     private void StartMatch()
     {
+        NetworkPlayer[] networkPlayers = GetAllNetworkedPlayers();
+
+        if (_arenaRoutine != null)
+        {
+            StopCoroutine(_arenaRoutine);
+            _arenaRoutine = null;
+        }
+
+        _arenaRoutine = StartCoroutine(ArenaFlowRoutine());
         _matchActive = true;
-        _currentArena = _counterArena;
-        _startCountdownCoroutine = null;
+        _startCountdownRoutine = null;
         _readyPlayers.Clear();
 
-        NetworkPlayer[] networkPlayers = GetAllNetworkedPlayers();
 
         MovePlayersToMatch(networkPlayers);
         StartCoroutine(MatchTimer());
@@ -593,6 +615,48 @@ public class GameManager : NetworkBehaviour
     private NetworkPlayer[] GetAllNetworkedPlayers()
     {
         return FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None);
+    }
+
+    /// <summary>
+    /// Waits before attempting to move the camera to the next arena.
+    /// </summary>
+
+    private IEnumerator ArenaFlowRoutine()
+    {
+        // Always start on the first arena
+        _currentArenaIndex = 0;
+        _arenaState = ArenaState.Static;
+
+        while (_currentArenaIndex < _staticArenas.Length - 1)
+        {
+            // Wait before moving the camera
+            yield return new WaitForSeconds(_timeBeforeArenaMove);
+
+            // Enter transition state so constraints use transition arena
+            _arenaState = ArenaState.Transition;
+
+            // Tell the camera to move to the next arena
+            CameraManager.Instance.MoveCameraToNextArena(
+                _currentArenaIndex,
+                _arenaMoveDuration,
+                _transitionArena
+            );
+
+            // Wait for camera movement to finish
+            yield return new WaitForSeconds(_arenaMoveDuration);
+
+            // Advance arena index
+            _currentArenaIndex++;
+
+            // Lock into the new static arena
+            _arenaState = ArenaState.Static;
+        }
+
+        if (_arenaRoutine != null)
+        {
+            StopCoroutine(_arenaRoutine);
+            _arenaRoutine = null;
+        }
     }
 
     /// <summary>
@@ -662,9 +726,14 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("Match Ended!");
 
-        _currentArena = null;
-        string winner = DetermineWinner();
         NetworkPlayer[] networkPlayers = GetAllNetworkedPlayers();
+        string winner = DetermineWinner();
+
+        if (_arenaRoutine != null)
+        {
+            StopCoroutine(_arenaRoutine);
+            _arenaRoutine = null;
+        }
 
         ResetAllScores(); // Reset scores between matches
         ShowWinner(winner);

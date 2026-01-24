@@ -1,5 +1,7 @@
+using System.Collections;
 using Unity.Cinemachine;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 public class CameraManager : MonoBehaviour
 {
@@ -7,11 +9,19 @@ public class CameraManager : MonoBehaviour
 
     public static CameraManager Instance { get; private set; }
 
+    [Header("Virtual Cameras")]
     [SerializeField] private CinemachineCamera _startCamera;
     [SerializeField] private CinemachineCamera _mainMenuCamera;
     [SerializeField] private CinemachineCamera _characterSelectCamera;
-    [SerializeField] private CinemachineCamera _lobbyCamera;
-    [SerializeField] private CinemachineTargetGroup _characterTargetGroup;
+    [SerializeField] private CinemachineCamera _playerFollowCamera;
+    [SerializeField] private CinemachineCamera _arenaTransitionCamera;
+    [SerializeField] private CinemachineTargetGroup _playerTargetGroup;
+
+    [Header("Arena Camera Targets")]
+    [SerializeField] private Transform[] _arenaTransitionTargets;
+
+    [Header("Camera Anchor")]
+    [SerializeField] private Transform _cameraAnchor;
 
     #endregion
 
@@ -58,7 +68,7 @@ public class CameraManager : MonoBehaviour
     {
         // Transition to the main menu camera
         _startCamera.Priority = 0;
-        _lobbyCamera.Priority = 0;
+        _playerFollowCamera.Priority = 0;
         _mainMenuCamera.Priority = 10;
     }
 
@@ -74,14 +84,73 @@ public class CameraManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Moves the camera from the character select position to the lobby's position.
+    /// Moves the camera from the character select position to the player follow position.
     /// </summary>
 
-    public void MoveCameraToLobby()
+    public void MoveCameraToPlayerFollow()
     {
-        // Transition to the lobby camera
+        // Transition to the player follow camera
         _characterSelectCamera.Priority = 0;
-        _lobbyCamera.Priority = 10;
+        _arenaTransitionCamera.Priority = 0;
+        _playerFollowCamera.Priority = 10;
+    }
+
+    /// <summary>
+    /// Moves the camera from the current arena to the next.
+    /// </summary>
+
+    public void MoveCameraToNextArena(int arenaIndex, float duration, ArenaArea transitionArena)
+    {
+        StopAllCoroutines();
+
+        MoveCameraToTransitionPosition();
+
+        StartCoroutine(
+            CameraTransitionRoutine(arenaIndex, arenaIndex + 1, duration, transitionArena)
+        );
+    }
+
+    /// <summary>
+    /// The routine the camera follows to transition.
+    /// </summary>
+
+    private IEnumerator CameraTransitionRoutine(int fromIndex, int toIndex, float duration, ArenaArea transitionArena)
+    {
+        Vector3 startPos = _arenaTransitionTargets[fromIndex].position;
+        Vector3 endPos = _arenaTransitionTargets[toIndex].position;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            t = Mathf.SmoothStep(0f, 1f, t);
+
+            Vector3 pos = Vector3.Lerp(startPos, endPos, t);
+            _cameraAnchor.position = pos;
+
+            if (transitionArena != null)
+                transitionArena.transform.position = pos;
+
+            yield return null;
+        }
+
+        _cameraAnchor.position = endPos;
+
+        if (transitionArena != null)
+            transitionArena.transform.position = endPos;
+
+        MoveCameraToPlayerFollow();
+    }
+
+    /// <summary>
+    /// Moves the camera from the player follow position to the transition position.
+    /// </summary>
+
+    public void MoveCameraToTransitionPosition()
+    {
+        _playerFollowCamera.Priority = 0;
+        _arenaTransitionCamera.Priority = 10;
     }
 
     /// <summary>
@@ -93,7 +162,7 @@ public class CameraManager : MonoBehaviour
     {
         if (!IsCharacterInCameraGroup(character))
         {
-            _characterTargetGroup.AddMember(character.transform, 1f, 2f); // Weight = 1, Radius = 2
+            _playerTargetGroup.AddMember(character.transform, 1f, 2f); // Weight = 1, Radius = 2
         }
         else
         {
@@ -108,7 +177,7 @@ public class CameraManager : MonoBehaviour
 
     public void RemoveCharacterFromCamera(GameObject character)
     {
-        _characterTargetGroup.RemoveMember(character.transform);
+        _playerTargetGroup.RemoveMember(character.transform);
     }
 
     /// <summary>
@@ -117,9 +186,9 @@ public class CameraManager : MonoBehaviour
 
     public void RemoveAllCharactersFromCamera()
     {
-        if (_characterTargetGroup != null && _characterTargetGroup.Targets != null)
+        if (_playerTargetGroup != null && _playerTargetGroup.Targets != null)
         {
-            _characterTargetGroup.Targets.Clear();
+            _playerTargetGroup.Targets.Clear();
         }
     }
 
@@ -129,7 +198,7 @@ public class CameraManager : MonoBehaviour
 
     private bool IsCharacterInCameraGroup(GameObject character)
     {
-        foreach (var member in _characterTargetGroup.Targets)
+        foreach (var member in _playerTargetGroup.Targets)
         {
             if (member.Object != null)
             {

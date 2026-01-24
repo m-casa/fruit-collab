@@ -691,7 +691,7 @@ namespace EasyCharacterMovement
         }
 
         /// <summary>
-        /// Applies the current arena constraint to the character.
+        /// Applies the current arena's constraint to the character.
         /// </summary>
 
         private void ApplyArenaConstraint()
