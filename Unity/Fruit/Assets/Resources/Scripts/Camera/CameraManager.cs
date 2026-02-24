@@ -130,14 +130,14 @@ public class CameraManager : MonoBehaviour
             t = Mathf.SmoothStep(0f, 1f, t);
 
             Vector3 pos = Vector3.Lerp(startPos, endPos, t);
-            _cameraAnchor.position = pos;
             transitionArena.transform.position = pos + arenaOffset;
+            _cameraAnchor.position = pos;
 
             yield return null;
         }
 
-        _cameraAnchor.position = endPos;
         transitionArena.transform.position = endPos + arenaOffset;
+        _cameraAnchor.position = endPos;
 
         MoveCameraToPlayerFollow();
     }

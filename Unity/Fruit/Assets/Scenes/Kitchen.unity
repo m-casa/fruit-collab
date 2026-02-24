@@ -677,6 +677,7 @@ Transform:
   - {fileID: 1423353453461894600}
   - {fileID: 6840228313929440424}
   - {fileID: 6425096941973927405}
+  - {fileID: 2032524244}
   - {fileID: 4997321279429782089}
   m_Father: {fileID: 1872152543}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -857,6 +858,7 @@ Transform:
   m_Children:
   - {fileID: 2103482980664442049}
   - {fileID: 4658612095525892901}
+  - {fileID: 1579122802}
   - {fileID: 224780896640214167}
   m_Father: {fileID: 1872152543}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1036,6 +1038,51 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ca985a1b6941e164ca95666ceb3b4f3a, type: 3}
+--- !u!1 &1579122801
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1579122802}
+  - component: {fileID: 1579122803}
+  m_Layer: 0
+  m_Name: Sink Target 2
+  m_TagString: Untagged
+  m_Icon: {fileID: 7148428337604731935, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1579122802
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1579122801}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -9.25, y: 11.5, z: -11}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1059033247}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1579122803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1579122801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fe7ff114a6fa5947b8f9c4ec520b822, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TransitionTarget
+  _transitionIndex: 2
 --- !u!1 &1816857104
 GameObject:
   m_ObjectHideFlags: 0
@@ -1220,6 +1267,56 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2032524243
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2032524244}
+  - component: {fileID: 2032524245}
+  m_Layer: 0
+  m_Name: Transition Arena 2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2032524244
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2032524243}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -12, y: 9.75, z: -11}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 813373994}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2032524245
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2032524243}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75a9b87a59122a34a8770747e9754f67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArenaArea
+  _mainBoundary: {x: 4.5, y: 4.5}
+  _softBoundary: 1.5
+  _pullForceStrength: 25
+  _velocityDamping: 8
+  _isTransitionArena: 1
+  _arenaIndex: 3
 --- !u!1 &2062564412
 GameObject:
   m_ObjectHideFlags: 0
@@ -1372,7 +1469,7 @@ GameObject:
   - component: {fileID: 6840228313929440424}
   - component: {fileID: 8087861611069823566}
   m_Layer: 0
-  m_Name: Transition Arena
+  m_Name: Transition Arena 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1410,7 +1507,7 @@ MonoBehaviour:
   _pullForceStrength: 25
   _velocityDamping: 8
   _isTransitionArena: 0
-  _arenaIndex: 3
+  _arenaIndex: 4
 --- !u!4 &1423353453461894600
 Transform:
   m_ObjectHideFlags: 0
@@ -1687,7 +1784,7 @@ Transform:
   m_GameObject: {fileID: 7551190667606088949}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -9.25, y: 11.5, z: -5.1}
+  m_LocalPosition: {x: -12, y: 11.5, z: -5.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1808,7 +1905,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fe7ff114a6fa5947b8f9c4ec520b822, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TransitionTarget
-  _transitionIndex: 2
+  _transitionIndex: 3
 --- !u!1 &6057705309556406345
 GameObject:
   m_ObjectHideFlags: 0
@@ -2015,7 +2112,7 @@ GameObject:
   - component: {fileID: 4658612095525892901}
   - component: {fileID: 8208832116355769078}
   m_Layer: 0
-  m_Name: Sink Target
+  m_Name: Sink Target 1
   m_TagString: Untagged
   m_Icon: {fileID: 7148428337604731935, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -2093,7 +2190,7 @@ SceneRoots:
   m_Roots:
   - {fileID: 446037038}
   - {fileID: 705507995}
-  - {fileID: 1916725328}
-  - {fileID: 1872152543}
   - {fileID: 1542150391}
   - {fileID: 4321448508499660925}
+  - {fileID: 1916725328}
+  - {fileID: 1872152543}
