@@ -50,10 +50,9 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private float _arenaMoveDuration = 15f;
 
     private ArenaState _arenaState = ArenaState.Static;
-    private ArenaArea[] _staticArenas;
-    private ArenaArea _transitionArena;
     private Coroutine _arenaRoutine;
-    private int _currentArenaIndex = 0;
+    private int _staticArenaIndex = 0;
+    private int _transitionArenaIndex = 0;
 
     #endregion
 
@@ -93,14 +92,6 @@ public class GameManager : NetworkBehaviour
                         .OrderBy(sp => sp.matchSpawnIndex)
                         .Select(sp => sp.transform)
                         .ToList();
-
-        _staticArenas = FindObjectsByType<ArenaArea>(FindObjectsSortMode.None)
-                        .Where(a => !a.isTransitionArena)
-                        .OrderBy(a => a.arenaIndex)
-                        .ToArray();
-
-        _transitionArena = FindObjectsByType<ArenaArea>(FindObjectsSortMode.None)
-                        .FirstOrDefault(a => a.isTransitionArena);
     }
 
     #endregion
@@ -241,9 +232,9 @@ public class GameManager : NetworkBehaviour
     public ArenaArea GetCurrentArena()
     {
         if (_arenaState == ArenaState.Transition)
-            return _transitionArena;
+            return CameraManager.Instance.GetTransitionArena(_transitionArenaIndex);
 
-        return _staticArenas[_currentArenaIndex];
+        return CameraManager.Instance.GetStaticArena(_staticArenaIndex);
     }
 
     /// <summary>
@@ -629,10 +620,11 @@ public class GameManager : NetworkBehaviour
     private IEnumerator ArenaFlowRoutine()
     {
         // Always start on the first arena
-        _currentArenaIndex = 0;
+        _staticArenaIndex = 0;
+        _transitionArenaIndex = 0;
         _arenaState = ArenaState.Static;
 
-        while (_currentArenaIndex < _staticArenas.Length - 1)
+        while (_transitionArenaIndex < CameraManager.Instance.TransitionCount)
         {
             // Wait before moving the camera
             yield return new WaitForSeconds(_timeBeforeArenaMove);
@@ -642,16 +634,16 @@ public class GameManager : NetworkBehaviour
 
             // Tell the camera to move to the next arena
             CameraManager.Instance.MoveCameraToNextArena(
-                _currentArenaIndex,
-                _arenaMoveDuration,
-                _transitionArena
+                _transitionArenaIndex,
+                _arenaMoveDuration
             );
 
             // Wait for camera movement to finish
             yield return new WaitForSeconds(_arenaMoveDuration);
 
             // Advance arena index
-            _currentArenaIndex++;
+            _staticArenaIndex++;
+            _transitionArenaIndex++;
 
             // Lock into the new static arena
             _arenaState = ArenaState.Static;
@@ -739,6 +731,8 @@ public class GameManager : NetworkBehaviour
             StopCoroutine(_arenaRoutine);
             _arenaRoutine = null;
         }
+
+        CameraManager.Instance.ResetTransitionArenas();
 
         ResetAllScores(); // Reset scores between matches
         ShowWinner(winner);

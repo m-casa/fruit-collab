@@ -539,6 +539,17 @@ MonoBehaviour:
   _arenaTransitionCamera: {fileID: 1883174017733063360}
   _playerTargetGroup: {fileID: 8189357236766673952}
   _cameraAnchor: {fileID: 6335637690226261286}
+  _transitionArenas:
+  - fromTarget: {fileID: 2391575484533996630, guid: b60ecc22e35346e4398bfd30faee4431, type: 3}
+    toTarget: {fileID: 1701855949918976089, guid: 9606e9a9cb9699641b6a6910812f1c73, type: 3}
+    transitionArena: {fileID: 6849740323981527588, guid: 22b95cad81f9595418a0ac1bcdb54fe1, type: 3}
+  - fromTarget: {fileID: 8984744468811228355, guid: 766e21c490af27c4db521a9131cfd11d, type: 3}
+    toTarget: {fileID: 444066034557773132, guid: 760be9e4defc84c4b8ca90eb58d69b0f, type: 3}
+    transitionArena: {fileID: 5265754311557866445, guid: d7dc03913e997b74ebfea788cdafc243, type: 3}
+  _staticArenas:
+  - {fileID: 3760079586036909983, guid: 97aa36618eae1f34b9bb11f83c5cec09, type: 3}
+  - {fileID: 7277374432369390326, guid: 43883374be12cf649b3e33dd9a47e397, type: 3}
+  - {fileID: 2165232648010553501, guid: 2258c1e6c4102974b87f7a4f50e4f944, type: 3}
 --- !u!1 &5978962533986537831
 GameObject:
   m_ObjectHideFlags: 0

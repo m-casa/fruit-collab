@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Linq;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -8,6 +7,29 @@ public class CameraManager : MonoBehaviour
     #region FIELDS
 
     public static CameraManager Instance { get; private set; }
+
+    [System.Serializable]
+    public class TransitionArena
+    {
+        public Transform fromTarget;
+        public Transform toTarget;
+        public ArenaArea arenaArea;
+
+        private Vector3 _initialPosition;
+        private Quaternion _initialRotation;
+
+        public void CacheInitialState()
+        {
+            _initialPosition = arenaArea.transform.position;
+            _initialRotation = arenaArea.transform.rotation;
+        }
+
+        public void ResetState()
+        {
+            arenaArea.transform.position = _initialPosition;
+            arenaArea.transform.rotation = _initialRotation;
+        }
+    }
 
     [Header("Virtual Cameras")]
     [SerializeField] private CinemachineCamera _startCamera;
@@ -18,7 +40,10 @@ public class CameraManager : MonoBehaviour
     [SerializeField] private CinemachineTargetGroup _playerTargetGroup;
     [SerializeField] private Transform _cameraAnchor;
 
-    private Transform[] _arenaTransitionTargets;
+    private ArenaArea[] _staticArenas;
+    private TransitionArena[] _transitionArenas;
+
+    public int TransitionCount => _transitionArenas.Length;
 
     #endregion
 
@@ -48,6 +73,36 @@ public class CameraManager : MonoBehaviour
 
     #region METHODS
 
+    public void InitializeArenas(ArenaArea[] staticArenas, TransitionArena[] transitionArenas)
+    {
+        _staticArenas = staticArenas;
+        _transitionArenas = transitionArenas;
+    }
+
+    public void ResetTransitionArenas()
+    {
+        foreach (TransitionArena transitionArena in _transitionArenas)
+        {
+            transitionArena.ResetState();
+        }
+    }
+
+    public ArenaArea GetStaticArena(int index)
+    {
+        if (index < 0 || index >= _staticArenas.Length)
+            return null;
+
+        return _staticArenas[index];
+    }
+
+    public ArenaArea GetTransitionArena(int index)
+    {
+        if (index < 0 || index >= _transitionArenas.Length)
+            return null;
+
+        return _transitionArenas[index].arenaArea;
+    }
+
     /// <summary>
     /// Show the start screen initially. Also grabs the transition targets in the map.
     /// </summary>
@@ -55,11 +110,6 @@ public class CameraManager : MonoBehaviour
     public void EnableCamera()
     {
         GetComponentInChildren<Camera>().enabled = true;
-
-        _arenaTransitionTargets = FindObjectsByType<TransitionTarget>(FindObjectsSortMode.None)
-                        .OrderBy(t => t.transitionIndex)
-                        .Select(t => t.transform)
-                        .ToArray();
     }
 
     /// <summary>
@@ -101,14 +151,25 @@ public class CameraManager : MonoBehaviour
     /// Moves the camera from the current arena to the next.
     /// </summary>
 
-    public void MoveCameraToNextArena(int arenaIndex, float duration, ArenaArea transitionArena)
+    public void MoveCameraToNextArena(int transitionIndex, float duration)
     {
+        if (transitionIndex < 0 || transitionIndex >= _transitionArenas.Length)
+        {
+            Debug.LogWarning($"[CameraManager] Invalid transition index {transitionIndex}");
+            return;
+        }
+
         StopAllCoroutines();
 
         MoveCameraToTransitionPosition();
 
+        TransitionArena transitionArena = _transitionArenas[transitionIndex];
+
         StartCoroutine(
-            CameraTransitionRoutine(arenaIndex, arenaIndex + 1, duration, transitionArena)
+            CameraTransitionRoutine(transitionArena.fromTarget,
+            transitionArena.toTarget,
+            duration,
+            transitionArena.arenaArea)
         );
     }
 
@@ -116,11 +177,11 @@ public class CameraManager : MonoBehaviour
     /// The routine the camera follows to transition.
     /// </summary>
 
-    private IEnumerator CameraTransitionRoutine(int fromIndex, int toIndex, float duration, ArenaArea transitionArena)
+    private IEnumerator CameraTransitionRoutine(Transform fromTarget, Transform toTarget, float duration, ArenaArea arenaArea)
     {
-        Vector3 startPos = _arenaTransitionTargets[fromIndex].position;
-        Vector3 endPos = _arenaTransitionTargets[toIndex].position;
-        Vector3 arenaOffset = transitionArena.transform.position - _cameraAnchor.position;
+        Vector3 startPos = fromTarget.position;
+        Vector3 endPos = toTarget.position;
+        Vector3 arenaOffset = arenaArea.transform.position - startPos;
         float elapsed = 0f;
 
         while (elapsed < duration)
@@ -130,13 +191,13 @@ public class CameraManager : MonoBehaviour
             t = Mathf.SmoothStep(0f, 1f, t);
 
             Vector3 pos = Vector3.Lerp(startPos, endPos, t);
-            transitionArena.transform.position = pos + arenaOffset;
+            arenaArea.transform.position = pos + arenaOffset;
             _cameraAnchor.position = pos;
 
             yield return null;
         }
 
-        transitionArena.transform.position = endPos + arenaOffset;
+        arenaArea.transform.position = endPos + arenaOffset;
         _cameraAnchor.position = endPos;
 
         MoveCameraToPlayerFollow();
