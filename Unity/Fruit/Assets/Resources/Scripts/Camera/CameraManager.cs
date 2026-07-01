@@ -11,9 +11,14 @@ public class CameraManager : MonoBehaviour
     [System.Serializable]
     public class TransitionArena
     {
+        [Header("Transition Targets")]
         public Transform fromTarget;
         public Transform toTarget;
         public ArenaArea arenaArea;
+
+        [Header("Camera Rotations")]
+        public Vector3 cameraStartRotation;
+        public Vector3 cameraEndRotation;
 
         private Vector3 _initialPosition;
         private Quaternion _initialRotation;
@@ -161,23 +166,51 @@ public class CameraManager : MonoBehaviour
 
         StopAllCoroutines();
 
-        MoveCameraToTransitionPosition();
-
         TransitionArena transitionArena = _transitionArenas[transitionIndex];
+
+        StartCoroutine(RotateVirtualCamera(_playerFollowCamera, transitionArena.cameraStartRotation));
+        StartCoroutine(RotateVirtualCamera(_arenaTransitionCamera, transitionArena.cameraStartRotation));
+
+        MoveCameraToTransitionPosition();
 
         StartCoroutine(
             CameraTransitionRoutine(transitionArena.fromTarget,
             transitionArena.toTarget,
             duration,
-            transitionArena.arenaArea)
+            transitionArena.arenaArea,
+            transitionArena.cameraEndRotation)
         );
+    }
+
+    private IEnumerator RotateVirtualCamera(CinemachineCamera virtualCamera, Vector3 targetEuler)
+    {
+        Transform camTransform = virtualCamera.transform;
+
+        Quaternion startRot = camTransform.rotation;
+        Quaternion endRot = Quaternion.Euler(targetEuler);
+
+        float elapsed = 0f;
+
+        while (elapsed < 2f)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / 2f);
+            t = Mathf.SmoothStep(0f, 1f, t);
+
+            camTransform.rotation = Quaternion.Slerp(startRot, endRot, t);
+
+            yield return null;
+        }
+
+        camTransform.rotation = endRot;
     }
 
     /// <summary>
     /// The routine the camera follows to transition.
     /// </summary>
 
-    private IEnumerator CameraTransitionRoutine(Transform fromTarget, Transform toTarget, float duration, ArenaArea arenaArea)
+    private IEnumerator CameraTransitionRoutine(Transform fromTarget, Transform toTarget, 
+        float duration, ArenaArea arenaArea, Vector3 cameraEndRotation)
     {
         Vector3 startPos = fromTarget.position;
         Vector3 endPos = toTarget.position;
@@ -199,6 +232,9 @@ public class CameraManager : MonoBehaviour
 
         arenaArea.transform.position = endPos + arenaOffset;
         _cameraAnchor.position = endPos;
+
+        StartCoroutine(RotateVirtualCamera(_arenaTransitionCamera, cameraEndRotation));
+        StartCoroutine(RotateVirtualCamera(_playerFollowCamera, cameraEndRotation));
 
         MoveCameraToPlayerFollow();
     }
@@ -270,6 +306,5 @@ public class CameraManager : MonoBehaviour
         }
         return false;
     }
-    
     #endregion
 }

@@ -1198,9 +1198,13 @@ MonoBehaviour:
   - fromTarget: {fileID: 692346079876171686}
     toTarget: {fileID: 6153070441317877995}
     arenaArea: {fileID: 1935998245167867033}
+    cameraStartRotation: {x: 30, y: 180, z: 0}
+    cameraEndRotation: {x: 30, y: 225, z: 0}
   - fromTarget: {fileID: 3804663339571616062}
     toTarget: {fileID: 9025062448142160671}
     arenaArea: {fileID: 7985352648364481825}
+    cameraStartRotation: {x: 30, y: 270, z: 0}
+    cameraEndRotation: {x: 30, y: 270, z: 0}
 --- !u!4 &1962736312
 Transform:
   m_ObjectHideFlags: 0
