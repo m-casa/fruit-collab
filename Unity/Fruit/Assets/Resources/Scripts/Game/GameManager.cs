@@ -725,6 +725,7 @@ public class GameManager : NetworkBehaviour
 
         NetworkPlayer[] networkPlayers = GetAllNetworkedPlayers();
         string winner = DetermineWinner();
+        Vector3 originalRotation = new Vector3(30, 180, 0);
 
         if (_arenaRoutine != null)
         {
@@ -732,6 +733,7 @@ public class GameManager : NetworkBehaviour
             _arenaRoutine = null;
         }
 
+        StartCoroutine(CameraManager.Instance.RotateTransitionCameras(originalRotation));
         CameraManager.Instance.ResetTransitionArenas();
 
         ResetAllScores(); // Reset scores between matches

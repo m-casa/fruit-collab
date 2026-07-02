@@ -12,27 +12,27 @@ public class CameraManager : MonoBehaviour
     public class TransitionArena
     {
         [Header("Transition Targets")]
-        public Transform fromTarget;
-        public Transform toTarget;
-        public ArenaArea arenaArea;
+        public Transform _fromTarget;
+        public Transform _toTarget;
+        public ArenaArea _arenaArea;
 
         [Header("Camera Rotations")]
-        public Vector3 cameraStartRotation;
-        public Vector3 cameraEndRotation;
+        public Vector3 _cameraStartRotation;
+        public Vector3 _cameraEndRotation;
 
         private Vector3 _initialPosition;
         private Quaternion _initialRotation;
 
         public void CacheInitialState()
         {
-            _initialPosition = arenaArea.transform.position;
-            _initialRotation = arenaArea.transform.rotation;
+            _initialPosition = _arenaArea.transform.position;
+            _initialRotation = _arenaArea.transform.rotation;
         }
 
         public void ResetState()
         {
-            arenaArea.transform.position = _initialPosition;
-            arenaArea.transform.rotation = _initialRotation;
+            _arenaArea.transform.position = _initialPosition;
+            _arenaArea.transform.rotation = _initialRotation;
         }
     }
 
@@ -78,11 +78,19 @@ public class CameraManager : MonoBehaviour
 
     #region METHODS
 
+    /// <summary>
+    /// Setup arenas to be used on the current map.
+    /// </summary>
+
     public void InitializeArenas(ArenaArea[] staticArenas, TransitionArena[] transitionArenas)
     {
         _staticArenas = staticArenas;
         _transitionArenas = transitionArenas;
     }
+
+    /// <summary>
+    /// Reset each arena's state for the next match.
+    /// </summary>
 
     public void ResetTransitionArenas()
     {
@@ -92,6 +100,10 @@ public class CameraManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Return the stationary arena found at the specified index.
+    /// </summary>
+
     public ArenaArea GetStaticArena(int index)
     {
         if (index < 0 || index >= _staticArenas.Length)
@@ -100,12 +112,16 @@ public class CameraManager : MonoBehaviour
         return _staticArenas[index];
     }
 
+    /// <summary>
+    /// Return the dynamic arena found at the specified index.
+    /// </summary>
+
     public ArenaArea GetTransitionArena(int index)
     {
         if (index < 0 || index >= _transitionArenas.Length)
             return null;
 
-        return _transitionArenas[index].arenaArea;
+        return _transitionArenas[index]._arenaArea;
     }
 
     /// <summary>
@@ -168,25 +184,26 @@ public class CameraManager : MonoBehaviour
 
         TransitionArena transitionArena = _transitionArenas[transitionIndex];
 
-        StartCoroutine(RotateVirtualCamera(_playerFollowCamera, transitionArena.cameraStartRotation));
-        StartCoroutine(RotateVirtualCamera(_arenaTransitionCamera, transitionArena.cameraStartRotation));
+        StartCoroutine(RotateTransitionCameras(transitionArena._cameraStartRotation));
 
         MoveCameraToTransitionPosition();
 
         StartCoroutine(
-            CameraTransitionRoutine(transitionArena.fromTarget,
-            transitionArena.toTarget,
+            CameraTransitionRoutine(transitionArena._fromTarget,
+            transitionArena._toTarget,
             duration,
-            transitionArena.arenaArea,
-            transitionArena.cameraEndRotation)
+            transitionArena._arenaArea,
+            transitionArena._cameraEndRotation)
         );
     }
 
-    private IEnumerator RotateVirtualCamera(CinemachineCamera virtualCamera, Vector3 targetEuler)
-    {
-        Transform camTransform = virtualCamera.transform;
+    /// <summary>
+    /// Smoothly rotate the cameras used for transitions to the target rotation.
+    /// </summary>
 
-        Quaternion startRot = camTransform.rotation;
+    public IEnumerator RotateTransitionCameras(Vector3 targetEuler)
+    {
+        Quaternion startRot = _playerFollowCamera.transform.rotation;
         Quaternion endRot = Quaternion.Euler(targetEuler);
 
         float elapsed = 0f;
@@ -197,12 +214,14 @@ public class CameraManager : MonoBehaviour
             float t = Mathf.Clamp01(elapsed / 2f);
             t = Mathf.SmoothStep(0f, 1f, t);
 
-            camTransform.rotation = Quaternion.Slerp(startRot, endRot, t);
+            _playerFollowCamera.transform.rotation = Quaternion.Slerp(startRot, endRot, t);
+            _arenaTransitionCamera.transform.rotation = Quaternion.Slerp(startRot, endRot, t);
 
             yield return null;
         }
 
-        camTransform.rotation = endRot;
+        _playerFollowCamera.transform.rotation = endRot;
+        _arenaTransitionCamera.transform.rotation = endRot;
     }
 
     /// <summary>
@@ -233,8 +252,7 @@ public class CameraManager : MonoBehaviour
         arenaArea.transform.position = endPos + arenaOffset;
         _cameraAnchor.position = endPos;
 
-        StartCoroutine(RotateVirtualCamera(_arenaTransitionCamera, cameraEndRotation));
-        StartCoroutine(RotateVirtualCamera(_playerFollowCamera, cameraEndRotation));
+        StartCoroutine(RotateTransitionCameras(cameraEndRotation));
 
         MoveCameraToPlayerFollow();
     }
@@ -306,5 +324,6 @@ public class CameraManager : MonoBehaviour
         }
         return false;
     }
+
     #endregion
 }
