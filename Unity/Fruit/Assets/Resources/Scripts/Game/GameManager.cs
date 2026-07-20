@@ -10,6 +10,9 @@ public class GameManager : NetworkBehaviour
 
     public static GameManager Instance { get; private set; }
 
+    [SyncVar] private ArenaState _arenaState = ArenaState.Static;
+    [SyncVar] private int _staticArenaIndex = 0;
+    [SyncVar] private int _transitionArenaIndex = 0;
     [SyncVar] private bool _matchActive;
 
     private enum ArenaState
@@ -48,11 +51,8 @@ public class GameManager : NetworkBehaviour
     [Header("Arena Timing")]
     [SerializeField] private float _timeBeforeArenaMove = 30f;
     [SerializeField] private float _arenaMoveDuration = 15f;
-
-    private ArenaState _arenaState = ArenaState.Static;
+    
     private Coroutine _arenaRoutine;
-    private int _staticArenaIndex = 0;
-    private int _transitionArenaIndex = 0;
 
     #endregion
 
@@ -632,8 +632,8 @@ public class GameManager : NetworkBehaviour
             // Enter transition state so constraints use transition arena
             _arenaState = ArenaState.Transition;
 
-            // Tell the camera to move to the next arena
-            CameraManager.Instance.MoveCameraToNextArena(
+            // Tell the camera to move to the next arena (broadcasts transition to all clients)
+            RpcMoveCameraToNextArena(
                 _transitionArenaIndex,
                 _arenaMoveDuration
             );
@@ -654,6 +654,15 @@ public class GameManager : NetworkBehaviour
             StopCoroutine(_arenaRoutine);
             _arenaRoutine = null;
         }
+    }
+
+    [ClientRpc]
+    private void RpcMoveCameraToNextArena(int transitionIndex, float duration)
+    {
+        CameraManager.Instance.MoveCameraToNextArena(
+                transitionIndex,
+                duration
+        );
     }
 
     /// <summary>
@@ -733,8 +742,7 @@ public class GameManager : NetworkBehaviour
             _arenaRoutine = null;
         }
 
-        StartCoroutine(CameraManager.Instance.RotateTransitionCameras(originalRotation));
-        CameraManager.Instance.ResetTransitionArenas();
+        RpcResetArenasAndCameras(originalRotation);
 
         ResetAllScores(); // Reset scores between matches
         ShowWinner(winner);
@@ -742,6 +750,13 @@ public class GameManager : NetworkBehaviour
         MovePlayersToLobby(networkPlayers);
 
         _matchActive = false;
+    }
+
+    [ClientRpc]
+    private void RpcResetArenasAndCameras(Vector3 originalRotation)
+    {
+        CameraManager.Instance.ResetTransitionArenas();
+        StartCoroutine(CameraManager.Instance.RotateTransitionCameras(originalRotation));
     }
 
     /// <summary>
