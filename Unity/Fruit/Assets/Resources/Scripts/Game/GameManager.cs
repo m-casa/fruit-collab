@@ -608,7 +608,7 @@ public class GameManager : NetworkBehaviour
     /// Returns each networked player.
     /// </summary>
 
-    private NetworkPlayer[] GetAllNetworkedPlayers()
+    public NetworkPlayer[] GetAllNetworkedPlayers()
     {
         return FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None);
     }
