@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 5754240009911054004}
   - component: {fileID: 5348387794108921019}
   m_Layer: 0
-  m_Name: Launch
+  m_Name: Launch Test
   m_TagString: Launch
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

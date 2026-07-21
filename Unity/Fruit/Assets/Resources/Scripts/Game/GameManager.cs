@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class GameManager : NetworkBehaviour
 {
@@ -31,10 +32,13 @@ public class GameManager : NetworkBehaviour
     [SyncVar(hook = nameof(OnClaimedCharactersSyncUpdated))]
     private string _claimedCharactersSync = ""; // Sync'd string for character selection (CSV format)
 
-    [Header("Timers")]
-    private Coroutine _startCountdownRoutine;
+    [Header("Power Up Settings")]
+    [SerializeField] private GameObject[] _powerUpPrefabs; // Drag all power up prefabs here
+    [SerializeField] private float _minPowerUpSpawnTime = 5f;
+    [SerializeField] private float _maxPowerUpSpawnTime = 10f;
+
+    [Header("Match Timer")]
     [SerializeField] private float _matchDuration = 150f; // 150 seconds is 2:30 minutes
-    private float _remainingTime;
 
     [Header("Fruit Prefabs")]
     [SerializeField] private GameObject[] _fruitPrefabs; // Reference to the fruit prefabs
@@ -51,8 +55,12 @@ public class GameManager : NetworkBehaviour
     [Header("Arena Timing")]
     [SerializeField] private float _timeBeforeArenaMove = 30f;
     [SerializeField] private float _arenaMoveDuration = 15f;
-    
+
+    private Coroutine _countdownRoutine;
     private Coroutine _arenaRoutine;
+    private Coroutine _powerUpRoutine;
+    private bool _powerUpSpawning = false;
+    private float _remainingTime;
 
     #endregion
 
@@ -196,10 +204,10 @@ public class GameManager : NetworkBehaviour
             _readyPlayers.Remove(target);
             Debug.Log($"Player {target.connectionId} is now UNREADY");
 
-            if (_startCountdownRoutine != null)
+            if (_countdownRoutine != null)
             {
-                StopCoroutine(_startCountdownRoutine);
-                _startCountdownRoutine = null;
+                StopCoroutine(_countdownRoutine);
+                _countdownRoutine = null;
 
                 Debug.Log("Countdown canceled, someone unreadied.");
             }
@@ -554,10 +562,10 @@ public class GameManager : NetworkBehaviour
     {
         if (_readyPlayers.Count == NetworkServer.connections.Count)
         {
-            if (_startCountdownRoutine == null)
+            if (_countdownRoutine == null)
             {
                 Debug.Log("All players ready. Starting countdown...");
-                _startCountdownRoutine = StartCoroutine(CountdownTimer(3f));
+                _countdownRoutine = StartCoroutine(CountdownTimer(3f));
             }
         }
     }
@@ -586,22 +594,125 @@ public class GameManager : NetworkBehaviour
     {
         NetworkPlayer[] networkPlayers = GetAllNetworkedPlayers();
 
+        _readyPlayers.Clear();
+
+        if (_countdownRoutine != null)
+        {
+            StopCoroutine(_countdownRoutine);
+            _countdownRoutine = null;
+        }
+
         if (_arenaRoutine != null)
         {
             StopCoroutine(_arenaRoutine);
             _arenaRoutine = null;
         }
 
-        _arenaRoutine = StartCoroutine(ArenaFlowRoutine());
-        _matchActive = true;
-        _startCountdownRoutine = null;
-        _readyPlayers.Clear();
+        if (_powerUpRoutine != null)
+        {
+            StopCoroutine(_powerUpRoutine);
+            _powerUpRoutine = null;
+        }
 
+        _matchActive = true;
+        _powerUpSpawning = true;
 
         MovePlayersToMatch(networkPlayers);
+        StartArenaFlowRoutine();
+        StartPowerUpSpawnRoutine();
         StartCoroutine(MatchTimer());
 
         Debug.Log("Match Started!");
+    }
+
+    /// <summary>
+    /// Starts the coroutine for the arena areas.
+    /// </summary>
+
+    private void StartArenaFlowRoutine()
+    {
+        _arenaRoutine = StartCoroutine(ArenaFlowRoutine());
+    }
+
+    /// <summary>
+    /// Starts the coroutine that randomly spawns power ups during the match.
+    /// </summary>
+
+    private void StartPowerUpSpawnRoutine()
+    {
+        _powerUpRoutine = StartCoroutine(PowerUpSpawnRoutine());
+    }
+
+    /// <summary>
+    /// Coroutine that waits a random amount of time and then spawns a power up.
+    /// </summary>
+
+    private IEnumerator PowerUpSpawnRoutine()
+    {
+        while (_powerUpSpawning)
+        {
+            // Wait a random time between minSpawnTime and maxSpawnTime
+            float randomDelay = Random.Range(_minPowerUpSpawnTime, _maxPowerUpSpawnTime);
+            yield return new WaitForSeconds(randomDelay);
+
+            // Spawn the power up
+            SpawnRandomPowerUp();
+        }
+    }
+
+    /// <summary>
+    /// Spawns a random power up above a random player's head.
+    /// </summary>
+
+    private void SpawnRandomPowerUp()
+    {
+        if (!_powerUpSpawning) return;
+
+        if (_powerUpPrefabs == null || _powerUpPrefabs.Length == 0)
+        {
+            Debug.LogWarning("No power up prefabs assigned in PowerUpSpawner.");
+            return;
+        }
+
+        // Get all networked players
+        NetworkPlayer[] networkPlayers = GetAllNetworkedPlayers();
+
+        if (networkPlayers == null || networkPlayers.Length == 0)
+        {
+            Debug.LogWarning("No active players found. Skipping power up spawn.");
+            return;
+        }
+
+        // Select a random player
+        int randomPlayerIndex = Random.Range(0, networkPlayers.Length);
+        NetworkPlayer randomPlayer = networkPlayers[randomPlayerIndex];
+
+        // Get the player's transform and position above their head
+        Transform playerTransform = randomPlayer.GetCharacter().transform;
+        Vector3 spawnPosition = playerTransform.position + new Vector3(0, 2f, 0);
+        Quaternion spawnRotation = playerTransform.rotation;
+
+        // Select a random power up prefab
+        int randomPrefabIndex = Random.Range(0, _powerUpPrefabs.Length);
+        GameObject selectedPrefab = _powerUpPrefabs[randomPrefabIndex];
+        GameObject spawnedPowerUp = Instantiate(selectedPrefab, spawnPosition, spawnRotation);
+        NetworkServer.Spawn(spawnedPowerUp);
+
+        // RpcSpawnPowerUp tells all clients to instantiate the power up on their end
+        //RpcSpawnPowerUp(selectedPrefab, spawnPosition, spawnRotation);
+    }
+
+    /// <summary>
+    /// ClientRpc called on each client to spawn and show the power up.
+    /// </summary>
+
+    [ClientRpc(includeOwner = false)]
+    private void RpcSpawnPowerUp(GameObject prefab, Vector3 position, Quaternion rotation)
+    {
+        if (prefab == null) return;
+
+        GameObject spawnedPowerUp = Instantiate(prefab, position, rotation);
+        Debug.Log($"Spawned a power up!");
     }
 
     /// <summary>
@@ -736,10 +847,19 @@ public class GameManager : NetworkBehaviour
         string winner = DetermineWinner();
         Vector3 originalRotation = new Vector3(30, 180, 0);
 
+        _matchActive = false;
+        _powerUpSpawning = false;
+
         if (_arenaRoutine != null)
         {
             StopCoroutine(_arenaRoutine);
             _arenaRoutine = null;
+        }
+
+        if (_powerUpRoutine != null)
+        {
+            StopCoroutine(_powerUpRoutine);
+            _powerUpRoutine = null;
         }
 
         RpcResetArenasAndCameras(originalRotation);
@@ -748,8 +868,6 @@ public class GameManager : NetworkBehaviour
         ShowWinner(winner);
         ResetHealthForAllPlayers(networkPlayers);
         MovePlayersToLobby(networkPlayers);
-
-        _matchActive = false;
     }
 
     [ClientRpc]

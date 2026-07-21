@@ -18,7 +18,7 @@ public class PowerUp : MonoBehaviour
                 direction = (other.transform.position - transform.position).normalized;
 
                 ApplyPowerUp(player);
-                //Destroy(gameObject); // Remove the power-up object after use
+                Destroy(gameObject); // Remove the power-up object after use
             }
         }
     }
