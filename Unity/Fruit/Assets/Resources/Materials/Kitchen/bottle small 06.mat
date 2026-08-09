@@ -53,7 +53,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: sink 01
+  m_Name: bottle small 06
   m_Shader: {fileID: 4800000, guid: 6c046203321edf34fb092959a05e5b4a, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -89,7 +89,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _AlbedoMap:
-        m_Texture: {fileID: 2800000, guid: 1cfc641305a8793489e0df70c578cae0, type: 3}
+        m_Texture: {fileID: 2800000, guid: 0a84999695b59844eb1e7736da386ebc, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BakedGIRamp:
@@ -161,7 +161,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 1cfc641305a8793489e0df70c578cae0, type: 3}
+        m_Texture: {fileID: 2800000, guid: 0a84999695b59844eb1e7736da386ebc, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -265,14 +265,14 @@ Material:
     - _DetailMapImpact: 0
     - _DetailNormalMapScale: 1
     - _DetailUVSet: 0
-    - _DiffuseSmoothness: 0.465
+    - _DiffuseSmoothness: 0.604
     - _DiffuseThresholdOffset: 0.25
     - _Dissolve: 0
     - _DissolveAmount: 0.5
     - _DissolveBorderSize: 0.25
     - _DissolveMapScale: 1
-    - _DrawnClampMax: 1
-    - _DrawnClampMin: 0.667
+    - _DrawnClampMax: 0.986
+    - _DrawnClampMin: 0.682
     - _DrawnMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
@@ -306,7 +306,7 @@ Material:
     - _LightBands: 4
     - _LightBandsScale: 0.5
     - _LightContribution: 1
-    - _LightThreshold: 0.26
+    - _LightThreshold: 0.007
     - _LightmapDirectionPitch: 152
     - _LightmapDirectionYaw: 68
     - _Metallic: 0
